@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    
+</body>
+<script>
+    (function() {
+        const thisExampleParent = document.body;
+        class Canvas {  // 类：画图
+            constructor(parent = thisExampleParent, width = 400, height = 400){
+                this.canvas = document.createElement('canvas');
+                this.canvas.width = width;
+                this.canvas.height = height;
+                parent.appendChild(this.canvas);
+                this.ctx = this.canvas.getContext('2d');
+            }
+            sync(state){  // 执行下一帧的绘图（或称 在画板上同步已经计算好的下一帧的数据）
+                this.clearDisplay();
+                this.drawActor(state.actors);
+            }
+            clearDisplay(){  // 清除画板（以方便绘制下一帧）
+                this.ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+            }
+            drawActor(actors){  // 画一个角色，比如画一个圆
+                for (const actor of actors) { if(actor.type === 'circle'){ this.drawCircle(actor); } }
+            }
+            drawCircle(actor){  // 画一个圆
+                this.ctx.strokeStyle = 'black';
+                this.ctx.strokeRect(0, 0, this.canvas.width, this.canvas.height);  // 画出边框
+                this.ctx.beginPath();
+                this.ctx.arc(actor.position.x, actor.position.y, actor.radius, 0, Math.PI * 2);
+                this.ctx.closePath();
+                this.ctx.fillStyle = actor.color;
+                this.ctx.fill();
+            }
+        }
+        class Ball {  // 类：球类
+            constructor(config){
+                Object.assign(this,{
+                    id: Math.floor(Math.random() * 1000000),
+                    type : 'circle',
+                    position : new Vector(100, 100),
+                    velocity : new Vector(5, 3),
+                    color : 'blue',
+                    radius : 25,
+                    ballKey : 0,
+                    collisions: [],
+                },config);
+            }
+            nextFrameUpdate(displayState, time, updateId){  // 计算下一帧，小球的位置
+                if (this.collisions.length > 10) { this.collisions = this.collisions.slice(this.collisions.length - 3); }  // 删除无用的 collisions
+                for (const actor of displayState.actors) {
+                    if (this === actor || this.collisions.includes(actor.id + updateId)) { continue; }
+                    const distanceNext = this.position.add(this.velocity).subtract(actor.position.add(actor.velocity)).magnitude;
+                    if (distanceNext <= this.radius + actor.radius) {
+                        const v1 = collisionVector(this, actor);
+                        const v2 = collisionVector(actor, this);
+                        this.velocity = v1; actor.velocity = v2;
+                        this.collisions.push(actor.id + updateId);
+                        actor.collisions.push(this.id + updateId);
+                    }
+                }
+                /* 碰到墙壁后，反弹 */
+                const upperLimit = new Vector(displayState.displayEle.canvas.width - this.radius, displayState.displayEle.canvas.height - this.radius);
+                const lowerLimit = new Vector(0 + this.radius, 0 + this.radius);
+                if (this.position.x >= upperLimit.x || this.position.x <= lowerLimit.x) {
+                    this.velocity = new Vector(-this.velocity.x, this.velocity.y);
+                }
+                if (this.position.y >= upperLimit.y || this.position.y <= lowerLimit.y) {
+                    this.velocity = new Vector(this.velocity.x, -this.velocity.y);
+                }
+                const newX = Math.max(Math.min(this.position.x + this.velocity.x, upperLimit.x), lowerLimit.x);
+                const newY = Math.max(Math.min(this.position.y + this.velocity.y, upperLimit.y), lowerLimit.y);
+                return new Ball({ ...this, position: new Vector(newX, newY), });  // 最终生成下一帧数据
+            }
+            get sphereArea(){ return 4 * Math.PI * this.radius ** 2; }  // 计算球表面积（利用球面积，来表示小球的质量）
+        }
+        class Vector {  // 类：向量（可作为位置 和 速度）
+            constructor(x, y) { this.x = x; this.y = y; }
+            /* 向量的各种运算 */
+            add(vector) {  return new Vector(this.x + vector.x, this.y + vector.y); }  // 加
+            subtract(vector) { return new Vector(this.x - vector.x, this.y - vector.y); }  // 减
+            multiply(scalar) { return new Vector(this.x * scalar, this.y * scalar); }  // 逐元素乘法
+            dotProduct(vector) { return this.x * vector.x + this.y * vector.y; }  // 数量积
+            get magnitude() { return Math.sqrt(this.x ** 2 + this.y ** 2); }  // 求模
+            get direction() { return Math.atan2(this.x, this.y); }  // 求方向的角度 tan
+        }
+        class DisplayState {  // 类：宏观状态
+            constructor(displayEle, actors) { this.displayEle = displayEle; this.actors = actors; }
+            update(time) {
+                const updateId = Math.floor(Math.random() * 1000000);  // 小球的身份证号（而且还能改，尽量不重复）
+                const new_actors = this.actors.map(actor => { return actor.nextFrameUpdate(this, time, updateId); });
+                return new DisplayState(this.displayEle, new_actors);
+            }
+        }
+        const collisionVector = (particle1, particle2) => {
+        return particle1.velocity.subtract(particle1.position
+                .subtract(particle2.position).multiply(particle1.velocity.subtract(particle2.velocity)
+                .dotProduct(particle1.position.subtract(particle2.position))
+                / particle1.position.subtract(particle2.position).magnitude ** 2)
+                .multiply((2 * particle2.sphereArea) / (particle1.sphereArea + particle2.sphereArea))
+            );
+        };
+        // ---------- demo 测试
+        const displayEle = new Canvas();
+        const random = (max = 9, min = 0) => { return Math.floor(Math.random() * (max - min + 1) + min); };
+        const colors = ['red', 'green', 'blue', 'purple', 'orange'];
+        const balls = [];
+        const count = 30;
+        for (let i = 0; i < count; i++) {
+            balls.push(new Ball({
+            radius: random(8, 3) + Math.random(),
+            color: colors[random(colors.length - 1)],
+            position: new Vector(random(400 - 10, 10), random(400 - 10, 10)),
+            velocity: new Vector(random(3, -3), random(3, -3)),
+            }));
+        }
+        let displayState = new DisplayState(displayEle, balls);
+        function myAnimation(time){  // 注意，这里的 time 是requestAnimationFrame回调，可直接使用，是 秒
+            displayState = displayState.update();  // 数据更新
+            displayEle.sync(displayState);     // 根据更新的数据来绘画
+            requestAnimationFrame(myAnimation);
+        }
+        myAnimation();
+    })();
+
+
+
+
+</script>
+</html>
