@@ -1,0 +1,557 @@
+<style>body{margin: 0;}</style>
+<script src="./js/w.js"></script>
+<script src="./js/cannon.js"></script>
+<script src="./js/mymode.js"></script>
+<img src='./img/texture.jpeg' id=marble hidden>
+<img src='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAZAAAAGQCAYAAACAvzbMAAAAAXNSR0IArs4c6QAAIABJREFUeF7tncFRY8sSBa/2sIWVlsgBuTEyAJkhWTPgBWAGuCE2Ixv4cfWGifjbShRxqm9qM6uaB1l1OrvUL2JW7+/vX1Po53Q6Tc/Pz6E/3TRtNpvp8fEx9ueTH2uN/OTHCLDq9Pmbf7vVLJDtdst+0ytVv76+Tk9PT9Pb29uV/gvsrz0ejxeBJPObBTxzTPx04Of81Sdnnjvnj/FLnr/dbqdA6u2dpg4HoAGud9gLTJ3dXKlAOD8FAhgaYADPADN4f/klB9gLDGtxB37J8+cGwubPDWQB/JID3OEAdAOuhyT9Aq1A6r29VBpgBrADPwVS77FfYdXZfX8FmDx/CoT1V4EsgF9ygDsI2A2kHhI3kDq7S2U6QAPMGtyBnwKp99gNpM6uw/nnBsL66wayAH4KpN5kBVJnp0AYOzeQH+LnVwh1kG7AdXbfB6DzV2eYPn9uIPXe+ogO2XX5nxDcQOqNdgOps3MDYezcQH6InzfAOsj0G2CHNyTnb9z5cwOp99YNBLJzA+EAFQhj2IFf8gasQNj8+Yi+AH7JAe5wALqB1EOSvgErkHpv3UAgOzcQDlCBMIYd+CVfYBQImz83kAXwSw5whwPQDaQeEjeQOjsf0SG77/+LwwDXQaYHWIHUe+sGzNjN1W4gkKEBZgA78HMDqffY/423zu77Apg8fwqE9devsBbALznAHQTsBlwPSfoGrEDqvfURHbLzKwQOUIEwhh34JV9gFAibPzeQBfBLDnCHA9ANpB4SN5A6Ox/RITsf0TnA9AArENbjDvySLzBuIGz+3EAWwC85wB0OQDeQekjSLzAKpN5b30AgO99AOEAFwhh24Jd8gVEgbP7cQBbALznAHQ5AN5B6SNxA6ux8A4HsfAPhANMDrEBYjzvwS77AuIGw+XMDWQC/5AB3OADdQOohSb/AKJB6b30Dgex8A+EAFQhj2IFf8gVGgbD5cwNZAL/kAHc4AN1A6iFxA6mz8w0EsvMNhANMD7ACYT3uwC/5AuMGwubPDWQB/JID3OEAdAOphyT9AqNA6r31DQSy8w2EA1QgjGEHfskXGAXC5s8NZAH8kgPc4QB0A6mHxA2kzs43EMjONxAOMD3ACoT1uAO/5AuMGwibPzeQBfBLDnCHA9ANpB6S9AuMAqn31jcQyM43EA5QgTCGHfglX2AUCJs/N5AF8EsOcIcD0A2kHhI3kDo730AgO99AOMD0ACsQ1uMO/JIvMG4gbP7cQBbALznAHQ5AN5B6SNIvMBeBvLy8fNV/xetWns/n6XQ6TfOfiZ/1ej3d399PNzc3iT/ehdvn5+f058+fyJ+vAz/nrz46zl+d3VyZfv6tVqtp9evXr1iBbDabab/fsy5csXo+nH///n3F/wL7q+UnP0aAVTt/Y/Obf7vVbrf7mlelxM/hcLgIZLvdJv5409vb2zR/xSG/WnvkV+P2XSU/+TECrPrj40OBEIQGmNCbFDDDJz/5QQKsXIEwfgZYfpAAK/cCIz9GgFUrEMZPgcgPEmDlCkR+jACrViCMnwKRHyTAyhWI/BgBVq1AGD8FIj9IgJUrEPkxAqxagTB+CkR+kAArVyDyYwRYtQJh/BSI/CABVq5A5McIsGoFwvgpEPlBAqxcgciPEWDVCoTxUyDygwRYuQKRHyPAqhUI46dA5AcJsHIFIj9GgFUrEMZPgcgPEmDlCkR+jACrViCMnwKRHyTAyhWI/BgBVq1AGD8FIj9IgJUrEPkxAqxagTB+CkR+kAArVyDyYwRYtQJh/BSI/CABVq5A5McIsGoFwvgpEPlBAqxcgciPEWDVCoTxUyDygwRYuQKRHyPAqhUI46dA5AcJsHIFIj9GgFUrEMZPgcgPEmDlCkR+jACrViCMX7xAjsfj9Pj46L8pX+zz4XCY9vu9/Ir8nL8iuL9l6fOnQFh/Fcjg/NIDnL6BKBAWkPT5UyCsvwpkcH7pAVYgbADT+aXPnwJh86dABueXHuD0A9ANhAUkff4UCOuvAhmcX3qAFQgbwHR+6fOnQNj8KZDB+aUHOP0AdANhAUmfPwXC+qtABueXHmAFwgYwnV/6/CkQNn8KZHB+6QFOPwDdQFhA0udPgbD+KpDB+aUHWIGwAUznlz5/CoTNnwIZnF96gNMPQDcQFpD0+VMgrL8KZHB+6QFWIGwA0/mlz58CYfOnQAbnlx7g9APQDYQFJH3+FAjrrwIZnF96gBUIG8B0funzp0DY/CmQwfmlBzj9AHQDYQFJnz8FwvqrQAbnlx5gBcIGMJ1f+vwpEDZ/CmRwfukBTj8A3UBYQNLnT4Gw/iqQwfmlB1iBsAFM55c+fwqEzZ8CGZxfeoDTD0A3EBaQ9Pm7COR4PH6xX/N61ev1erq7u5tub2+v9x8Bf/P5fJ5Op9M0/5n4kR/rivzkxwiw6vT5m3+71fv7e6xA5sP5+fmZdeGK1ZvN5vJPxqZ+5Mc6Iz/5MQKsOn3+/glku92y3/RK1a+vr9PT09Plq6LET/qKPvObBTz/mfjpwM/5q0+O81dnN1emn3+73e6/DUSB1Brd4QBUILXedgiw81fv7VzZgV/yBUaBsPlrMYAKpN7k9BtghwPQ+Rt3/hRIvbeXSgPMAHbgl3wD7MBPgdQzkn6BUSD13ioQyK6LgBVIvdG+gdTZdfgKVYGw/rqBLICfAqk3WYHU2SkQxu5Snb7C+RUCa3IHfgqk3mMFUmfX4fxzA2H9dQNZAD8FUm+yAqmzUyCMnRvID/HzEbMO0g24zu77AHT+6gzT588NpN5bH9EhOx/ROcAOXwEqkHqfFUidnRsIZOcNkANMD7ACYT3uwC/5K1Q3EDZ/voEsgF9ygDscgG4g9ZCkX2AUSL23foUF2fkVFgeoQBjDDvySLzAKhM2fG8gC+CUHuMMB6AZSD4kbSJ2dbyCQnW8gHGB6gBUI63EHfskXGDcQNn9uIAvglxzgDgegG0g9JOkXGAVS761vIJCdbyAcoAJhDDvwS77AKBA2f24gC+CXHOAOB6AbSD0kbiB1dr6BQHa+gXCA6QFWIKzHHfglX2DcQNj8uYEsgF9ygDscgG4g9ZCkX2AUSL23voFAdr6BcIAKhDHswC/5AqNA2Py5gSyAX3KAOxyAbiD1kLiB1Nn5BgLZ+QbCAaYHWIGwHnfgl3yBcQNh8+cGsgB+yQHucAC6gdRDkn6BUSD13voGAtn5BsIBKhDGsAO/5AuMAmHz5wayAH7JAe5wALqB1EPiBlJn5xsIZOcbCAeYHmAFwnrcgV/yBcYNhM2fG8gC+CUHuMMB6AZSD0n6BUaB1HvrGwhk5xsIB6hAGMMO/JIvMAqEzZ8byAL4JQe4wwHoBlIPiRtInZ1vIJCdbyAcYHqAFQjrcQd+yRcYNxA2f24gC+CXHOAOB6AbSD0k6RcYBVLvrW8gkJ1vIBygAmEMO/BLvsAoEDZ/biAL4Jcc4A4HoBtIPSRuIHV2voFAdr6BcIDpAVYgrMcd+CVfYNxA2Py5gSyAX3KAOxyAbiD1kKRfYBRIvbe+gUB2voFwgAqEMezAL/kCo0DY/LmBLIBfcoA7HIBuIPWQtNhAXl5evuq/4nUrz+fz9Pn5Oc1//sTn6+tnf9X1ej3d399PNzc3P/Hj/fjfIT+GVH7yYwRYdfr8rVarabXb7X72VGXM/q/64eFh2u/3P/g3/uxfNcttvqGmfuTHOiM/+TECrDp9/ubf7iKQeVVK/BwOh4tAtttt4o83vb29XQQiv1p75Ffj9l0lP/kxAqz64+NDgRCEBpjQmxQwwyc/+UECrFyBMH4GWH6QACv3AiM/RoBVKxDGT4HIDxJg5QpEfowAq1YgjJ8CkR8kwMoViPwYAVatQBg/BSI/SICVKxD5MQKsWoEwfgpEfpAAK1cg8mMEWLUCYfwUiPwgAVauQOTHCLBqBcL4KRD5QQKsXIHIjxFg1QqE8VMg8oMEWLkCkR8jwKoVCOOnQOQHCbByBSI/RoBVKxDGT4HIDxJg5QpEfowAq1YgjJ8CkR8kwMoViPwYAVatQBg/BSI/SICVKxD5MQKsWoEwfgpEfpAAK1cg8mMEWLUCYfwUiPwgAVauQOTHCLBqBcL4KRD5QQKsXIHIjxFg1QqE8VMg8oMEWLkCkR8jwKoVCOOnQOQHCbByBSI/RoBVKxDGT4HIDxJg5QpEfowAq1YgjF+8QI7H4/T4+Oi/KV/s8+FwmPb7vfyK/Jy/Iri/Zenzp0BYfxXI4PzSA5y+gSgQFpD0+VMgrL8KZHB+6QFWIGwA0/mlz58CYfOnQAbnlx7g9APQDYQFJH3+FAjrrwIZnF96gBUIG8B0funzp0DY/CmQwfmlBzj9AHQDYQFJnz8FwvqrQAbnlx5gBcIGMJ1f+vwpEDZ/CmRwfukBTj8A3UBYQNLnT4Gw/iqQwfmlB1iBsAFM55c+fwqEzZ8CGZxfeoDTD0A3EBaQ9PlTIKy/CmRwfukBViBsANP5pc+fAmHzp0AG55ce4PQD0A2EBSR9/hQI668CGZxfeoAVCBvAdH7p86dA2PwpkMH5pQc4/QB0A2EBSZ8/BcL6q0AG55ceYAXCBjCdX/r8KRA2fwpkcH7pAU4/AN1AWEDS50+BsP4qkMH5pQdYgbABTOeXPn8KhM2fAhmcX3qA0w9ANxAWkPT5uwjkeDx+sV/zetXr9Xq6u7ubbm9vr/cfAX/z+XyeTqfTNP+Z+JEf64r85McIsOr0+Zt/u9X7+3usQObD+fn5mXXhitWbzebyT8amfuTHOiM/+TECrDp9/v4JZLvdst/0StWvr6/T09PT5auixE/6ij7zmwU8/5n46cDP+atPjvNXZzdXpp9/u93uvw1EgdQa3eEAVCC13nYIsPNX7+1c2YFf8gVGgbD5azGACqTe5PQbYIcD0Pkbd/4USL23l0oDzAB24Jd8A+zAT4HUM5J+gVEg9d4qEMiui4AVSL3RvoHU2XX4ClWBsP66gSyAnwKpN1mB1NkpEMbuUp2+wvkVAmtyB34KpN5jBVJn1+H8cwNh/XUDWQA/BVJvsgKps1MgjJ0byA/x8xGzDtINuM7u+wB0/uoM0+fPDaTeWx/RITsf0TnADl8BKpB6nxVInZ0bCGTnDZADTA+wAmE97sAv+StUNxA2f76BLIBfcoA7HIBuIPWQpF9gFEi9t36FBdn5FRYHqEAYww78ki8wCoTNnxvIAvglB7jDAegGUg+JG0idnW8gkJ1vIBxgeoAVCOtxB37JFxg3EDZ/biAL4Jcc4A4HoBtIPSTpFxgFUu+tbyCQnW8gHKACYQw78Eu+wCgQNn9uIAvglxzgDgegG0g9JG4gdXa+gUB2voFwgOkBViCsxx34JV9g3EDY/LmBLIBfcoA7HIBuIPWQpF9gFEi9t76BQHa+gXCACoQx7MAv+QKjQNj8uYEsgF9ygDscgG4g9ZC4gdTZ+QYC2fkGwgGmB1iBsB534Jd8gXEDYfPnBrIAfskB7nAAuoHUQ5J+gVEg9d76BgLZ+QbCASoQxrADv+QLjAJh8+cGsgB+yQHucAC6gdRD4gZSZ+cbCGTnGwgHmB5gBcJ63IFf8gXGDYTNnxvIAvglB7jDAegGUg9J+gVGgdR76xsIZOcbCAeoQBjDDvySLzAKhM2fG8gC+CUHuMMB6AZSD4kbSJ2dbyCQnW8gHGB6gBUI63EHfskXGDcQNn9uIAvglxzgDgegG0g9JOkXGAVS761vIJCdbyAcoAJhDDvwS77AKBA2f24gC+CXHOAOB6AbSD0kbiB1dr6BQHa+gXCA6QFWIKzHHfglX2DcQNj8uYEsgF9ygDscgG4g9ZCkX2AUSL23voFAdr6BcIAKhDHswC/5AqNA2Py5gSyAX3KAOxyAbiD1kLTYQF5eXr7qv+J1K8/n83Q6nab5z8TPer2e7u/vp5ubm8Qf78Lt8/Nz+vPnT+TP14Gf81cfHeevzm6uTD//VqvVtPr161esQDabzbTf71kXrlg9H86/f/++4n+B/dXykx8jwKqdv7H5zb/darfbfc2rUuLncDhcBLLdbhN/vOnt7W2av+KQX6098qtx+66Sn/wYAVb98fGhQAhCA0zoTQqY4ZOf/CABVq5AGD8DLD9IgJV7gZEfI8CqFQjjp0DkBwmwcgUiP0aAVSsQxk+ByA8SYOUKRH6MAKtWIIyfApEfJMDKFYj8GAFWrUAYPwUiP0iAlSsQ+TECrFqBMH4KRH6QACtXIPJjBFi1AmH8FIj8IAFWrkDkxwiwagXC+CkQ+UECrFyByI8RYNUKhPFTIPKDBFi5ApEfI8CqFQjjp0DkBwmwcgUiP0aAVSsQxk+ByA8SYOUKRH6MAKtWIIyfApEfJMDKFYj8GAFWrUAYPwUiP0iAlSsQ+TECrFqBMH4KRH6QACtXIPJjBFi1AmH8FIj8IAFWrkDkxwiwagXC+CkQ+UECrFyByI8RYNUKhPFTIPKDBFi5ApEfI8CqFQjjp0DkBwmwcgUiP0aAVSsQxi9eIMfjcXp8fPTflC/2+XA4TPv9Xn5Ffs5fEdzfsvT5UyCsvwpkcH7pAU7fQBQIC0j6/CkQ1l8FMji/9AArEDaA6fzS50+BsPlTIIPzSw9w+gHoBsICkj5/CoT1V4EMzi89wAqEDWA6v/T5UyBs/hTI4PzSA5x+ALqBsICkz58CYf1VIIPzSw+wAmEDmM4vff4UCJs/BTI4v/QApx+AbiAsIOnzp0BYfxXI4PzSA6xA2ACm80ufPwXC5k+BDM4vPcDpB6AbCAtI+vwpENZfBTI4v/QAKxA2gOn80udPgbD5UyCD80sPcPoB6AbCApI+fwqE9VeBDM4vPcAKhA1gOr/0+VMgbP4UyOD80gOcfgC6gbCApM+fAmH9VSCD80sPsAJhA5jOL33+FAibPwUyOL/0AKcfgG4gLCDp86dAWH8VyOD80gOsQNgApvNLnz8FwuZPgQzOLz3A6QegGwgLSPr8XQRyPB6/2K95ver1ej3d3d1Nt7e31/uPgL/5fD5Pp9Npmv9M/MiPdUV+8mMEWHX6/M2/3er9/T1WIPPh/Pz8zLpwxerNZnP5J2NTP/JjnZGf/BgBVp0+f/8Est1u2W96perX19fp6enp8lVR4id9RZ/5zQKe/0z8dODn/NUnx/mrs5sr08+/3W733waiQGqN7nAAKpBabzsE2Pmr93au7MAv+QKjQNj8tRhABVJvcvoNsMMB6PyNO38KpN7bS6UBZgA78Eu+AXbgp0DqGUm/wCiQem8VCGTXRcAKpN5o30Dq7Dp8hapAWH/dQBbAT4HUm6xA6uwUCGN3qU5f4fwKgTW5Az8FUu+xAqmz63D+uYGw/rqBLICfAqk3WYHU2SkQxs4N5If4+YhZB+kGXGf3fQA6f3WG6fPnBlLvrY/okJ2P6Bxgh68AFUi9zwqkzs4NBLLzBsgBpgdYgbAed+CX/BWqGwibP99AFsAvOcAdDkA3kHpI0i8wCqTeW7/Cguz8CosDVCCMYQd+yRcYBcLmzw1kAfySA9zhAHQDqYfEDaTOzjcQyM43EA4wPcAKhPW4A7/kC4wbCJs/N5AF8EsOcIcD0A2kHpL0C4wCqffWNxDIzjcQDlCBMIYd+CVfYBQImz83kAXwSw5whwPQDaQeEjeQOjvfQCA730A4wPQAKxDW4w78ki8wbiBs/txAFsAvOcAdDkA3kHpI0i8wCqTeW99AIDvfQDhABcIYduCXfIFRIGz+3EAWwC85wB0OQDeQekjcQOrsfAOB7HwD4QDTA6xAWI878Eu+wLiBsPlzA1kAv+QAdzgA3UDqIUm/wCiQem99A4HsfAPhABUIY9iBX/IFRoGw+XMDWQC/5AB3OADdQOohcQOps/MNBLLzDYQDTA+wAmE97sAv+QLjBsLmzw1kAfySA9zhAHQDqYck/QKjQOq99Q0EsvMNhANUIIxhB37JFxgFwubPDWQB/JID3OEAdAOph8QNpM7ONxDIzjcQDjA9wAqE9bgDv+QLjBsImz83kAXwSw5whwPQDaQekvQLjAKp99Y3EMjONxAOUIEwhh34JV9gFAibPzeQBfBLDnCHA9ANpB4SN5A6O99AIDvfQDjA9AArENbjDvySLzBuIGz+3EAWwC85wB0OQDeQekjSLzAKpN5b30AgO99AOEAFwhh24Jd8gVEgbP7cQBbALznAHQ5AN5B6SFpsIC8vL1/1X/G6lefzefr8/JzmP3/i8/X1s7/qer2e7u/vp5ubm5/48X7875AfQyo/+TECrDp9/lar1bTa7XY/e6oyZv9X/fDwMO33+x/8G3/2r5rlNt9QUz/yY52Rn/wYAVadPn/zb3cRyLwqJX4Oh8NFINvtNvHHm97e3i4CkV+tPfKrcfuukp/8GAFW/fHxoUAIQgNM6E0KmOGTn/wgAVauQBg/Ayw/SICVe4GRHyPAqhUI46dA5AcJsHIFIj9GgFUrEMZPgcgPEmDlCkR+jACrViCMnwKRHyTAyhWI/BgBVq1AGD8FIj9IgJUrEPkxAqxagTB+CkR+kAArVyDyYwRYtQJh/BSI/CABVq5A5McIsGoFwvgpEPlBAqxcgciPEWDVCoTxUyDygwRYuQKRHyPAqhUI46dA5AcJsHIFIj9GgFUrEMZPgcgPEmDlCkR+jACrViCMnwKRHyTAyhWI/BgBVq1AGD8FIj9IgJUrEPkxAqxagTB+CkR+kAArVyDyYwRYtQJh/BSI/CABVq5A5McIsGoFwvgpEPlBAqxcgciPEWDVCoTxUyDygwRYuQKRHyPAqhUI46dA5AcJsHIFIj9GgFUrEMYvXiDH43F6fHz035Qv9vlwOEz7/V5+RX7OXxHc37L0+VMgrL8KZHB+6QFO30AUCAtI+vwpENZfBTI4v/QAKxA2gOn80udPgbD5UyCD80sPcPoB6AbCApI+fwqE9VeBDM4vPcAKhA1gOr/0+VMgbP4UyOD80gOcfgC6gbCApM+fAmH9VSCD80sPsAJhA5jOL33+FAibPwUyOL/0AKcfgG4gLCDp86dAWH8VyOD80gOsQNgApvNLnz8FwuZPgQzOLz3A6QegGwgLSPr8KRDWXwUyOL/0ACsQNoDp/NLnT4Gw+VMgg/NLD3D6AegGwgKSPn8KhPVXgQzOLz3ACoQNYDq/9PlTIGz+FMjg/NIDnH4AuoGwgKTPnwJh/VUgg/NLD7ACYQOYzi99/hQImz8FMji/9ACnH4BuICwg6fOnQFh/Fcjg/NIDrEDYAKbzS58/BcLmT4EMzi89wOkHoBsIC0j6/F0Ecjwev9iveb3q9Xo93d3dTbe3t9f7j4C/+Xw+T6fTaZr/TPzIj3VFfvJjBFh1+vzNv93q/f09ViDz4fz8/My6cMXqzWZz+SdjUz/yY52Rn/wYAVadPn//BLLdbtlveqXq19fX6enp6fJVUeInfUWf+c0Cnv9M/HTg5/zVJ8f5q7ObK9PPv91u998GokBqje5wACqQWm87BNj5q/d2ruzAL/kCo0DY/LUYQAVSb3L6DbDDAej8jTt/CqTe20ulAWYAO/BLvgF24KdA6hlJv8AokHpvFQhk10XACqTeaN9A6uw6fIWqQFh/3UAWwE+B1JusQOrsFAhjd6lOX+H8CoE1uQM/BVLvsQKps+tw/rmBsP66gSyAnwKpN1mB1NkpEMbODeSH+PmIWQfpBlxn930AOn91hunz5wZS762P6JCdj+gcYIevABVIvc8KpM7ODQSy8wbIAaYHWIGwHnfgl/wVqhsImz/fQBbALznAHQ5AN5B6SNIvMAqk3lu/woLs/AqLA1QgjGEHfskXGAXC5s8NZAH8kgPc4QB0A6mHxA2kzs43EMjONxAOMD3ACoT1uAO/5AuMGwibPzeQBfBLDnCHA9ANpB6S9AuMAqn31jcQyM43EA5QgTCGHfglX2AUCJs/N5AF8EsOcIcD0A2kHhI3kDo730AgO99AOMD0ACsQ1uMO/JIvMG4gbP7cQBbALznAHQ5AN5B6SNIvMAqk3lvfQCA730A4QAXCGHbgl3yBUSBs/txAFsAvOcAdDkA3kHpI3EDq7HwDgex8A+EA0wOsQFiPO/BLvsC4gbD5cwNZAL/kAHc4AN1A6iFJv8AokHpvfQOB7HwD4QAVCGPYgV/yBUaBsPlzA1kAv+QAdzgA3UDqIXEDqbPzDQSy8w2EA0wPsAJhPe7AL/kC4wbC5s8NZAH8kgPc4QB0A6mHJP0Co0DqvfUNBLLzDYQDVCCMYQd+yRcYBcLmzw1kAfySA9zhAHQDqYfEDaTOzjcQyM43EA4wPcAKhPW4A7/kC4wbCJs/N5AF8EsOcIcD0A2kHpL0C4wCqffWNxDIzjcQDlCBMIYd+CVfYBQImz83kAXwSw5whwPQDaQeEjeQOjvfQCA730A4wPQAKxDW4w78ki8wbiBs/txAFsAvOcAdDkA3kHpI0i8wCqTeW99AIDvfQDhABcIYduCXfIFRIGz+3EAWwC85wB0OQDeQekhabCAvLy9f9V/xupXn83k6nU7T/GfiZ71eT/f399PNzU3ij3fh9vn5Of358yfy5+vAz/mrj47zV2c3V6aff6vValr9+vUrViCbzWba7/esC1esng/n379/X/G/wP5q+cmPEWDVzt/Y/ObfbrXb7b7mVSnxczgcLgLZbreJP9709vY2zV9xyK/WHvnVuH1XyU9+jACr/vj4UCAEoQEm9CYFzPDJT36QACtXIIyfAZYfJMDKvcDIjxFg1QqE8VMg8oMEWLkCkR8jwKoVCOOnQOQHCbByBSI/RoBVKxDGT4HIDxJg5QpEfowAq1YgjJ8CkR8kwMoViPwYAVatQBg/BSI/SICVKxD5MQKsWoEwfgpEfpAAK1cg8mMEWLUCYfwUiPwgAVauQOTHCLBqBcL4KRD5QQKsXIHIjxFg1QqE8VMg8oMEWLkCkR8jwKoVCOOnQOQHCbByBSI/RoBVKxDGT4HIDxJg5QpEfowAq1YgjJ8CkR8kwMoViPwYAVYo+SKgAAAB7ElEQVStQBg/BSI/SICVKxD5MQKsWoEwfgpEfpAAK1cg8mMEWLUCYfwUiPwgAVauQOTHCLBqBcL4KRD5QQKsXIHIjxFg1QqE8VMg8oMEWLkCkR8jwKoVCOMXL5Dj8Tg9Pj76b8oX+3w4HKb9fi+/Ij/nrwjub1n6/CkQ1l8FMji/9ACnbyAKhAUkff4UCOuvAhmcX3qAFQgbwHR+6fOnQNj8KZDB+aUHOP0AdANhAUmfPwXC+qtABueXHmAFwgYwnV/6/CkQNn8KZHB+6QFOPwDdQFhA0udPgbD+KpDB+aUHWIGwAUznlz5/CoTNnwIZnF96gNMPQDcQFpD0+VMgrL8KZHB+6QFWIGwA0/mlz58CYfOnQAbnlx7g9APQDYQFJH3+FAjrrwIZnF96gBUIG8B0funzp0DY/CmQwfmlBzj9AHQDYQFJnz8FwvqrQAbnlx5gBcIGMJ1f+vwpEDZ/CmRwfukBTj8A3UBYQNLnT4Gw/iqQwfmlB1iBsAFM55c+fwqEzZ8CGZxfeoDTD0A3EBaQ9PlTIKy/CmRwfukBViBsANP5pc+fAmHzp0AG55ce4PQD0A2EBSR9/v4JhP2a16t+eHi4/ItwqZ/Pz8/p6ekp9cebNpvN5V8kTP2k83P+2OQ4f4xf+vzNv93/ALuPbtDZsRN0AAAAAElFTkSuQmCC' width=600 height=600 id=testsvg hidden>
+<canvas id=c width=320 height=300></canvas>
+<div id="fpsInfo" hidden></div>
+<span id="shiftInfo" hidden></span>
+<span id="posInfo"></span>
+<span id="metrics"></span>
+<span id="cpuInfo"></span>
+<span> <a href="http://127.0.0.1:5505/emloglab/workspace/%E4%B8%89%E7%BB%B4%E6%B2%99%E7%9B%92/obj.html">obj</a></span>
+<script>
+
+"use strict";
+    
+// 一些数学函数
+var wMath = {
+    quaternionToEuler: function(q){  // 四元数转化为欧拉数
+        const { x, y,  z,  w } = q;
+        const roll = Math.atan2(2 * (w * x + y * z), 1 - 2 * (x * x + y * y)); // Roll (X轴)
+        const sinPitch = 2 * (w * y - z * x);
+        const pitch = Math.asin(Math.max(-1, Math.min(1, sinPitch))); // Pitch (Y轴)
+        const yaw = Math.atan2(2 * (w * z + x * y), 1 - 2 * (y * y + z * z)); // Yaw (Z轴)
+        const toDeg = angle => angle * (180 / Math.PI); // 转为度数
+        return { rX: toDeg(roll), rY: toDeg(pitch), rZ: toDeg(yaw)};
+    },
+
+    eulerToQuaternion: function(roll, pitch, yaw){  // 欧拉数转化为四元数（目前用不到）
+        const rollRad = roll * (Math.PI / 180);
+        const pitchRad = pitch * (Math.PI / 180);
+        const yawRad = yaw * (Math.PI / 180);
+        const cr = Math.cos(rollRad * 0.5);
+        const sr = Math.sin(rollRad * 0.5);
+        const cp = Math.cos(pitchRad * 0.5);
+        const sp = Math.sin(pitchRad * 0.5);
+    },
+}
+
+// w.js 初始化
+c.width = window.innerWidth - 100
+c.height = window.innerHeight - 100
+W.reset(c);
+W.ambient(0.7);
+W.light({ x: 0.5, y: -0.3, z: -0.5});
+W.clearColor("8Af");
+
+// 绘制原点坐标轴
+W.group({n:'posZero',x:0,y:1,z:0});
+W.cube({g:'posZero',x:5,w:10,h:.5,d:.5,b:"f44"});
+W.cube({g:'posZero',y:5,h:10,w:.5,d:.5,b:"4f4"});
+W.cube({g:'posZero',z:5,d:10,w:.5,h:.5,b:"44f"});
+W.pyramid({g:'posZero',size:1,x:10,rz:-90,b:"f44"});
+W.pyramid({g:'posZero',size:1,y:10,b:"4f4"});
+W.pyramid({g:'posZero', n:'test0001' ,size:1,z:10,rx:90,b:"44f"});
+
+// 项目对象
+var ccgxk = {
+    // ccgxk 的 cannon.js 物理世界
+        world : null,
+
+    // 初始化物理世界
+    initWorld : function(){
+        W.camera({n:'camera'});  // 初始化相机
+        this.world = new CANNON.World();
+        this.world.gravity.set(0, -9.82, 0); // 地球重力9.82m/s²
+        this.world.broadphase = new CANNON.NaiveBroadphase(); // 碰撞检测（所有刚体件都进行碰撞）
+        this.world.solver.iterations = 20; // 物理迭代
+        this.world.addContactMaterial(this.cannonDefaultCantactMaterial);  // 默认材质关联
+        this.eventListener();  // 事件监听
+        this.animate(); // 动画
+        shiftInfo.innerHTML = 'speed:' + 25 + ' | ' // 【测试，临时】
+    },
+
+    // 默认材质关联材质
+    cannonDefaultCantactMaterial : new CANNON.ContactMaterial( // 默认材质关联材质
+        new CANNON.Material(),
+        new CANNON.Material(), {
+            friction: 0.1, // 摩擦力
+            restitution: 0.1, // 弹性系数
+    }),
+
+    // 物理体列表
+    bodylist : new Array(),
+
+    // 添加 box 物理体
+    addPhysicalBox : function({ 
+                isPhysical = true, isVisualMode = true, name = 'k'+(Math.random()*10**9|0),  // 如果没指认，则使用随机数生成 ID
+                X = 5, Y = 5, Z = 5,
+                mass = 0, width = 1, depth = 1, height = 1, size = 1,
+                texture = null, smooth = 0,  // 因为 W.js 版本问题， smooth 暂时为 0
+                background = '#888', mixValue = 0.71, rX = 0, rY = 0, rZ = 0 } = {}){
+        if(size !== 1){
+            width =  depth =  height = size;
+        }
+        var body = null;
+        if(isPhysical){  // 是否创建物理计算体
+            body = new CANNON.Body({
+                mass : mass,
+                shape: new CANNON.Box(new CANNON.Vec3(width/2, height/2, depth/2)),
+                position: new CANNON.Vec3(X, Y, Z),
+                material: this.cannonDefaultCantactMaterial,
+            });
+            this.world.addBody(body);
+        }
+        if(isVisualMode){  // 是否可视化
+            W.cube({
+                n: name,
+                w: width, d: depth, h: height,
+                x: X, y:Y, z:Z, t: texture, s: smooth,
+                rx: rX, ry: rY, rz: rZ, b: background, mix: mixValue
+            });
+        }
+        var result = { name, body, X, Y, Z, rX, rY, rZ, isVisualMode };
+        this.bodylist.push(result);
+        return result;
+    },
+
+    // 按照列表将 物理体 逐个 物理计算 和 可视化 更新
+    updataBodylist : function(){
+        for (let i = 0; i < this.bodylist.length; i++) {
+            let indexItem = this.bodylist[i];
+            if(indexItem.body !== null){ 
+                let pos = indexItem.body.position;
+                let quat = indexItem.body.quaternion;
+                let indexItemEuler = wMath.quaternionToEuler(quat);
+                indexItem.rX = indexItemEuler.rX;
+                indexItem.rY = indexItemEuler.rY;
+                indexItem.rZ = indexItemEuler.rZ;
+                indexItem.X = pos.x;
+                indexItem.Y = pos.y;
+                indexItem.Z = pos.z;
+            }
+            if(indexItem.isVisualMode){
+                W.move({
+                    n: indexItem.name,
+                    x: indexItem.X,
+                    y: indexItem.Y,
+                    z: indexItem.Z,
+                    rx: indexItem.rX,
+                    ry: indexItem.rY,
+                    rz: indexItem.rZ,
+                });
+            }
+        }
+    },
+
+    // 主角被手动操纵的状态值
+    keys : {
+        viewForward: 0,  // 向前移动
+        viewBackward: 0,
+        turnRight: 0,
+        turnLeft: 0,  // 向左旋转
+        turnUp: 0,
+        turnDown: 0,
+        viewUp: 0,
+        viewDown: 0,
+        viewLeft: 0,  // 向左移动
+        viewRight: 0,
+        shiftKeyvalue: 0,
+        jumping: 0,
+    },
+
+    // 键盘按键 与 操作状态值 的对应
+    keyMap : {
+        'w': 'viewForward',
+        's': 'viewBackward',
+        'a': 'viewLeft',
+        'd': 'viewRight',
+        'r': 'viewUp',
+        'v': 'viewDown',
+        'o': 'turnUp',
+        'p': 'turnDown',
+        'k': 'viewLeft',
+        'l': 'viewRight',
+        'arrowup': 'viewForward',
+        'arrowdown': 'viewBackward',
+        'arrowleft': 'turnLeft',
+        'arrowright': 'turnRight',
+    },
+
+    // 是否按下了 shift 键
+    isShiftPress : 0,
+
+    // 事件监听
+    eventListener : function(){
+        var _this = this;
+        var isMouseMove = false;
+        document.addEventListener('keydown', function(e) {  // 按下键盘
+            _this._handleKey(e, 1);
+        });
+        document.addEventListener('keyup', function(e) {  // 松开键盘
+            _this._handleKey(e, 0);
+        });
+        document.addEventListener('mousemove', function(e) {  // 鼠标移动
+            if (isMouseMove) {
+                _this.keys.turnRight = e.movementX * 0.1;
+                _this.keys.turnUp = e.movementY * 0.1;
+            }
+        });
+        c.addEventListener('click', () => {  // 单击画布，开启虚拟鼠标
+            c.requestPointerLock = c.requestPointerLock || c.mozRequestPointerLock || c.webkitRequestPointerLock;
+            c.requestPointerLock();
+            isMouseMove = true;
+        });
+        document.addEventListener('pointerlockchange', lockChangeAlert, false);
+        document.addEventListener('mozpointerlockchange', lockChangeAlert, false);
+        document.addEventListener('webkitpointerlockchange', lockChangeAlert, false);
+        function lockChangeAlert() {  // 单击 ESC 键后
+            if (document.pointerLockElement === c || document.mozPointerLockElement === c || document.webkitPointerLockElement === c) {
+                isMouseMove = true;
+            } else {
+                isMouseMove = false;
+            }
+        }
+    },
+
+    // 键盘事件处理逻辑
+    _handleKey : function(e, value) {
+        var action = this.keyMap[e.key.toLowerCase()];
+        if (action) { this.keys[action] = value; }
+        if (e.keyCode === 32 && this.mainVPlayer !== null) {  // 空格键
+            var limit = this.mainVPlayer.body.position.y <= 10000;
+            if (this.keys.jumping === 0 && limit) {
+                this.mainVPlayer.body.velocity.y = 10;
+            }
+            this.keys.jumping = value;
+        }
+        // if (e.keyCode === 16 || e.key.toLowerCase() === 'q') {  // shift键 或 q 开启加速
+        if (e.key.toLowerCase() === 'q') {  // 按键 q 开启加速
+            this.isShiftPress = value;
+        }
+    },
+
+    // 向前（后）移动的加速度辅助计算值
+    forwardAcc : 0,
+
+    displayPOS : function(){
+        var posInfo = document.getElementById('posInfo');
+        if(this.mainVPlayer !== null){
+            posInfo.innerHTML = (
+                'pos: <br>X:' + this.mainVPlayer.body.position.x.toFixed(2) +
+                ', Y:' + this.mainVPlayer.body.position.y.toFixed(2) +
+                ', Z:' + this.mainVPlayer.body.position.z.toFixed(2) + ',<br> | '
+            );
+        }
+    },
+
+    // 计算物体的移动参数
+    calMovePara : function(X, Y, Z, RX, RY, RZ){
+        const keys = this.keys;
+        if (keys.viewForward || keys.viewBackward) { // 前后平移
+            var speed = (this.isShiftPress) ? Math.max(1,4-(this.forwardAcc+=0.01)) :4+0*(this.forwardAcc=0.01);  // 加速度
+            shiftInfo.innerHTML = 'speed:' + Math.round((100 / speed)) + ' | ';
+            Z += (-keys.viewForward + keys.viewBackward) * Math.cos(RY * Math.PI / 180) / speed;
+            X += (-keys.viewForward + keys.viewBackward) * Math.sin(RY * Math.PI / 180) / speed;
+            this.displayPOS();
+        }
+        if (keys.viewLeft || keys.viewRight) { // 左右平移
+            Z += (-keys.viewLeft + keys.viewRight) * Math.cos((RY + 90) * Math.PI / 180) / 10;
+            X += (-keys.viewLeft + keys.viewRight) * Math.sin((RY + 90) * Math.PI / 180) / 10;
+            this.displayPOS();
+        }
+        if (keys.viewUp || keys.viewDown) { // 上下平移
+            var offset = (keys.viewUp - keys.viewDown) / 7;
+            Y += offset;
+        }
+        if(keys.turnRight || keys.turnLeft) {  // 左右扭动
+            var offset = (-keys.turnRight + keys.turnLeft);
+            if(Math.abs(offset) > 0.1){
+                RY += offset;
+            }
+        }
+        if(keys.turnUp || keys.turnDown) {  // 上下扭动
+            var offset = (-keys.turnUp + keys.turnDown);
+            if(Math.abs(offset) > 0.5){
+                RX += offset;
+            }
+        }
+        return {  x: X,  y: Y,  z: Z,  rx: RX,  ry: RY,  rz: RZ  }
+    },
+
+    // 主角物理体
+    mainVPlayer : null,
+
+    // 摄像机的一些参数
+    mainCamera : {
+        groupName : null,
+        pos : {  // 相对坐标系，相对于主角（下面 qua 也是）
+            x: 0,
+            y: 4,
+            z: 1,
+        },
+        qua : {
+            rx: 0,
+            ry: 0,
+            rz: 0,
+        },
+    },
+
+    // 摄像机和主角的移动和旋转
+    mainVPlayerMove : function(mainVPlayerObj){
+        if(mainVPlayerObj === null){return};
+        var cam = this.mainCamera;
+        cam.groupName = mainVPlayerObj.name;
+        var vplayerBodyPos = mainVPlayerObj.body.position;
+        var vplayerBodyQua = mainVPlayerObj.body.quaternion;
+        var vplayerAct = this.calMovePara(  // 获取按键和鼠标事件处理后的移动参数
+            vplayerBodyPos.x, vplayerBodyPos.y, vplayerBodyPos.z,
+            cam.qua.rx, cam.qua.ry, cam.qua.rz
+        );
+        mainVPlayerObj.body.position.x = vplayerAct.x;
+        mainVPlayerObj.body.position.y = vplayerAct.y;
+        mainVPlayerObj.body.position.z = vplayerAct.z;
+        cam.qua = vplayerAct;
+        vplayerBodyQua.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), Math.PI / 180 * vplayerAct.ry);  // 主角只旋转 Y 轴
+        W.camera({g:cam.groupName, x:cam.pos.x, y:cam.pos.y, z:cam.pos.z, rx: cam.qua.rx, rz: cam.qua.rz})  // 摄像机只旋转 X 和 Z 轴
+        return 0;
+        
+    },
+
+    // 将顶点数据转化成 cannon.js 可用的格式
+    returnVec3Data : function(verticesData, indicesData){
+        const vertices = [];
+        for (let i = 0; i < verticesData.length; i += 3) {
+            vertices.push(new CANNON.Vec3(verticesData[i], verticesData[i + 1], verticesData[i + 2]));
+        }
+        const faces = [];
+        for (let i = 0; i < indicesData.length; i += 3) {
+            faces.push([indicesData[i], indicesData[i + 1], indicesData[i + 2]]);
+        }
+        const convexPolyhedron = new CANNON.ConvexPolyhedron(vertices, faces);
+        return convexPolyhedron;
+    },
+
+    // 添加自定义顶点数据的物体
+    addCustomDataObj : function({ 
+                name = 'custom'+(Math.random()*10**9|0),  // 如果没指认，则使用随机数生成 ID
+                modelName = null,  // 模型名
+                X = 5, Y = 5, Z = 5,
+                mass = 0, size = 1,
+                verticesData = [], indicesData = [],
+                texture = null, smooth = 0,  // 因为 W.js 版本问题， smooth 暂时为 0
+                background = '#888', mixValue = 0.71, rX = 0, rY = 0, rZ = 0 } = {}){
+        if(verticesData.length === 0 || indicesData.length === 0){ console.error('没有添加模型数据！');return; }
+        const myshape = this.returnVec3Data(verticesData.map(v => v * size), indicesData);
+        const tempBody = new CANNON.Body({
+            mass: mass,
+            shape: myshape,
+            position: new CANNON.Vec3(X, Y, Z),
+            material: this.cannonDefaultCantactMaterial,
+        });
+        this.world.addBody(tempBody);
+        modelName = modelName || name;  // 指认了模型名，就使用模型
+        if(W.modelName === undefined) {
+            W.add(modelName, {  // W 引擎引入模型数据
+                vertices: verticesData,
+                indices: indicesData,
+            });
+        }
+        W[modelName]({n:name,size: size, x:X, z:Z, y:Y});
+        var result = {name: name, body: tempBody, rX: 0, rY: 0, rZ: 0};
+        this.bodylist.push(result);  // 向 CCGXK 项目内追加
+    },
+
+    // 计算一次物理世界
+    cannonAni : function(){
+        this.world.step(1 / 60); // 时间步长 1/60，用于更新物理世界
+    },
+
+    // FPS 计算的辅助值
+    fpsFrameCount : 0,
+    lastTime : performance.now(),
+
+    // 显示 FPS 和 内存 等...
+    showFPS : function(){
+        var currentTime = performance.now();
+        var deltaTime = currentTime - this.lastTime;
+        this.fpsFrameCount++;
+        if(deltaTime > 3000){
+            var fps = this.fpsFrameCount / (deltaTime / 1000);
+            fpsInfo.innerHTML = ('<br>FPS: ' + fps.toFixed(2));
+            this.fpsFrameCount = 0;
+            this.lastTime = currentTime;
+            this._showMemory();  // 一秒显示一次内存，写在这里吧
+            this.displayPOS();  // 显示主角坐标
+        }
+    },
+
+    // 显示内存占用情况
+    _showMemory : function(){
+        var output = document.getElementById('metrics');
+        if (performance.memory) {
+            const mem = performance.memory;
+            output.innerHTML = `内存: ${(mem.usedJSHeapSize/1048576).toFixed(1)}MB/` +
+                    `${(mem.jsHeapSizeLimit/1048576).toFixed(1)}MB`  + ' | ';
+        }
+    },
+
+    // 动画循环
+    animate : function(){
+        var _this = this;
+        const viewAnimate = function() {
+            _this.showFPS(); // 显示 FPS
+            _this.cannonAni(); // 物理世界计算
+            _this.updataBodylist(); // 更新物体列表
+            _this.mainVPlayerMove(_this.mainVPlayer); // 摄像机和主角的移动和旋转
+            requestAnimationFrame(viewAnimate);
+        }
+        viewAnimate();
+    },
+}
+ccgxk.initWorld();
+var list = ccgxk.bodylist;
+
+
+ccgxk.addPhysicalBox({  // 创建一个 测试 物理体
+    name: 'test', X: -30, Y: 1, Z: -30,
+    mass: 0, width: 40, depth: 50, height: 2, texture: marble
+});
+
+ccgxk.addPhysicalBox({  // 创建一个 旋转测试 细长物理体
+    name: 'longThin', X: 20, Y: 1, Z: -30,
+    mass: 1, width: 40, depth: 2, height: 2, texture: marble
+});
+
+
+
+ccgxk.addPhysicalBox({  // 创建地面
+    name: 'groundPlane', X: 0, Y: -0.5, Z: 0,
+    mass: 0, width: 10000, depth: 10000, height: 2,
+    texture: marble, background: '#FFF', mixValue: 0.71
+});
+
+ccgxk.addPhysicalBox({  // 创建天空
+    name: 'sky', X: 0, Y: 20, Z: 0,
+    mass: 0, width: 10000, depth: 10000, height: 2,
+    texture: marble, background: '#FFF', mixValue: 0.71
+});
+
+
+
+// ccgxk.mainVPlayer = ccgxk.addPhysicalBox({  // 创建一个立方体，并设置为主角
+//     name: 'mainPlayer', X: 15, Y: 20, Z: 30,
+//     rX: 0, rY: 0, rZ: 0, size:1,
+//     mass: 50, texture: marble
+// });
+
+// 添加四面体
+var vertices = [0,0,0,  1,0,0,  0,1,3,  0,0,3, ];
+var indices = [0,3,2,  0,1,3,  0,2,1,  1,2,3,  ];
+ccgxk.addCustomDataObj({
+    name: 'custom',
+    X: 0, Y: 15, Z: 0,
+    size : 10,
+    mass: 0,
+    verticesData: vertices,
+    indicesData: indices,
+    texture: marble
+})
+
+// 生成 100 个模型
+
+// var yVlaue = 150;
+// for(var i = 0; i < 100; i++){
+//     ccgxk.addPhysicalBox({
+//         isPhysical: true,
+//         X: -Math.floor( i * 100 + 1 - 5000), Y: yVlaue, Z: -Math.floor( i * 100 + 1 - 5000),
+//         mass: 10, width: Math.floor( Math.random() * 30 + 1), depth: 5, height: Math.floor( Math.random() * 100 + 1),
+//         background: `#${Math.floor(Math.random() * 16777216).toString(16).padStart(6, '0')}`, mixValue: 0.71
+//     });
+// }
+// console.log(ccgxk.bodylist.length);
+
+/* ---------- ---------- ---------- ---------- ---------- ---------- ----------*/ /* ---------- ---------- ---------- ---------- ---------- ---------- ----------*/
+// 下面是模型区
+//  x1b1 西一北一区 测试区
+/* ---------- ---------- ---------- ---------- ---------- ---------- ----------*/ /* ---------- ---------- ---------- ---------- ---------- ---------- ----------*/
+
+const red = '#FF0000';
+const green = '#00FF00';
+const blue = '#0000FF';
+const white = '#FFFFFF';
+const black = '#000000';
+const gray = '#808080';
+const yellow = '#FFFF00';
+const cyan = '#00FFFF';
+const magenta = '#FF00FF';
+const orange = '#FFA500';
+const brown = '#A52A2A';
+
+
+function cPos(x = 0, z = 0){
+    var poolpos = {x: -500, z: -500}; // 中心点
+    return {x: x + poolpos.x, z: z + poolpos.z};
+}
+
+ccgxk.mainVPlayer = ccgxk.addPhysicalBox({  // 创建一个立方体，并设置为主角
+    name: 'mainPlayer', 
+    // X: cPos().x + 15, Y: 20, Z: cPos().z + 30,
+    X:-29.15, Y:1.00, Z:44.33,
+    rX: 0, rY: 0, rZ: 0, size:1,
+    mass: 50, texture: marble
+});
+
+
+// 创建地基 高 1
+ccgxk.addPhysicalBox({  // 创建 x1b1 领域地面
+    name: 'x1b1groundPlane', X: cPos().x, Y: 1, Z: cPos().z,
+    mass: 0, width: 800, depth: 800, height: 1,
+    texture: marble,
+});
+
+// 房子地面
+ccgxk.addPhysicalBox({
+    X: cPos().x, Y: 2, Z: cPos().z,
+    mass: 0, width: 100, depth: 100, height: 1,
+    background : green, texture: marble
+});
+
+
+// 使用更直观的方式来添加方块
+function addInSafePos(x,  z, w,  d, y = 12.5, h = 20){
+    ccgxk.addPhysicalBox({
+        X: cPos(x + w/2).x , Y: y + h/2, Z: cPos(0,z - d/2).z,
+        mass: 0, width: w, depth: d, height: h,
+        background : cyan, texture: marble
+    });
+}
+
+// addInSafePos(0,0,4,20);
+// addInSafePos(4,0,10,4);
+// addInSafePos(20,0,4,16);
+// addInSafePos(4,-16,20,4);
+
+function add4Wall(x, z, width, depth, y, height = 20){
+    // 一楼的四堵墙
+    addInSafePos(x + 0, z + 0, width, depth, y, height);
+    addInSafePos(x + width, z + 0, (depth-width) * 0.8, width, y, height);
+    addInSafePos(x + depth, z + 0, width, depth - width, y, height);
+    addInSafePos(x + width, z - depth + width, depth, width, y, height);
+
+    // n 个台阶
+    var stage = 5;
+    var stageWidth = 50;
+    for(var i = 1; i <= stage; i++){
+        addInSafePos(x + width,   z -  (depth - 2 * width) / stage * (i - 1), stageWidth, (depth - 2 * width) / stage, y, height / stage * i);
+    }
+}
+
+// 加了一个一圈墙
+add4Wall(-50,50, 1, 200, 1.5, 20);
+
+W.wolf({y: 50, size: 100, b:yellow,});
+
+</script>
