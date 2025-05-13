@@ -433,13 +433,6 @@ ccgxk.addPhysicalBox({  // 创建地面
     texture: marble, background: '#FFF', mixValue: 0.71
 });
 
-ccgxk.addPhysicalBox({  // 创建天空
-    name: 'sky', X: 0, Y: 20, Z: 0,
-    mass: 0, width: 10000, depth: 10000, height: 2,
-    texture: marble, background: '#FFF', mixValue: 0.71
-});
-
-
 
 // ccgxk.mainVPlayer = ccgxk.addPhysicalBox({  // 创建一个立方体，并设置为主角
 //     name: 'mainPlayer', X: 15, Y: 20, Z: 30,
@@ -548,6 +541,9 @@ function add4Wall(x, z, width, depth, y, height = 20){
         addInSafePos(x + width,   z -  (depth - 2 * width) / stage * (i - 1), stageWidth, (depth - 2 * width) / stage, y, height / stage * i);
     }
 }
+
+// 加了一个一圈墙
+add4Wall(-50,50, 1, 200, 1.5, 20);
 
 W.wolf({y: 50, size: 100, b:yellow,});
 
