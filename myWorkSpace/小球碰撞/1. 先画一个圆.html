@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    
+</body>
+<script>
+    class Canvas{
+        constructor(parent = document.body, width = 400, height = 400){
+            this.canvas = document.createElement('canvas');
+            this.canvas.width = width;
+            this.canvas.height = height;
+            parent.appendChild(this.canvas);
+            this.ctx = this.canvas.getContext('2d');
+        }
+
+        drawActor(actors){  // 画一个角色，比如画一个圆
+            for (const actor of actors) {
+                if(actor.type === 'circle'){
+                    this.drawCircle(actor);
+                }
+            }
+        }
+
+        drawCircle(actor){  // 画一个圆
+            this.ctx.strokeStyle = 'black';
+            this.ctx.strokeRect(0, 0, this.canvas.width, this.canvas.height);  // 画出边框
+            this.ctx.beginPath();
+            this.ctx.arc(actor.position.x, actor.position.y, actor.radius, 0, Math.PI * 2);
+            this.ctx.closePath();
+            this.ctx.fillStyle = actor.color;
+            this.ctx.fill();
+        }
+    }
+
+    class Ball{
+        constructor(config){
+            Object.assign(this,{
+                type : 'circle',
+                position : {x : 100, y : 100},
+                color : 'blue',
+                radius : 25,
+
+            },config);
+        }
+    }
+
+
+    // ---------- 测试
+
+    const draw = new Canvas();
+    draw.drawCircle();
+
+</script>
+</html>

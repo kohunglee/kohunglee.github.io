@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+
+    <!-- <canvas></canvas> -->
+
+    
+</body>
+<script>
+    function c(msg){
+        console.log(msg);
+    }
+
+    // 更新对象在每一帧中的状态
+    class DisplayState {
+      
+      constructor(displayEle, actors) {
+        this.displayEle = displayEle;
+        this.actors = actors;
+      }
+    
+      update(time) {
+    
+        /**
+         * provide an update ID to let actors update other actors only once
+         * used with collision detection
+         */
+        const updateId = Math.floor(Math.random() * 1000000);
+        const actors = this.actors.map(actor => {
+          return actor.updateEach(this, time, updateId);  // 让 actors 数组中的每个成员都调用一遍 update
+        });
+        return new DisplayState(this.displayEle, actors);
+      }
+    }
+    
+    // 向量
+    class Vector {
+      constructor(x, y) {
+        this.x = x;
+        this.y = y;
+      }
+    
+      add(vector) {  // 两个向量相加
+        return new Vector(this.x + vector.x, this.y + vector.y);
+      }
+    
+      subtract(vector) {  // 两个向量相减
+        return new Vector(this.x - vector.x, this.y - vector.y);
+      }
+    
+      multiply(scalar) {  // 
+        return new Vector(this.x * scalar, this.y * scalar);
+      }
+    
+      dotProduct(vector) {  // 点积
+        return this.x * vector.x + this.y * vector.y;
+      }
+    
+      get magnitude() {  // 取值函数，获取向量的 模
+        return Math.sqrt(this.x ** 2 + this.y ** 2);
+      }
+    
+      get direction() {  // 返回夹角，获取向量的角度
+        return Math.atan2(this.x, this.y);
+      }
+    }
+    
+    // 画图功能
+    class Canvas {
+      constructor(parent = document.body, width = 400, height = 400) {  // 创建画布
+        this.canvas = document.createElement('canvas');
+        this.canvas.width = width;
+        this.canvas.height = height;
+        parent.appendChild(this.canvas);
+        this.ctx = this.canvas.getContext('2d');
+      }
+    
+      sync(state) {   // 同步（Synchronize）数据
+        this.clearDisplay();  // 清除显示内容
+        this.drawActors(state.actors);
+      }
+    
+      clearDisplay() {
+    
+        // opacity controls the trail effect set to 1 to remove（opacity 透明度是控制轨迹效果的）
+        this.ctx.fillStyle = 'rgba(255, 255, 255, 1)';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        this.ctx.strokeStyle = 'black';
+        this.ctx.strokeRect(0, 0, this.canvas.width, this.canvas.height);
+      }
+    
+      drawActors(actors) {  // 绘制圆圈功能
+        for (let actor of actors) {
+          if (actor.type === 'circle') {
+            this.drawCircle(actor);
+          }
+        }
+      }
+    
+      drawCircle(actor) {
+        this.ctx.beginPath();
+        this.ctx.arc(actor.position.x, actor.position.y, actor.radius, 0, Math.PI * 2);
+        this.ctx.closePath();
+        this.ctx.fillStyle = actor.color;
+        this.ctx.fill();
+      }
+    }
+    
+    // 球
+    class Ball {
+      constructor(config) {
+        Object.assign(this,
+          {
+            id: Math.floor(Math.random() * 1000000),
+            type: 'circle',
+            position: new Vector(100, 100),
+            velocity: new Vector(5, 3),   // 速度也是一个向量，位置也是
+            radius: 25,
+            color: 'blue',
+            collisions: [],
+          },
+          config
+        );
+      }
+    
+      updateEach(state, time, updateId) {
+    
+        c('frame----------------------');
+        /**
+         * if slice occurs on too many elements, it starts to lag
+         * collisions is an array to allow multiple collisions at once
+         */
+        if (this.collisions.length > 10) {  // 如果有 10 个以上的元素发生碰撞，则 只会保留数组中的最后三个元素
+          this.collisions = this.collisions.slice(this.collisions.length - 3);
+        }
+
+
+        // 循环判断所有的球，有没有碰撞
+        /**
+         * this is the most stable solution to avoid overlap   避免重叠的最稳定方式
+         * but it is slightly inaccurate  或许还有点不准确
+         */
+        // this === actor 的原因是，防止将元素自身设置为碰撞对象
+        for (let actor of state.actors) {
+       
+          if (this === actor || this.collisions.includes(actor.id + updateId)) {
+            continue;
+          }
+    
+          /**
+           * check if actors collide in the next frame and update now if they do   
+           * innaccurate, but it is the easiest solution to the sticky collision bug
+           * 检测下一帧是否会碰撞，并在当前帧更新
+           * 虽然不准确，但这样写最简单了
+           */
+          const distance = this.position.add(this.velocity).subtract(actor.position.add(actor.velocity)).magnitude;  // 利用位置和速度向量，计算出一个预测的距离
+          c(distance);
+          if (distance <= this.radius + actor.radius) {
+            const v1 = collisionVector(this, actor);
+            const v2 = collisionVector(actor, this);
+            c('v1 ' + v1.x);
+            c('v2 ' + v2.x);
+            this.velocity = v1;
+            actor.velocity = v2;
+            this.collisions.push(actor.id + updateId);
+            actor.collisions.push(this.id + updateId);
+          }
+        }
+        
+
+        // 如果碰到了容器（upperLimit）的边缘 ，那么速度（velocity）向量的坐标就需要更改一下 ↓
+        // setting bounds on the canvas prevents balls from overlapping on update
+        const upperLimit = new Vector(state.displayEle.canvas.width - this.radius, state.displayEle.canvas.height - this.radius);
+        const lowerLimit = new Vector(0 + this.radius, 0 + this.radius);
+
+        // check if hitting left or right of container
+        if (this.position.x >= upperLimit.x || this.position.x <= lowerLimit.x) {
+          this.velocity = new Vector(-this.velocity.x, this.velocity.y);
+        }
+    
+        // check if hitting top or bottom of container
+        if (this.position.y >= upperLimit.y || this.position.y <= lowerLimit.y) {
+          this.velocity = new Vector(this.velocity.x, -this.velocity.y);
+        }
+    
+        // const newX = Math.max(Math.min(this.position.x + this.velocity.x, upperLimit.x), lowerLimit.x);
+        // const newY = Math.max(Math.min(this.position.y + this.velocity.y, upperLimit.y), lowerLimit.y);
+
+
+        const newX = this.position.x + this.velocity.x;
+        const newY = this.position.y + this.velocity.y;
+        c('position.x ' + this.position.x);
+        c('velocity.x ' + this.velocity.x);
+        c('newX ' + newX);
+    
+        return new Ball({
+          ...this,
+          position: new Vector(newX, newY),
+        });
+      }
+    
+      get area() {
+        return Math.PI * this.radius ** 2;
+      }
+    
+      get sphereArea() {  // 获取物体的大小面积
+        return 4 * Math.PI * this.radius ** 2;
+      }
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+    // see elastic collision: https://en.wikipedia.org/wiki/Elastic_collision
+    // 弹性碰撞
+    const collisionVector = (particle1, particle2) => {
+      return particle1.velocity
+        .subtract(particle1.position
+          .subtract(particle2.position)
+          .multiply(particle1.velocity
+            .subtract(particle2.velocity)
+            .dotProduct(particle1.position.subtract(particle2.position))
+            / particle1.position.subtract(particle2.position).magnitude ** 2
+          )
+    
+          // add mass to the system（以面积来表示物体的质量）
+          .multiply((2 * particle2.sphereArea) / (particle1.sphereArea + particle2.sphereArea))
+        );
+    };
+
+
+    
+    // const isMovingTowards = (particle1, particle2) => {
+    //   return particle2.position.subtract(particle1.position).dotProduct(particle1.velocity) > 0;
+    // };
+
+
+    // ----- 测试
+    const random = (max = 9, min = 0) => {
+      return Math.floor(Math.random() * (max - min + 1) + min);
+    };
+
+    const colors = ['red', 'green', 'blue', 'purple', 'orange'];
+
+    const collidingBalls = ({ width = 400, height = 400, parent = document.body, count = 50 } = {}) => {
+      const display = new Canvas(parent, width, height);
+      const balls = [];
+      for (let i = 0; i < count; i++) {
+        balls.push(new Ball({
+          radius: random(8, 3) + Math.random(),
+          color: colors[random(colors.length - 1)],
+          position: new Vector(random(width - 10, 10), random(height - 10, 10)),
+          velocity: new Vector(random(3, -3), random(3, -3)),
+        }));
+      }
+      let state = new displayState(display, balls);
+      runAnimation(time => {
+        state = state.update(time);
+        display.sync(state);
+      });
+    };
+    
+    collidingBalls();
+
+    /* ---------- 测试
+    const displayEle = new Canvas();
+    const ball1 = new Ball({
+        position: new Vector(40, 100),
+        velocity: new Vector(3, 0),
+        radius: 24,
+        color: 'red',
+    });
+
+
+    const ball3 = new Ball({
+        position: new Vector(340, 100),
+        velocity: new Vector(2, 0),
+        radius: 14,
+        color: 'green',
+    });
+
+    const actors = [ball1, ball3];
+    let displayState = new DisplayState(displayEle, actors);
+    function myAnimation(time){  // 注意，这里的 time 是requestAnimationFrame回调，可直接使用，是 秒
+        displayState = displayState.update();  // 数据更新
+        displayEle.sync(displayState);     // 根据更新的数据来绘画
+
+        if(!time || parseInt(time) < 1300) {
+          requestAnimationFrame(myAnimation);
+        }
+    }
+    myAnimation(); */
+</script>
+</html>
