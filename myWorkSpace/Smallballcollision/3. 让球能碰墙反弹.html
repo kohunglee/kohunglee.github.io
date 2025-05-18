@@ -64,10 +64,12 @@
 
         nextFrameUpdate(displayState){  // 计算下一帧，小球的位置
 
+            // 如果小球左右到达边界，X 速度取反
             if (this.position.x >= displayState.displayEle.canvas.width - this.radius || this.position.x <= this.radius) {
                 this.velocity = new Vector(-this.velocity.x, this.velocity.y);
             }
 
+            // 如果小球上下到达边界，Y 速度取反
             if (this.position.y >= displayState.displayEle.canvas.height - this.radius || this.position.y <= this.radius) {
                 this.velocity = new Vector(this.velocity.x, -this.velocity.y);
             }
@@ -76,7 +78,6 @@
                 ...this,  // 其他属性保持不变
                 position: this.position.add(this.velocity),
             });
-
         } 
     }
 
@@ -145,8 +146,6 @@
 
         requestAnimationFrame(myAnimation)
     }
-
-
 
     myAnimation();
 

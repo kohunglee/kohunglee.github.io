@@ -24,7 +24,7 @@
             this.drawActor(state.actors);
         }
 
-        clearDisplay(){
+        clearDisplay(){  // 清空画布
             this.ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
             this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         }
@@ -65,9 +65,8 @@
         nextFrameUpdate(){  // 计算下一帧，小球的位置
             return new Ball({
                 ...this,  // 其他属性保持不变
-                position: this.position.add(this.velocity),
+                position: this.position.add(this.velocity),  // 所谓的计算，其实就是根据向量 +1
             });
-
         } 
     }
 
@@ -104,7 +103,7 @@
         }
     }
 
-    // 宏观状态
+    // 宏观状态，也可理解为【一键更新数据】
     class DisplayState {
         constructor(displayEle, actors) {
             this.displayEle = displayEle;
@@ -112,11 +111,11 @@
         }
 
         update() {
-            const new_actors = this.actors.map(actor => {
+            const new_actors = this.actors.map(actor => {  // 获取下一帧的位置数据
                 return actor.nextFrameUpdate();
             });
 
-            return new DisplayState(this.displayEle, new_actors);
+            return new DisplayState(this.displayEle, new_actors);  // 把 DisplayState 类的属性更新后，把最新数据再返回
         }
     }
 
