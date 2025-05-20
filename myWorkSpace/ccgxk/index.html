@@ -289,8 +289,8 @@ var ccgxk = {
         groupName : null,
         pos : {  // 相对坐标系，相对于主角（下面 qua 也是）
             x: 0,
-            y: 4,
-            z: 1,
+            y: 2,
+            z: 4,
         },
         qua : {
             rx: 0,
@@ -455,15 +455,15 @@ ccgxk.addCustomDataObj({
 
 // 生成 100 个模型
 
-// var yVlaue = 150;
-// for(var i = 0; i < 100; i++){
-//     ccgxk.addPhysicalBox({
-//         isPhysical: true,
-//         X: -Math.floor( i * 100 + 1 - 5000), Y: yVlaue, Z: -Math.floor( i * 100 + 1 - 5000),
-//         mass: 10, width: Math.floor( Math.random() * 30 + 1), depth: 5, height: Math.floor( Math.random() * 100 + 1),
-//         background: `#${Math.floor(Math.random() * 16777216).toString(16).padStart(6, '0')}`, mixValue: 0.71
-//     });
-// }
+var yVlaue = 150;
+for(var i = 0; i < 100; i++){
+    ccgxk.addPhysicalBox({
+        isPhysical: true,
+        X: -Math.floor( i * 100 + 1 - 5000), Y: yVlaue, Z: -Math.floor( i * 100 + 1 - 5000),
+        mass: 10, width: Math.floor( Math.random() * 30 + 1), depth: 5, height: Math.floor( Math.random() * 100 + 1),
+        background: `#${Math.floor(Math.random() * 16777216).toString(16).padStart(6, '0')}`, mixValue: 0.71
+    });
+}
 // console.log(ccgxk.bodylist.length);
 
 /* ---------- ---------- ---------- ---------- ---------- ---------- ----------*/ /* ---------- ---------- ---------- ---------- ---------- ---------- ----------*/
@@ -543,7 +543,7 @@ function add4Wall(x, z, width, depth, y, height = 20){
 }
 
 // 加了一个一圈墙
-add4Wall(-50,50, 1, 200, 1.5, 20);
+add4Wall(50, 350, 1, 200, 1.5, 20);
 
 W.wolf({y: 50, size: 100, b:yellow,});
 
