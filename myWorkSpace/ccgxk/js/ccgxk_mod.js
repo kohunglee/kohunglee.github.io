@@ -1,19 +1,16 @@
-<style>body{margin: 0;}</style>
-<script src="./js/w.js"></script>
-<script src="./js/cannon.js"></script>
-<script src="./js/mymode.js"></script>
-<img src='./img/texture.jpeg' id=marble hidden>
-<canvas id=c width=320 height=300></canvas>
-<div id="fpsInfo"></div>
-<span id="shiftInfo"></span>
-<span id="posInfo"></span>
-<span id="metrics"></span>
-<span id="cpuInfo"></span>
-<!-- <span> <a href="http://127.0.0.1:5505/emloglab/workspace/%E4%B8%89%E7%BB%B4%E6%B2%99%E7%9B%92/obj.html">obj</a></span> -->
-<script>
 
 "use strict";
+
+function draw_W(){
     
+}
+
+// setInterval(() => {
+//     var startTime = performance.now();
+//     draw_W();
+//     console.log("t:" + (performance.now() - startTime));
+//   }, 1000); 
+
 // 一些数学函数
 var wMath = {
     quaternionToEuler: function(q){  // 四元数转化为欧拉数
@@ -37,23 +34,6 @@ var wMath = {
     },
 }
 
-// w.js 初始化
-c.width = window.innerWidth - 100
-c.height = window.innerHeight - 100
-W.reset(c);
-W.ambient(0.7);
-W.light({ x: 0.5, y: -0.3, z: -0.5});
-W.clearColor("8Af");
-
-// 绘制原点坐标轴
-W.group({n:'posZero',x:0,y:1,z:0});
-W.cube({g:'posZero',x:5,w:10,h:.5,d:.5,b:"f44"});
-W.cube({g:'posZero',y:5,h:10,w:.5,d:.5,b:"4f4"});
-W.cube({g:'posZero',z:5,d:10,w:.5,h:.5,b:"44f"});
-W.pyramid({g:'posZero',size:1,x:10,rz:-90,b:"f44"});
-W.pyramid({g:'posZero',size:1,y:10,b:"4f4"});
-W.pyramid({g:'posZero', n:'test0001' ,size:1,z:10,rx:90,b:"44f"});
-
 // 项目对象
 var ccgxk = {
     // ccgxk 的 cannon.js 物理世界
@@ -62,6 +42,7 @@ var ccgxk = {
     // 初始化物理世界
     initWorld : function(){
         W.camera({n:'camera'});  // 初始化相机
+        W.camera({fov: 40});  // 相机视野为 40
         this.world = new CANNON.World();
         this.world.gravity.set(0, -9.82, 0); // 地球重力9.82m/s²
         this.world.broadphase = new CANNON.NaiveBroadphase(); // 碰撞检测（所有刚体件都进行碰撞）
@@ -69,7 +50,7 @@ var ccgxk = {
         this.world.addContactMaterial(this.cannonDefaultCantactMaterial);  // 默认材质关联
         this.eventListener();  // 事件监听
         this.animate(); // 动画
-        shiftInfo.innerHTML = 'speed:' + 25 + ' | ' // 【测试，临时】
+        shiftInfo.innerHTML = '速度:' + 0 + ' | ' // 【测试，临时】
     },
 
     // 默认材质关联材质
@@ -80,8 +61,11 @@ var ccgxk = {
             restitution: 0.1, // 弹性系数
     }),
 
-    // 物理体列表
+    // 物体列表
     bodylist : new Array(),
+
+    // 隐藏的物体列表
+    hiddenBodylist : new Array(),
 
     // 添加 box 物理体
     addPhysicalBox : function({ 
@@ -90,7 +74,7 @@ var ccgxk = {
                 mass = 0, width = 1, depth = 1, height = 1, size = 1,
                 texture = null, smooth = 0,  // 因为 W.js 版本问题， smooth 暂时为 0
                 background = '#888', mixValue = 0.71, rX = 0, rY = 0, rZ = 0 } = {}){
-        if(size !== 1){
+        if(size !== 1){  // 处理体积大小
             width =  depth =  height = size;
         }
         var body = null;
@@ -111,9 +95,25 @@ var ccgxk = {
                 rx: rX, ry: rY, rz: rZ, b: background, mix: mixValue
             });
         }
-        var result = { name, body, X, Y, Z, rX, rY, rZ, isVisualMode };
+        var myargs = Array.from(arguments);
+        var result = { name, body, X, Y, Z, rX, rY, rZ, isVisualMode, myargs,};
         this.bodylist.push(result);
         return result;
+    },
+
+    // 根据 name 删除（暂时隐藏）某个物体
+    removeBody : function(name){
+        for (let index = 0; index < this.bodylist.length; index++) {
+            let indexItem = this.bodylist[index];
+            if(indexItem.name === name){
+                console.log(name);
+                this.world.removeBody(indexItem.body);  // 删除物理计算体
+                W.delete({n:name});  // 删除可视化物体
+                this.hiddenBodylist.push(indexItem);  // 将删除的物体放入隐藏列表
+                this.bodylist.splice(index, 1);  // 删除物体列表中的物体
+                break;
+            }
+        }
     },
 
     // 按照列表将 物理体 逐个 物理计算 和 可视化 更新
@@ -131,7 +131,7 @@ var ccgxk = {
                 indexItem.Y = pos.y;
                 indexItem.Z = pos.z;
             }
-            if(indexItem.isVisualMode){
+            if(indexItem.isVisualMode && W.next[indexItem.name]){
                 W.move({
                     n: indexItem.name,
                     x: indexItem.X,
@@ -226,8 +226,7 @@ var ccgxk = {
             }
             this.keys.jumping = value;
         }
-        // if (e.keyCode === 16 || e.key.toLowerCase() === 'q') {  // shift键 或 q 开启加速
-        if (e.key.toLowerCase() === 'q') {  // 按键 q 开启加速
+        if (e.keyCode === 16 || e.key.toLowerCase() === 'q') {  // shift键 或 q 开启加速
             this.isShiftPress = value;
         }
     },
@@ -239,7 +238,7 @@ var ccgxk = {
         var posInfo = document.getElementById('posInfo');
         if(this.mainVPlayer !== null){
             posInfo.innerHTML = (
-                'pos: X:' + this.mainVPlayer.body.position.x.toFixed(2) +
+                '位置: X:' + this.mainVPlayer.body.position.x.toFixed(2) +
                 ', Y:' + this.mainVPlayer.body.position.y.toFixed(2) +
                 ', Z:' + this.mainVPlayer.body.position.z.toFixed(2) + ', | '
             );
@@ -250,8 +249,8 @@ var ccgxk = {
     calMovePara : function(X, Y, Z, RX, RY, RZ){
         const keys = this.keys;
         if (keys.viewForward || keys.viewBackward) { // 前后平移
-            var speed = (this.isShiftPress) ? Math.max(1,4-(this.forwardAcc+=0.01)) :4+0*(this.forwardAcc=0.01);  // 加速度
-            shiftInfo.innerHTML = 'speed:' + Math.round((100 / speed)) + ' | ';
+            var speed = (this.isShiftPress) ? Math.max(0.2,4-(this.forwardAcc+=0.01)) :4+0*(this.forwardAcc=0.01);  // 加速度
+            shiftInfo.innerHTML = '速度:' + Math.round((100 / speed)) + ' | ';
             Z += (-keys.viewForward + keys.viewBackward) * Math.cos(RY * Math.PI / 180) / speed;
             X += (-keys.viewForward + keys.viewBackward) * Math.sin(RY * Math.PI / 180) / speed;
             this.displayPOS();
@@ -302,7 +301,6 @@ var ccgxk = {
     mainVPlayerMove : function(mainVPlayerObj){
         if(mainVPlayerObj === null){return};
         var cam = this.mainCamera;
-        cam.groupName = mainVPlayerObj.name;
         var vplayerBodyPos = mainVPlayerObj.body.position;
         var vplayerBodyQua = mainVPlayerObj.body.quaternion;
         var vplayerAct = this.calMovePara(  // 获取按键和鼠标事件处理后的移动参数
@@ -314,9 +312,9 @@ var ccgxk = {
         mainVPlayerObj.body.position.z = vplayerAct.z;
         cam.qua = vplayerAct;
         vplayerBodyQua.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), Math.PI / 180 * vplayerAct.ry);  // 主角只旋转 Y 轴
-        W.camera({g:cam.groupName, x:cam.pos.x, y:cam.pos.y, z:cam.pos.z, rx: cam.qua.rx, rz: cam.qua.rz})  // 摄像机只旋转 X 和 Z 轴
+        W.camera({g:mainVPlayerObj.name, x:cam.pos.x, y:cam.pos.y, z:cam.pos.z, rx: cam.qua.rx, rz: cam.qua.rz})  // 摄像机只旋转 X 和 Z 轴
+        cam.groupName = mainVPlayerObj.name;
         return 0;
-        
     },
 
     // 将顶点数据转化成 cannon.js 可用的格式
@@ -373,13 +371,16 @@ var ccgxk = {
     lastTime : performance.now(),
 
     // 显示 FPS 和 内存 等...
+    isFirstShowFPS : true,
     showFPS : function(){
         var currentTime = performance.now();
         var deltaTime = currentTime - this.lastTime;
         this.fpsFrameCount++;
-        if(deltaTime > 3000){
+        if(deltaTime > 4000 || this.isFirstShowFPS){
+            this.isFirstShowFPS = false;
             var fps = this.fpsFrameCount / (deltaTime / 1000);
             fpsInfo.innerHTML = ('<br>FPS: ' + fps.toFixed(2));
+            modListCount.innerHTML = ('当前模型数：' + this.bodylist.length + ' |');
             this.fpsFrameCount = 0;
             this.lastTime = currentTime;
             this._showMemory();  // 一秒显示一次内存，写在这里吧
@@ -410,140 +411,3 @@ var ccgxk = {
         viewAnimate();
     },
 }
-ccgxk.initWorld();
-var list = ccgxk.bodylist;
-
-
-ccgxk.addPhysicalBox({  // 创建一个 测试 物理体
-    name: 'test', X: -30, Y: 1, Z: -30,
-    mass: 0, width: 40, depth: 50, height: 2, texture: marble
-});
-
-ccgxk.addPhysicalBox({  // 创建一个 旋转测试 细长物理体
-    name: 'longThin', X: 20, Y: 1, Z: -30,
-    mass: 1, width: 40, depth: 2, height: 2, texture: marble
-});
-
-
-
-ccgxk.addPhysicalBox({  // 创建地面
-    name: 'groundPlane', X: 0, Y: -0.5, Z: 0,
-    mass: 0, width: 10000, depth: 10000, height: 2,
-    texture: marble, background: '#FFF', mixValue: 0.71
-});
-
-
-// ccgxk.mainVPlayer = ccgxk.addPhysicalBox({  // 创建一个立方体，并设置为主角
-//     name: 'mainPlayer', X: 15, Y: 20, Z: 30,
-//     rX: 0, rY: 0, rZ: 0, size:1,
-//     mass: 50, texture: marble
-// });
-
-// 添加四面体
-var vertices = [0,0,0,  1,0,0,  0,1,3,  0,0,3, ];
-var indices = [0,3,2,  0,1,3,  0,2,1,  1,2,3,  ];
-ccgxk.addCustomDataObj({
-    name: 'custom',
-    X: 0, Y: 15, Z: 0,
-    size : 10,
-    mass: 0,
-    verticesData: vertices,
-    indicesData: indices,
-    texture: marble
-})
-
-// 生成 100 个模型
-
-var yVlaue = 150;
-for(var i = 0; i < 100; i++){
-    ccgxk.addPhysicalBox({
-        isPhysical: true,
-        X: -Math.floor( i * 100 + 1 - 5000), Y: yVlaue, Z: -Math.floor( i * 100 + 1 - 5000),
-        mass: 10, width: Math.floor( Math.random() * 30 + 1), depth: 5, height: Math.floor( Math.random() * 100 + 1),
-        background: `#${Math.floor(Math.random() * 16777216).toString(16).padStart(6, '0')}`, mixValue: 0.71
-    });
-}
-// console.log(ccgxk.bodylist.length);
-
-/* ---------- ---------- ---------- ---------- ---------- ---------- ----------*/ /* ---------- ---------- ---------- ---------- ---------- ---------- ----------*/
-// 下面是模型区
-//  x1b1 西一北一区 测试区
-/* ---------- ---------- ---------- ---------- ---------- ---------- ----------*/ /* ---------- ---------- ---------- ---------- ---------- ---------- ----------*/
-
-const red = '#FF0000';
-const green = '#00FF00';
-const blue = '#0000FF';
-const white = '#FFFFFF';
-const black = '#000000';
-const gray = '#808080';
-const yellow = '#FFFF00';
-const cyan = '#00FFFF';
-const magenta = '#FF00FF';
-const orange = '#FFA500';
-const brown = '#A52A2A';
-
-
-function cPos(x = 0, z = 0){
-    var poolpos = {x: -500, z: -500}; // 中心点
-    return {x: x + poolpos.x, z: z + poolpos.z};
-}
-
-ccgxk.mainVPlayer = ccgxk.addPhysicalBox({  // 创建一个立方体，并设置为主角
-    name: 'mainPlayer', 
-    // X: cPos().x + 15, Y: 20, Z: cPos().z + 30,
-    X:-29.15, Y:1.00, Z:44.33,
-    rX: 0, rY: 0, rZ: 0, size:1,
-    mass: 50, texture: marble
-});
-
-
-// 创建地基 高 1
-ccgxk.addPhysicalBox({  // 创建 x1b1 领域地面
-    name: 'x1b1groundPlane', X: cPos().x, Y: 1, Z: cPos().z,
-    mass: 0, width: 800, depth: 800, height: 1,
-    texture: marble,
-});
-
-// 房子地面
-ccgxk.addPhysicalBox({
-    X: cPos().x, Y: 2, Z: cPos().z,
-    mass: 0, width: 100, depth: 100, height: 1,
-    background : green, texture: marble
-});
-
-
-// 使用更直观的方式来添加方块
-function addInSafePos(x,  z, w,  d, y = 12.5, h = 20){
-    ccgxk.addPhysicalBox({
-        X: cPos(x + w/2).x , Y: y + h/2, Z: cPos(0,z - d/2).z,
-        mass: 0, width: w, depth: d, height: h,
-        background : cyan, texture: marble
-    });
-}
-
-// addInSafePos(0,0,4,20);
-// addInSafePos(4,0,10,4);
-// addInSafePos(20,0,4,16);
-// addInSafePos(4,-16,20,4);
-
-function add4Wall(x, z, width, depth, y, height = 20){
-    // 一楼的四堵墙
-    addInSafePos(x + 0, z + 0, width, depth, y, height);
-    addInSafePos(x + width, z + 0, (depth-width) * 0.8, width, y, height);
-    addInSafePos(x + depth, z + 0, width, depth - width, y, height);
-    addInSafePos(x + width, z - depth + width, depth, width, y, height);
-
-    // n 个台阶
-    var stage = 5;
-    var stageWidth = 50;
-    for(var i = 1; i <= stage; i++){
-        addInSafePos(x + width,   z -  (depth - 2 * width) / stage * (i - 1), stageWidth, (depth - 2 * width) / stage, y, height / stage * i);
-    }
-}
-
-// 加了一个一圈墙
-add4Wall(50, 350, 1, 200, 1.5, 20);
-
-W.wolf({y: 50, size: 100, b:yellow,});
-
-</script>

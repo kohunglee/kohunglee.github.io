@@ -1,0 +1,214 @@
+<meta http-equiv="cache-control" content="no-cache">
+<meta http-equiv="expires" content="0">
+<meta http-equiv="pragma" content="no-cache">
+<style>body{margin: 0;}</style>
+<script src="./js/w_mod.js"></script>
+<script src="./js/cannon.js"></script>
+<script src="./js/mymode.js"></script>
+<script src="./js/ccgxk_mod.js"></script>
+<img src='./img/texture.jpeg' id=marble hidden>
+<canvas id=c width=320 height=300></canvas>
+<div id="fpsInfo"></div>
+<span id="shiftInfo"></span>
+<span id="posInfo"></span>
+<span id="metrics"></span>
+<span id="cpuInfo"></span>
+<span id="modListCount"></span>
+<!-- <span> <a href="http://127.0.0.1:5505/emloglab/workspace/%E4%B8%89%E7%BB%B4%E6%B2%99%E7%9B%92/obj.html">obj</a></span> -->
+<script>
+// w.js 初始化
+c.width = window.innerWidth - 100
+c.height = window.innerHeight - 100
+W.reset(c);
+W.ambient(0.7);
+W.light({ x: 0.5, y: -0.3, z: -0.5});
+W.clearColor("8Af");
+
+// 绘制原点坐标轴
+W.group({n:'posZero',x:0,y:1,z:0});
+W.cube({g:'posZero',x:5,w:10,h:.5,d:.5,b:"f44"});
+W.cube({g:'posZero',y:5,h:10,w:.5,d:.5,b:"4f4"});
+W.cube({g:'posZero',z:5,d:10,w:.5,h:.5,b:"44f"});
+W.pyramid({g:'posZero',size:1,x:10,rz:-90,b:"f44"});
+W.pyramid({g:'posZero',size:1,y:10,b:"4f4"});
+W.pyramid({g:'posZero', n:'test0001' ,size:1,z:10,rx:90,b:"44f"});
+
+ccgxk.initWorld();
+var list = ccgxk.bodylist;
+
+// ccgxk.addPhysicalBox({  // 创建一个 测试 物理体
+//     name: 'test', X: -30, Y: 1, Z: -30, isVisualMode : true,
+//     mass: 0, width: 40, depth: 50, height: 5, texture: marble
+// });
+
+ccgxk.addPhysicalBox({  // 创建一个 旋转测试 细长物理体
+    name: 'longThin', X: 20, Y: 1, Z: -30,
+    isPhysical : false,
+    mass: 1, width: 40, depth: 2, height: 2, texture: marble
+});
+
+// W.cube({n:'longThin', x:20, y:1, z:-30, w:40, h:2, d:2, t: marble});
+
+ccgxk.addPhysicalBox({  // 创建地面
+    name: 'groundPlane', X: 0, Y: -0.5, Z: 0,
+    mass: 0, width: 10000, depth: 10000, height: 2,
+    texture: marble, background: '#FFF', mixValue: 0.71
+});
+
+ccgxk.mainVPlayer = ccgxk.addPhysicalBox({  // 创建一个立方体，并设置为主角
+    name: 'mainPlayer', 
+    // X: cPos().x + 15, Y: 20, Z: cPos().z + 30,
+    X:18.59, Y:1.00, Z:35.55,
+    rX: 0, rY: 0, rZ: 0, size:1,
+    mass: 50, texture: marble
+});
+
+// // 添加四面体
+// var vertices = [0,0,0,  1,0,0,  0,1,3,  0,0,3, ];
+// var indices = [0,3,2,  0,1,3,  0,2,1,  1,2,3,  ];
+// ccgxk.addCustomDataObj({
+//     name: 'custom',
+//     X: 0, Y: 15, Z: 0,
+//     size : 10,
+//     mass: 0,
+//     verticesData: vertices,
+//     indicesData: indices,
+//     texture: marble
+// })
+
+// // 生成 100 个模型
+// var yVlaue = 150;
+// var modcount = 0;
+// for(var i = 0; i < modcount; i++){
+//     ccgxk.addPhysicalBox({
+//         isPhysical: true,
+//         X: -Math.floor( i * 100 + 1 - 5000), Y: yVlaue, Z: -Math.floor( i * 100 + 1 - 5000),
+//         mass: 10, width: Math.floor( Math.random() * 30 + 1), depth: 5, height: Math.floor( Math.random() * 100 + 1),
+//         background: `#ffff00`, mixValue: 0.71, texture: marble
+//     });
+// }
+// // console.log(ccgxk.bodylist.length);
+
+
+// // var cubeCountMod = 10;
+// // for(i = 0; i < cubeCountMod; i++){
+// //     for(j = 0; j < cubeCountMod; j++){
+// //         ccgxk.addPhysicalBox({
+// //             isPhysical: true,
+// //             X: (i-5)*50, Y: 10, Z: (j-5)*50,
+// //             mass: 10, size: 3,
+// //             background: `#ff0000`, mixValue: 0.71, texture: marble
+// //         });
+// //     }
+// // }
+
+
+// ccgxk.mainVPlayer = ccgxk.addPhysicalBox({  // 创建一个立方体，并设置为主角
+//     name: 'mainPlayer', 
+//     // X: cPos().x + 15, Y: 20, Z: cPos().z + 30,
+//     X:18.59, Y:1.00, Z:35.55,
+//     rX: 0, rY: 0, rZ: 0, size:1,
+//     mass: 50, texture: marble
+// });
+
+
+// /* ---------- ---------- ---------- ---------- ---------- ---------- ----------*/ /* ---------- ---------- ---------- ---------- ---------- ---------- ----------*/
+// // 下面是模型区
+// //  x1b1 西一北一区 测试区
+// /* ---------- ---------- ---------- ---------- ---------- ---------- ----------*/ /* ---------- ---------- ---------- ---------- ---------- ---------- ----------*/
+
+// const red = '#FF0000';
+// const green = '#00FF00';
+// const blue = '#0000FF';
+// const white = '#FFFFFF';
+// const black = '#000000';
+// const gray = '#808080';
+// const yellow = '#FFFF00';
+// const cyan = '#00FFFF';
+// const magenta = '#FF00FF';
+// const orange = '#FFA500';
+// const brown = '#A52A2A';
+// var areaid;
+
+// areaid = {ax: -1, az: -1};
+// function cPos(x = 0, z = 0){
+//     var poolpos = {x: 1000 * areaid.ax - (500 * Math.sign(areaid.ax)), z: 1000 * areaid.az  - (500 * Math.sign(areaid.az))}; // 中心点
+//     return {x: x + poolpos.x, z: z + poolpos.z};
+// }
+
+// // 创建地基 高 1
+// ccgxk.addPhysicalBox({  // 创建 x1b1 领域地面
+//     X: cPos().x, Y: 1, Z: cPos().z,
+//     mass: 0, width: 990, depth: 990, height: 1,
+//     texture: marble, background: gray,
+// });
+
+// // 房子地面
+// ccgxk.addPhysicalBox({
+//     X: cPos().x, Y: 2, Z: cPos().z,
+//     mass: 0, width: 100, depth: 100, height: 1,
+//     background : green, texture: marble
+// });
+
+// function addInSafePos(x,  z, w,  d, y = 12.5, h = 20){  // 使用更直观的方式来添加方块
+//     ccgxk.addPhysicalBox({
+//         X: cPos(x + w/2).x , Y: y + h/2, Z: cPos(0,z - d/2).z,
+//         mass: 0, width: w, depth: d, height: h,
+//         background : cyan, texture: marble
+//     });
+// }
+// function add4Wall(x, z, width, depth, y, height = 20){  // 建造一个房子
+//     // 一楼的四堵墙
+//     addInSafePos(x + 0, z + 0, width, depth, y, height);
+//     addInSafePos(x + width, z + 0, (depth-width) * 0.8, width, y, height);
+//     addInSafePos(x + depth, z + 0, width, depth - width, y, height);
+//     addInSafePos(x + width, z - depth + width, depth, width, y, height);
+
+//     // n 个台阶
+//     var stage = 5;
+//     var stageWidth = 50;
+//     for(var i = 1; i <= stage; i++){
+//         addInSafePos(x + width,   z -  (depth - 2 * width) / stage * (i - 1), stageWidth, (depth - 2 * width) / stage, y, height / stage * i);
+//     }
+// }
+// add4Wall(50, 350, 1, 200, 1.5, 20);  // 加了一个一圈墙
+
+
+// /* ---------- ---------- ---------- ---------- ---------- ---------- ----------*/ /* ---------- ---------- ---------- ---------- ---------- ---------- ----------*/
+// // 下面是模型区
+// //  x1b1 东一北一区 测试区
+// /* ---------- ---------- ---------- ---------- ---------- ---------- ----------*/ /* ---------- ---------- ---------- ---------- ---------- ---------- ----------*/
+
+// /* D1B1 */
+
+// areaid = {ax: 1, az: -1};
+// // 创建地基 高 1
+// ccgxk.addPhysicalBox({  // 创建 x1b1 领域地面
+//     X: cPos().x, Y: 1, Z: cPos().z,
+//     mass: 0, width: 990, depth: 990, height: 1,
+//     texture: marble, background: green, mixValue: 0.2,
+// });
+
+
+// /* D2B1 */
+
+// areaid = {ax: 2, az: -1};
+// // 创建地基 高 1
+// ccgxk.addPhysicalBox({  // 创建 x1b1 领域地面
+//     X: cPos().x, Y: 1, Z: cPos().z,
+//     mass: 0, width: 990, depth: 990, height: 1,
+//     texture: marble, background: blue, mixValue: 0.2,
+// });
+
+
+// /* D3B1 */
+
+// areaid = {ax: 3, az: -1};
+// // 创建地基 高 1
+// ccgxk.addPhysicalBox({  // 创建 x1b1 领域地面
+//     X: cPos().x, Y: 1, Z: cPos().z,
+//     mass: 0, width: 990, depth: 990, height: 1,
+//     texture: marble, background: cyan, mixValue: 0.2,
+// });
+
+</script>
