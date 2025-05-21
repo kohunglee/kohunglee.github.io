@@ -1,38 +1,4 @@
-
 "use strict";
-
-function draw_W(){
-    
-}
-
-// setInterval(() => {
-//     var startTime = performance.now();
-//     draw_W();
-//     console.log("t:" + (performance.now() - startTime));
-//   }, 1000); 
-
-// 一些数学函数
-var wMath = {
-    quaternionToEuler: function(q){  // 四元数转化为欧拉数
-        const { x, y,  z,  w } = q;
-        const roll = Math.atan2(2 * (w * x + y * z), 1 - 2 * (x * x + y * y)); // Roll (X轴)
-        const sinPitch = 2 * (w * y - z * x);
-        const pitch = Math.asin(Math.max(-1, Math.min(1, sinPitch))); // Pitch (Y轴)
-        const yaw = Math.atan2(2 * (w * z + x * y), 1 - 2 * (y * y + z * z)); // Yaw (Z轴)
-        const toDeg = angle => angle * (180 / Math.PI); // 转为度数
-        return { rX: toDeg(roll), rY: toDeg(pitch), rZ: toDeg(yaw)};
-    },
-
-    eulerToQuaternion: function(roll, pitch, yaw){  // 欧拉数转化为四元数（目前用不到）
-        const rollRad = roll * (Math.PI / 180);
-        const pitchRad = pitch * (Math.PI / 180);
-        const yawRad = yaw * (Math.PI / 180);
-        const cr = Math.cos(rollRad * 0.5);
-        const sr = Math.sin(rollRad * 0.5);
-        const cp = Math.cos(pitchRad * 0.5);
-        const sp = Math.sin(pitchRad * 0.5);
-    },
-}
 
 // 项目对象
 var ccgxk = {
@@ -68,12 +34,25 @@ var ccgxk = {
     hiddenBodylist : new Array(),
 
     // 添加 box 物理体
-    addPhysicalBox : function({ 
-                isPhysical = true, isVisualMode = true, name = 'k'+(Math.random()*10**9|0),  // 如果没指认，则使用随机数生成 ID
+    addPhysicalBox : function({
+                dispZIndex = 2,  // 显示优先级
+                isPhysical = true,  // 是否被物理计算
+                isVisualMode = true,  // 是否渲染
+                name = 'k'+(Math.random()*10**9|0),  // 如果没指认，则使用随机数生成 ID
                 X = 5, Y = 5, Z = 5,
+                quat = null,
                 mass = 0, width = 1, depth = 1, height = 1, size = 1,
                 texture = null, smooth = 0,  // 因为 W.js 版本问题， smooth 暂时为 0
                 background = '#888', mixValue = 0.71, rX = 0, rY = 0, rZ = 0 } = {}){
+        var myargs = Array.from(arguments);  // 备份参数
+        var posID = this.calPosID(X, Y, Z);
+        // console.log(this.mainVPlayer !== null);
+        // console.log(posID !== this.mainVPlayer.posID);               
+        // console.log(dispZIndex !== 1);
+        if(this.legalPosID.includes(posID) === false && dispZIndex !== 1){  // 位置编码和优先级不合法
+            this.hiddenBodylist.push({posID, myargs});  // 放入隐藏列表
+            return 0;
+        }
         if(size !== 1){  // 处理体积大小
             width =  depth =  height = size;
         }
@@ -86,6 +65,10 @@ var ccgxk = {
                 material: this.cannonDefaultCantactMaterial,
             });
             this.world.addBody(body);
+            if(quat){
+                body.quaternion.set(quat.x, quat.y, quat.z, quat.w);
+            }
+            quat = body.quaternion;
         }
         if(isVisualMode){  // 是否可视化
             W.cube({
@@ -95,8 +78,7 @@ var ccgxk = {
                 rx: rX, ry: rY, rz: rZ, b: background, mix: mixValue
             });
         }
-        var myargs = Array.from(arguments);
-        var result = { name, body, X, Y, Z, rX, rY, rZ, isVisualMode, myargs,};
+        var result = { name, body, X, Y, Z, rX, rY, rZ, isVisualMode, myargs, posID, dispZIndex, quat};
         this.bodylist.push(result);
         return result;
     },
@@ -106,14 +88,86 @@ var ccgxk = {
         for (let index = 0; index < this.bodylist.length; index++) {
             let indexItem = this.bodylist[index];
             if(indexItem.name === name){
-                console.log(name);
                 this.world.removeBody(indexItem.body);  // 删除物理计算体
-                W.delete({n:name});  // 删除可视化物体
+                W.delete(name);  // 删除可视化物体
                 this.hiddenBodylist.push(indexItem);  // 将删除的物体放入隐藏列表
                 this.bodylist.splice(index, 1);  // 删除物体列表中的物体
                 break;
             }
         }
+    },
+
+    // 计算位置的简码
+    calPosID : function(x, y, z){
+        var dirctionA = (Math.sign(x) === -1) ? 'X' : 'D';
+        var dirctionB = (Math.sign(z) === -1) ? 'B' : 'N';
+        var numberA = Math.ceil(x / 1000 * Math.sign(x));
+        var numberB = Math.ceil(z / 1000 * Math.sign(z));
+        return dirctionA + numberA + dirctionB + numberB;
+    },
+
+    // 合法能被现实的位置简码（2级优先级）
+    legalPosID : new Array(),
+
+    // 根据主角的位置简码，动态增删物体
+    dynaNodes : function(){
+        if(this.mainVPlayer !== null) {
+            var mVP = this.mainVPlayer;
+            this.legalPosID.length = 0;
+            var mainVPPosID = this.calPosID(mVP.X, mVP.Y, mVP.Z);
+            const offsets = [  // 八个方向查找临近的区域编码
+                { x: 1, y: 0, z: 0 },
+                { x: -1, y: 0, z: 0 },
+                { x: 0, y: 0, z: 1 },
+                { x: 0, y: 0, z: -1 },
+                { x: 1, y: 0, z: 1 },
+                { x: -1, y: 0, z: -1 },
+                { x: -1, y: 0, z: 1 },
+                { x: 1, y: 0, z: -1 }
+            ];
+            offsets.forEach(offset => {  // 生成合法地址编码库
+                const limitLen = 450;  // 方圆合法的距离
+                const posID = this.calPosID(mVP.X + offset.x * limitLen, mVP.Y + offset.y * limitLen, mVP.Z + offset.z * limitLen);
+                if (!this.legalPosID.includes(posID)) {
+                    this.legalPosID.push(posID);
+                }
+            });
+            // this.legalPosID.includes(item)
+
+            
+            for (let i = 0; i < this.bodylist.length; i++) {  // 把已经显示的非法物体删去
+                let indexItem = this.bodylist[i];
+                if(this.legalPosID.includes(indexItem.posID) === false && indexItem.dispZIndex !== 1){
+                    this.removeBody(indexItem.name);
+                }
+            }
+            for (let i = 0; i < this.hiddenBodylist.length; i++) {  // 恢复已经合法的隐藏物体
+                let indexItem = this.hiddenBodylist[i];
+                if(this.legalPosID.includes(indexItem.posID)){
+                    var myargs = indexItem.myargs[0];
+                    if(indexItem.X){
+                        myargs.X = indexItem.X;
+                        myargs.Y = indexItem.Y;
+                        myargs.Z = indexItem.Z;
+                        myargs.quat = indexItem.quat;
+                    }
+                    this.addPhysicalBox(myargs);
+                    this.hiddenBodylist.splice(i, 1);
+                }
+            }
+            return mainVPPosID;
+        }
+    },
+
+    // 四元数转化为欧拉数
+    quaternionToEuler: function(q){
+        const { x, y,  z,  w } = q;
+        const roll = Math.atan2(2 * (w * x + y * z), 1 - 2 * (x * x + y * y)); // Roll (X轴)
+        const sinPitch = 2 * (w * y - z * x);
+        const pitch = Math.asin(Math.max(-1, Math.min(1, sinPitch))); // Pitch (Y轴)
+        const yaw = Math.atan2(2 * (w * z + x * y), 1 - 2 * (y * y + z * z)); // Yaw (Z轴)
+        const toDeg = angle => angle * (180 / Math.PI); // 转为度数
+        return { rX: toDeg(roll), rY: toDeg(pitch), rZ: toDeg(yaw)};
     },
 
     // 按照列表将 物理体 逐个 物理计算 和 可视化 更新
@@ -123,7 +177,8 @@ var ccgxk = {
             if(indexItem.body !== null){ 
                 let pos = indexItem.body.position;
                 let quat = indexItem.body.quaternion;
-                let indexItemEuler = wMath.quaternionToEuler(quat);
+                let indexItemEuler = this.quaternionToEuler(quat);
+                indexItem.quat = quat;
                 indexItem.rX = indexItemEuler.rX;
                 indexItem.rY = indexItemEuler.rY;
                 indexItem.rZ = indexItemEuler.rZ;
@@ -234,6 +289,7 @@ var ccgxk = {
     // 向前（后）移动的加速度辅助计算值
     forwardAcc : 0,
 
+    // 显示主角的实时位置
     displayPOS : function(){
         var posInfo = document.getElementById('posInfo');
         if(this.mainVPlayer !== null){
@@ -249,7 +305,7 @@ var ccgxk = {
     calMovePara : function(X, Y, Z, RX, RY, RZ){
         const keys = this.keys;
         if (keys.viewForward || keys.viewBackward) { // 前后平移
-            var speed = (this.isShiftPress) ? Math.max(0.2,4-(this.forwardAcc+=0.01)) :4+0*(this.forwardAcc=0.01);  // 加速度
+            var speed = (this.isShiftPress) ? Math.max(0.6,4-(this.forwardAcc+=0.01)) :4+0*(this.forwardAcc=0.01);  // 加速度
             shiftInfo.innerHTML = '速度:' + Math.round((100 / speed)) + ' | ';
             Z += (-keys.viewForward + keys.viewBackward) * Math.cos(RY * Math.PI / 180) / speed;
             X += (-keys.viewForward + keys.viewBackward) * Math.sin(RY * Math.PI / 180) / speed;
@@ -298,22 +354,23 @@ var ccgxk = {
     },
 
     // 摄像机和主角的移动和旋转
-    mainVPlayerMove : function(mainVPlayerObj){
-        if(mainVPlayerObj === null){return};
+    mainVPlayerMove : function(mVP){
+        if(mVP === null){return};
         var cam = this.mainCamera;
-        var vplayerBodyPos = mainVPlayerObj.body.position;
-        var vplayerBodyQua = mainVPlayerObj.body.quaternion;
+        var vplayerBodyPos = mVP.body.position;
+        var vplayerBodyQua = mVP.body.quaternion;
         var vplayerAct = this.calMovePara(  // 获取按键和鼠标事件处理后的移动参数
             vplayerBodyPos.x, vplayerBodyPos.y, vplayerBodyPos.z,
             cam.qua.rx, cam.qua.ry, cam.qua.rz
         );
-        mainVPlayerObj.body.position.x = vplayerAct.x;
-        mainVPlayerObj.body.position.y = vplayerAct.y;
-        mainVPlayerObj.body.position.z = vplayerAct.z;
+        mVP.body.position.x = vplayerAct.x;
+        mVP.body.position.y = vplayerAct.y;
+        mVP.body.position.z = vplayerAct.z;
         cam.qua = vplayerAct;
         vplayerBodyQua.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), Math.PI / 180 * vplayerAct.ry);  // 主角只旋转 Y 轴
-        W.camera({g:mainVPlayerObj.name, x:cam.pos.x, y:cam.pos.y, z:cam.pos.z, rx: cam.qua.rx, rz: cam.qua.rz})  // 摄像机只旋转 X 和 Z 轴
-        cam.groupName = mainVPlayerObj.name;
+        W.camera({g:mVP.name, x:cam.pos.x, y:cam.pos.y, z:cam.pos.z, rx: cam.qua.rx, rz: cam.qua.rz})  // 摄像机只旋转 X 和 Z 轴
+        cam.groupName = mVP.name;
+        mVP.posID = this.calPosID(mVP.X, mVP.Y, mVP.Z);
         return 0;
     },
 
@@ -370,21 +427,22 @@ var ccgxk = {
     fpsFrameCount : 0,
     lastTime : performance.now(),
 
-    // 显示 FPS 和 内存 等...
+    // 显示 FPS 和 内存 等... (所有一秒一次的函数)
     isFirstShowFPS : true,
-    showFPS : function(){
+    showFPS1S : function(){
         var currentTime = performance.now();
         var deltaTime = currentTime - this.lastTime;
         this.fpsFrameCount++;
-        if(deltaTime > 4000 || this.isFirstShowFPS){
+        if(deltaTime > 1000 || this.isFirstShowFPS){
             this.isFirstShowFPS = false;
             var fps = this.fpsFrameCount / (deltaTime / 1000);
-            fpsInfo.innerHTML = ('<br>FPS: ' + fps.toFixed(2));
-            modListCount.innerHTML = ('当前模型数：' + this.bodylist.length + ' |');
             this.fpsFrameCount = 0;
             this.lastTime = currentTime;
-            this._showMemory();  // 一秒显示一次内存，写在这里吧
-            this.displayPOS();  // 显示主角坐标
+            fpsInfo.innerHTML = ('<br>FPS: ' + fps.toFixed(2));  // 一秒显示一次 FPS
+            this._showMemory();  // 一秒显示一次内存
+            this.displayPOS();  // 一秒显示一次显示主角坐标
+            posIDMVP.innerHTML = this.dynaNodes();
+            modListCount.innerHTML = ('当前模型数：' + this.bodylist.length + ' |');  // 一秒显示一次模型数
         }
     },
 
@@ -402,7 +460,7 @@ var ccgxk = {
     animate : function(){
         var _this = this;
         const viewAnimate = function() {
-            _this.showFPS(); // 显示 FPS
+            _this.showFPS1S(); // 显示 FPS 和 一秒一次 的函数
             _this.cannonAni(); // 物理世界计算
             _this.updataBodylist(); // 更新物体列表
             _this.mainVPlayerMove(_this.mainVPlayer); // 摄像机和主角的移动和旋转
