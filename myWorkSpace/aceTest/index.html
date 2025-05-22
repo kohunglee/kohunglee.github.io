@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <pre id="code" class="ace_emAceEditor" style="min-height:calc(100vh - 180px)"></pre>
+</body>
+<script src="./ace.js"></script>
+<script src="./ext-language_tools.js"></script>
+<script>
+    let emAceEditor = ace.edit("code");  //定义 ACE 代码编辑器对象
+
+    var st_theme    = 'clouds';
+    var st_language = "javascript";
+
+    emAceEditor.setTheme("ace/theme/" + st_theme);
+    emAceEditor.session.setMode("ace/mode/" + st_language);
+    emAceEditor.setFontSize(12);  // 字体大小
+    emAceEditor.setReadOnly(false);  // 设置只读（ true 时只读，用于展示代码）
+    emAceEditor.setOption("wrap", "off");  // 自动换行,设置为off关闭
+    emAceEditor.getSession().setTabSize(4);  // 制表符默认为 4 个空格
+
+    ace.require("ace/ext/language_tools");  // 启用提示菜单
+    emAceEditor.setOptions({
+        enableBasicAutocompletion: true,
+        enableSnippets           : true,
+        scrollPastEnd            : 1,
+        useSoftTabs              : true,
+        enableLiveAutocompletion : true
+    });
+</script>
+</html>

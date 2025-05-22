@@ -45,14 +45,12 @@ var ccgxk = {
                 texture = null, smooth = 0,  // 因为 W.js 版本问题， smooth 暂时为 0
                 background = '#888', mixValue = 0.71, rX = 0, rY = 0, rZ = 0 } = {}){
         var myargs = Array.from(arguments);  // 备份参数
-        var posID = this.calPosID(X, Y, Z);
-        // console.log(this.mainVPlayer !== null);
-        // console.log(posID !== this.mainVPlayer.posID);               
-        // console.log(dispZIndex !== 1);
+        var posID = this.calPosID(X, Y, Z, dispZIndex);
         if(this.legalPosID.includes(posID) === false && dispZIndex !== 1){  // 位置编码和优先级不合法
             this.hiddenBodylist.push({posID, myargs});  // 放入隐藏列表
             return 0;
         }
+
         if(size !== 1){  // 处理体积大小
             width =  depth =  height = size;
         }
@@ -97,16 +95,21 @@ var ccgxk = {
         }
     },
 
+    // 预留函数位，每 10 秒将所有隐藏物体，坐标和旋转保留一位小数
+    tofixedHiddenlist : null,
+
     // 计算位置的简码
-    calPosID : function(x, y, z){
+    calPosID : function(x, y, z, zindex){
+        const foo = {2: 1000, 3: 100, 4: 40}[zindex] || 0;
+        if(foo === 0){ return 0; }
         var dirctionA = (Math.sign(x) === -1) ? 'X' : 'D';
         var dirctionB = (Math.sign(z) === -1) ? 'B' : 'N';
-        var numberA = Math.ceil(x / 1000 * Math.sign(x));
-        var numberB = Math.ceil(z / 1000 * Math.sign(z));
-        return dirctionA + numberA + dirctionB + numberB;
+        var numberA = Math.ceil(x / foo * Math.sign(x));
+        var numberB = Math.ceil(z / foo * Math.sign(z));
+        return zindex + dirctionA + numberA + dirctionB + numberB;
     },
 
-    // 合法能被现实的位置简码（2级优先级）
+    // 合法能被现实的位置简码
     legalPosID : new Array(),
 
     // 根据主角的位置简码，动态增删物体
@@ -114,7 +117,7 @@ var ccgxk = {
         if(this.mainVPlayer !== null) {
             var mVP = this.mainVPlayer;
             this.legalPosID.length = 0;
-            var mainVPPosID = this.calPosID(mVP.X, mVP.Y, mVP.Z);
+            var mainVPPosID = this.calPosID(mVP.X, mVP.Y, mVP.Z, 2);
             const offsets = [  // 八个方向查找临近的区域编码
                 { x: 1, y: 0, z: 0 },
                 { x: -1, y: 0, z: 0 },
@@ -125,15 +128,23 @@ var ccgxk = {
                 { x: -1, y: 0, z: 1 },
                 { x: 1, y: 0, z: -1 }
             ];
-            offsets.forEach(offset => {  // 生成合法地址编码库
-                const limitLen = 450;  // 方圆合法的距离
-                const posID = this.calPosID(mVP.X + offset.x * limitLen, mVP.Y + offset.y * limitLen, mVP.Z + offset.z * limitLen);
-                if (!this.legalPosID.includes(posID)) {
-                    this.legalPosID.push(posID);
+            offsets.forEach(offset => {  // 生成合法地址编码库（2级和3级）
+                const limitLen2 = 450;  // 方圆合法的距离(2级)
+                const limitLen3 = 45;   // 方圆合法的距离(3级)
+                const limitLen4 = 15;   // 方圆合法的距离(4级)
+                const posID2 = this.calPosID(mVP.X + offset.x * limitLen2, mVP.Y + offset.y * limitLen2, mVP.Z + offset.z * limitLen2, 2);
+                if (!this.legalPosID.includes(posID2)) {
+                    this.legalPosID.push(posID2);
+                }
+                const posID3 = this.calPosID(mVP.X + offset.x * limitLen3, mVP.Y + offset.y * limitLen3, mVP.Z + offset.z * limitLen3, 3);
+                if (!this.legalPosID.includes(posID3)) {
+                    this.legalPosID.push(posID3);
+                }
+                const posID4 = this.calPosID(mVP.X + offset.x * limitLen4, mVP.Y + offset.y * limitLen4, mVP.Z + offset.z * limitLen4, 4);
+                if (!this.legalPosID.includes(posID4)) {
+                    this.legalPosID.push(posID4);
                 }
             });
-            // this.legalPosID.includes(item)
-
             
             for (let i = 0; i < this.bodylist.length; i++) {  // 把已经显示的非法物体删去
                 let indexItem = this.bodylist[i];
@@ -370,7 +381,8 @@ var ccgxk = {
         vplayerBodyQua.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), Math.PI / 180 * vplayerAct.ry);  // 主角只旋转 Y 轴
         W.camera({g:mVP.name, x:cam.pos.x, y:cam.pos.y, z:cam.pos.z, rx: cam.qua.rx, rz: cam.qua.rz})  // 摄像机只旋转 X 和 Z 轴
         cam.groupName = mVP.name;
-        mVP.posID = this.calPosID(mVP.X, mVP.Y, mVP.Z);
+        mVP.posID = this.calPosID(mVP.X, mVP.Y, mVP.Z, 2);
+
         return 0;
     },
 
@@ -438,10 +450,10 @@ var ccgxk = {
             var fps = this.fpsFrameCount / (deltaTime / 1000);
             this.fpsFrameCount = 0;
             this.lastTime = currentTime;
-            fpsInfo.innerHTML = ('<br>FPS: ' + fps.toFixed(2));  // 一秒显示一次 FPS
             this._showMemory();  // 一秒显示一次内存
             this.displayPOS();  // 一秒显示一次显示主角坐标
-            posIDMVP.innerHTML = this.dynaNodes();
+            posIDMVP.innerHTML = this.dynaNodes();  // 一秒显示一次主角位置编码
+            fpsInfo.innerHTML = ('<br>FPS: ' + fps.toFixed(2));  // 一秒显示一次 FPS
             modListCount.innerHTML = ('当前模型数：' + this.bodylist.length + ' |');  // 一秒显示一次模型数
         }
     },
