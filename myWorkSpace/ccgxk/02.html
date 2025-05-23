@@ -1,7 +1,14 @@
 <meta http-equiv="cache-control" content="no-cache">
 <meta http-equiv="expires" content="0">
 <meta http-equiv="pragma" content="no-cache">
-<style>body{margin: 0;}</style>
+<style>
+    body{margin: 0;}
+    #posMap {
+        position: fixed;
+        right: 230px;
+        margin-top: -22px;
+    }
+</style>
 <script src="./js/w_mod.js"></script>
 <script src="./js/cannon.js"></script>
 <script src="./js/mymode.js"></script>
@@ -15,6 +22,7 @@
 <span id="cpuInfo"></span>
 <span id="modListCount"></span>
 <span id="posIDMVP"></span>
+<canvas id="posMap" width="100" height="100"></canvas>
 <!-- <span> <a href="http://127.0.0.1:5505/emloglab/workspace/%E4%B8%89%E7%BB%B4%E6%B2%99%E7%9B%92/obj.html">obj</a></span> -->
 <script>
 // w.js 初始化
@@ -33,8 +41,7 @@ W.cube({g:'posZero',z:5,d:10,w:.5,h:.5,b:"44f"});
 W.pyramid({g:'posZero',size:1,x:10,rz:-90,b:"f44"});
 W.pyramid({g:'posZero',size:1,y:10,b:"4f4"});
 W.pyramid({g:'posZero', n:'test0001' ,size:1,z:10,rx:90,b:"44f"});
-
-
+W.sphere({n:'posZeroSphere',x:0, y:0, z:0, size:5, s:1, b:"#FF145B"});
 
 
 var k = ccgxk;
@@ -45,7 +52,7 @@ k.mainVPlayer = k.addBox({  // 创建一个立方体，并设置为主角
     name: 'mainPlayer', DPZ : 1,
     colliGroup: 1,
     // X: cPos().x + 15, Y: 20, Z: cPos().z + 30,
-    X:-8.19, Y:1.00, Z:-22.75,
+    X:4.25, Y:1.00, Z:12.09,
     rX: 0, rY: 0, rZ: 0, size:1,
     mass: 50, texture: marble
 });
@@ -58,7 +65,7 @@ k.addBox({  // 创建一个 旋转测试 细长物理体
 });
 
 k.addBox({  // 创建一个 旋转测试 细长物理体
-    DPZ : 2,
+    DPZ : 1,
     colliGroup: 2,
     name: 'longThin02', X: 20, Y: 10, Z: -50,
     mass: 1, width: 40, depth: 2, height: 2, texture: marble
@@ -75,7 +82,7 @@ k.addBox({  // 创建地面
 
 // 随机生成 n 个模型
 var yVlaue = 10;
-for(var i = 0; i < 1_00; i++){
+for(var i = 0; i < 100; i++){
     k.addBox({
         DPZ : 1,
         isPhysical: true,
@@ -86,53 +93,33 @@ for(var i = 0; i < 1_00; i++){
     });
 }
 
+// 绘制模型
+const drawList = [
+    {func:drawRandomNoise, id:'xnoise'},
+    {func:drawjpflag, id:'jpflag'},
+    {func:drawText, id:'xjapangood'}
+];
 
+k.loadTexture(drawList).then(res => {
+    k.addBox({  // 创建一个立方体，测试我的纹理系统
+        DPZ : 2,
+        shape : 'sphere',
+        name: 'testTexture', X: 60, Y: 200, Z: -60, XNumber: 5,
+        mass: 100, size:90, texture: jpflag, mixValue: 0.1
+    });
+    
+})
 
-// /* ---------- ---------- ---------- ---------- ---------- ---------- ----------*/ /* ---------- ---------- ---------- ---------- ---------- ---------- ----------*/
-// // 下面是模型区
-// //  x1b1 西一北一区 测试区
-// /* ---------- ---------- ---------- ---------- ---------- ---------- ----------*/ /* ---------- ---------- ---------- ---------- ---------- ---------- ----------*/
-
-const red = '#FF0000';
-const green = '#00FF00';
-const blue = '#0000FF';
-const white = '#FFFFFF';
-const black = '#000000';
-const gray = '#808080';
-const yellow = '#FFFF00';
-const cyan = '#00FFFF';
-const magenta = '#FF00FF';
-const orange = '#FFA500';
-const brown = '#A52A2A';
-var areaid;
-
-// 智能函数
-areaid = {ax: -1, az: -1};
-function cPos(x = 0, z = 0){
-    var poolpos = {x: 1000 * areaid.ax - (500 * Math.sign(areaid.ax)), z: 1000 * areaid.az  - (500 * Math.sign(areaid.az))}; // 中心点
-    return {x: x + poolpos.x, z: z + poolpos.z};
+function drawRedDot(canvas) {
+    const ctx = canvas.getContext('2d');
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, 5, 0, Math.PI * 2);
+    ctx.fillStyle = 'red';
+    ctx.fill();
 }
-
-// 房子地面
-k.addBox({
-    X: cPos().x, Y: 2, Z: cPos().z,
-    mass: 0, width: 100, depth: 100, height: 1,
-    background : green, texture: marble
-});
-
-// // 随机生成 n 个模型
-// var yVlaue = 10;
-// for(var i = 0; i < 3_0000; i++){
-//     k.addBox({
-//         DPZ : 4,
-//         isPhysical: true,
-//         X: Math.floor( Math.random() * 1000 + 1 - 500), Y: yVlaue, Z: Math.floor( Math.random() * 1000 + 1 - 500),
-//         mass: 90, width: 0.03, depth: 0.03, height: 0.03, texture: marble,
-//         background: `#00ffff52`, mixValue: 0.71
-//     });
-// }
-
-
 
 // 日本国旗
 function drawjpflag(ctx, w, h) {
@@ -167,20 +154,20 @@ function drawText(ctx){
     ctx.fillText("日本狗香", 150, 50);
 }
 
-// 绘制模型
-const drawList = [
-    {func:drawRandomNoise, id:'xnoise'},
-    {func:drawjpflag, id:'jpflag'},
-    {func:drawText, id:'xjapangood'}
-];
+// 一个能跑起来的计算角度的函数，凑合用吧
+function calculateNorthAngle(t,a,h){var t=-t*Math.PI/180,a=-a*Math.PI/180,h=h*Math.PI/180,M=Math.cos(t),
+    t=Math.sin(t),o=Math.cos(a),a=Math.sin(a),h=(Math.cos(h),Math.sin(h),a*M),a=-t,t=o*M,o=[0,0,1],M=t,
+    a=Math.sqrt(Math.pow(h,2)+Math.pow(a,2)+Math.pow(t,2));let n=Math.acos(Math.min(1,Math.max(-1,M/a)));
+    return n=(n=h*o[2]-t*o[0]<0?-n:n)>-Math.PI/2&&n<Math.PI/2?2*Math.PI-n:n}
 
-k.loadTexture(drawList).then(res => {
-    k.addBox({  // 创建一个立方体，测试我的纹理系统
-        DPZ : 2,
-        name: 'testTexture', X: 60, Y: 200, Z: -60, XNumber: 5,
-        mass: 100, size:90, texture: jpflag, mixValue: 0.1
-    });
-    W.cube({n:'test0002',x:60,y:200,z:-900, t:jpflag,size:90, xNumber: 5});
-})
+// 绘制小地图
+const mapUpdatax = setInterval(() => { drawRedDot(posMap); }, 500);
+function drawRedDot(t){var l=t.getContext("2d"),e=t.width/2,i=t.height/2,a=k.mainVPlayer.X/5e3*e,r=k.mainVPlayer.Z/5e3*i,
+    h=(l.clearRect(0,0,t.width,t.height),t.width/10);l.fillStyle="#fff",l.fillRect(0,0,t.width,t.height),l.fillStyle="#F5F7FF";
+    for(let e=0;e<10;e++)for(let t=0;t<10;t++)(e+t)%2==0&&l.fillRect(e*h,t*h,h,h);t=e+a,a=i+r,l.beginPath(),l.arc(e,i,2,0,2*Math.PI),
+    l.arc(t,a,3,0,2*Math.PI),l.fillStyle="red",l.fill(),l.strokeStyle="#9AFF4D",l.lineWidth=1,l.beginPath(),l.moveTo(t,a),
+    r=W.current.mainPlayer,e=calculateNorthAngle(r.rx,r.ry,r.rz);l.lineTo(t-100*Math.sin(e),a-100*Math.cos(e)),l.stroke()}
+
+
 
 </script>

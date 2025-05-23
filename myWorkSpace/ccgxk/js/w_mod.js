@@ -4,436 +4,264 @@
 debug = 0; // 启用着色器/程序编译日志（可选）
 
 W = {
-  
-  // 框架可以渲染的3D模型列表
-  // （参见文件末尾的内置模型：平面、广告牌、立方体、金字塔等）
-  models: {},
+  models: {},  // 模型列表
+  uvXnumber: {}, // 【自己添加的】纹理坐标的默认x轴重复次数
 
-  uvXnumber: {}, // 纹理坐标的默认x轴重复次数
-  
-  // 自定义渲染器列表
-  renderers: {},
-
-  // 重置框架
-  // 参数：一个<canvas>元素
-  reset: canvas => {
+  // 初始化
+  reset: canvas => {  // 参数为一个 canvas 元素
     
     // 全局变量
     W.canvas = canvas;    // 画布元素
-    W.objs = 0;           // 对象计数器
-    W.current = {};       // 对象当前状态
-    W.next = {};          // 对象下一状态
-    W.textures = {};      // 纹理列表
-    W.viewLimit = 5000;   // 视野
-
-    // WebGL上下文
-    W.gl = canvas.getContext('webgl2');
+    W.objs = 0;           // 目前的对象数量
+    W.current = {};       // 每个对象 本帧 的长宽高等
+    W.next = {};          // 每个对象 下一帧 的长宽高等
+    W.textures = {};      // 纹理的列表
+    W.viewLimit = 5000;   // 【自己添加的】视野
+    W.gl = canvas.getContext('webgl2');  // 获取 gl
+    W.gl.blendFunc(770 /* SRC_ALPHA */, 771 /* ONE_MINUS_SRC_ALPHA */);  // 默认混合方法
+    W.gl.activeTexture(33984 /* TEXTURE0 */);  // 启用纹理0
+    W.program = W.gl.createProgram();  // 启动一个 webgl
+    W.gl.enable(2884 /* CULL_FACE */);  // 隐藏多边形的不可见的背面
     
-    // 透明对象的默认混合方法
-    W.gl.blendFunc(770 /* SRC_ALPHA */, 771 /* ONE_MINUS_SRC_ALPHA */);
-    
-    // 启用纹理0
-    W.gl.activeTexture(33984 /* TEXTURE0 */);
-
-    // 创建一个WebGL程序
-    W.program = W.gl.createProgram();
-    
-    // 隐藏多边形的背面（可选）
-    W.gl.enable(2884 /* CULL_FACE */);
-    
-    // 创建一个顶点着色器
-    // （这个GLSL程序在场景的每个顶点处调用）
+    // 顶点着色器
     W.gl.shaderSource(
-      
-      t = W.gl.createShader(35633 /* VERTEX_SHADER */),
-      
-      `#version 300 es
-      precision highp float;                        // 设置默认浮点精度
-      in vec4 pos, col, uv, normal;                 // 顶点属性：位置、颜色、纹理坐标、法线（如果有的话）
-      uniform mat4 pv, eye, m, im;                  // 统一变换矩阵：投影 * 视图、视线、模型、模型逆矩阵
-      uniform vec4 bb;                              // 如果当前形状是广告牌：bb = [w, h, 1.0, 0.0]
-      out vec4 v_pos, v_col, v_uv, v_normal;        // 传递给片段着色器的可变量：位置、颜色、纹理坐标、法线（如果有的话）
-      void main() {                                 
-        gl_Position = pv * (                        // 设置顶点位置：p * v * v_pos
-          v_pos = bb.z > 0.                         // 设置v_pos可变量：
-          ? m[3] + eye * (pos * bb)                 // 广告牌总是朝向相机：p * v * 距离 + 眼睛 * (位置 * [w, h, 1.0, 0.0])
-          : m * pos                                 // 其他对象正常旋转：p * v * m * 位置
-        );                                          
-        v_col = col;                                // 设置可变量
-        v_uv = uv;
-        v_normal = transpose(inverse(m)) * normal;  // 重新计算法线以匹配模型变换
-      }`
-    );
-    
-    // 编译顶点着色器并将其附加到程序
-    W.gl.compileShader(t);
-    W.gl.attachShader(W.program, t);
-    if(debug) console.log('顶点着色器:', W.gl.getShaderInfoLog(t) || 'OK');
-    
-    // 创建片段着色器
-    // （此GLSL程序在场景的每个片段（像素）处调用）
-    W.gl.shaderSource(
+          t = W.gl.createShader(35633 /* VERTEX_SHADER */),
+          `#version 300 es
+          precision highp float;                        // 设置默认浮点精度 为 高精度
+          in vec4 pos, col, uv, normal;                 // 顶点属性：位置、颜色、纹理坐标、法线（如果有的话）
+          uniform mat4 pv, eye, m, im;                  // 矩阵：投影 * 视图、视线、模型、模型逆矩阵
+          uniform vec4 bb;                              // 如果当前形状是广告牌：bb = [w, h, 1.0, 0.0]
+          out vec4 v_pos, v_col, v_uv, v_normal;        // 传递给【片段着色器】的可变量：位置、颜色、纹理坐标、法线（如果有的话）
+          void main() {                                 
+            gl_Position = pv * (                        // 设置顶点位置：p * v * v_pos
+              v_pos = bb.z > 0.                         // 设置v_pos可变量：
+              ? m[3] + eye * (pos * bb)                 // 【广告牌部分】广告牌总是朝向相机：p * v * 距离 + 眼睛 * (位置 * [w, h, 1.0, 0.0])
+              : m * pos                                 // 其他对象正常旋转：p * v * m * 位置
+            );                                          
+            v_col = col;                                // 传给【片段着色器】的部分
+            v_uv = uv;
+            v_normal = transpose(inverse(m)) * normal;  // 重新计算法线以匹配模型变换
+          }`
+        );
 
-      t = W.gl.createShader(35632 /* FRAGMENT_SHADER */),
-      
-      `#version 300 es
-      precision highp float;                  // 设置默认浮点精度
-      in vec4 v_pos, v_col, v_uv, v_normal;   // 从顶点着色器接收的varyings：位置、颜色、纹理坐标、法线（如果有的话）
-      uniform vec3 light;                     // 统一变量：光源方向，启用平滑法线
-      uniform vec4 o;                         // 选项 [平滑，启用光照，环境光，混合]
-      uniform sampler2D sampler;              // 统一变量：2D纹理
-      out vec4 c;                             // 输出：最终片段颜色
+        W.gl.compileShader(t);  // 编译顶点着色器并将其附加到程序
+        W.gl.attachShader(W.program, t);
+        if(debug) console.log('顶点着色器:', W.gl.getShaderInfoLog(t) || 'OK');
+        
+        // 创建片段着色器
+        W.gl.shaderSource(
+          t = W.gl.createShader(35632 /* FRAGMENT_SHADER */),
+          `#version 300 es
+          precision highp float;                  // 设置默认浮点精度
+          in vec4 v_pos, v_col, v_uv, v_normal;   // 从顶点着色器接收的varyings：位置、颜色、纹理坐标、法线（如果有的话）
+          uniform vec3 light;                     // 统一变量：光源方向，启用平滑法线
+          uniform vec4 o;                         // 选项 [平滑，启用光照，环境光，混合]
+          uniform sampler2D sampler;              // 统一变量：2D纹理
+          out vec4 c;                             // 输出：最终片段颜色
 
-      // 下面的代码显示彩色/纹理/阴影片段
-      void main() {
-        c = mix(texture(sampler, v_uv.xy), v_col, o[3]);  // 基础颜色（纹理和rgba的混合）
-        if(o[1] > 0.){                                    // 如果启用了光照/阴影：
-          c = vec4(                                       // 输出 = vec4(基础颜色RGB * (方向阴影 + 环境光))，基础颜色Alpha
-            c.rgb * (max(0., dot(light, -normalize(       // 方向阴影：计算光源方向和法线的点积（如果为负则取0）
-              o[0] > 0.                                   // 如果启用了平滑阴影：
-              ? vec3(v_normal.xyz)                        // 使用传递的平滑法线
-              : cross(dFdx(v_pos.xyz), dFdy(v_pos.xyz))   // 否则，通过当前片段及其x/y邻居的叉积计算平面法线
-            )))
-            + o[2]),                                      // 添加传递的环境光
-            c.a                                           // 使用基础颜色的Alpha
-          );
-        }
-      }`
-    );
-    
-    // 编译片段着色器并将其附加到程序
-    W.gl.compileShader(t);
-    W.gl.attachShader(W.program, t);
-    if(debug) console.log('片段着色器:', W.gl.getShaderInfoLog(t) || 'OK');
-    
-    // 编译程序
-    W.gl.linkProgram(W.program);
-    W.gl.useProgram(W.program);
-    if(debug) console.log('程序:', W.gl.getProgramInfoLog(W.program) || 'OK');
-    
-    // 设置场景的背景颜色（RGBA）
-    W.gl.clearColor(1, 1, 1, 1);
-    
-    // 快捷方式设置清除颜色
-    W.clearColor = c => W.gl.clearColor(...W.col(c));
-    W.clearColor("fff");
-    
-    // 启用片段深度排序
-    // （靠近物体的片段将自动覆盖远离物体的片段）
-    W.gl.enable(2929 /* DEPTH_TEST */);
-    
-    // 当一切加载完毕后：设置默认光源/相机
-    W.light({y: -1});
-    W.camera({fov: 30});
-    
-    // 绘制场景。忽略第一帧，因为默认相机可能会被程序覆盖
-    setTimeout(W.draw, 16);
+          // 下面的代码显示彩色/纹理/阴影片段
+          void main() {
+            c = mix(texture(sampler, v_uv.xy), v_col, o[3]);  // 基础颜色（纹理和rgba的混合）
+            if(o[1] > 0.){                                    // 如果启用了光照/阴影：【判断选项】
+              c = vec4(                                       // 输出 = vec4(基础颜色RGB * (方向阴影 + 环境光))，基础颜色Alpha
+                c.rgb * (max(0., dot(light, -normalize(       // 方向阴影：计算光源方向和法线的点积（如果为负则取0）
+                  o[0] > 0.                                   // 如果启用了平滑阴影：
+                  ? vec3(v_normal.xyz)                        // 使用传递的平滑法线
+                  : cross(dFdx(v_pos.xyz), dFdy(v_pos.xyz))   // 否则，通过当前片段及其x/y邻居的叉积计算平面法线
+                )))
+                + o[2]),                                      // 添加传递的环境光
+                c.a                                           // 使用基础颜色的Alpha
+              );
+            }
+          }`
+        );
+        
+        W.gl.compileShader(t);  // 编译【片段着色器】并将其附加到程序
+        W.gl.attachShader(W.program, t);
+        if(debug) console.log('片段着色器:', W.gl.getShaderInfoLog(t) || 'OK');
+        W.gl.linkProgram(W.program);  // 链接和编译
+        W.gl.useProgram(W.program);
+        if(debug) console.log('程序:', W.gl.getProgramInfoLog(W.program) || 'OK');
+        W.clearColor = c => W.gl.clearColor(...W.col(c));  // 快捷函数设置清除颜色
+        W.clearColor("fff");
+        W.gl.enable(2929 /* DEPTH_TEST */);  // 深度排序
+        W.light({y: -1});  // 设置默认光源/相机
+        W.camera({fov: 30});
+        setTimeout(W.draw, 16);  // 开始绘制
   },
 
   // 设置对象的状态
   setState: (state, type, texture, i, normal = [], A, B, C, Ai, Bi, Ci, AB, BC) => {
-
-    // 自定义名称或默认名称（'o' + 自动递增）
-    state.n ||= 'o' + W.objs++;
-    
-    // Size同时设置w, h和d（可选）
-    if(state.size) state.w = state.h = state.d = state.size;
-    
-    // 如果提供了新纹理，则构建并保存在W.textures中
-    if(state.t && state.t.width && !W.textures[state.t.id]){
-      texture = W.gl.createTexture();
-
-      // W.gl.texParameteri(3553 /* TEXTURE_2D */, 10242 /* TEXTURE_WRAP_S */, 10497 /* REPEAT */);
-      // W.gl.texParameteri(3553 /* TEXTURE_2D */, 10243 /* TEXTURE_WRAP_T */, 10497 /* REPEAT */);
-      W.gl.pixelStorei(37441 /* UNPACK_PREMULTIPLY_ALPHA_WEBGL */, true);
-      W.gl.bindTexture(3553 /* TEXTURE_2D */, texture);
-      W.gl.pixelStorei(37440 /* UNPACK_FLIP_Y_WEBGL */, 1);
-      W.gl.texImage2D(3553 /* TEXTURE_2D */, 0, 6408 /* RGBA */, 6408 /* RGBA */, 5121 /* UNSIGNED_BYTE */, state.t);
-      
-      W.gl.generateMipmap(3553 /* TEXTURE_2D */);
-      W.textures[state.t.id] = texture;
-    }
-    
-    // 如果设置了fov，则重新计算投影矩阵（近裁剪面：1，远裁剪面：1000，宽高比：画布比例）
-    if(state.fov){
-      var viewLimit = W.viewLimit;
-      W.projection =
-        new DOMMatrix([
-          (1 / Math.tan(state.fov * Math.PI / 180)) / (W.canvas.width / W.canvas.height), 0, 0, 0, 
-          0, (1 / Math.tan(state.fov * Math.PI / 180)), 0, 0, 
-          0, 0, -(viewLimit + 1) / (viewLimit - 1), -1,
-          0, 0, -(2 * viewLimit + 2) / (viewLimit - 1), 0
-        ]);
-    }
-    
-    // 保存对象的类型，
-    // 将之前的状态（或默认状态）与传入的新状态合并，
-    // 并重置f（动画计时器）
-    state = {type, ...(W.current[state.n] = W.next[state.n] || {w:1, h:1, d:1, x:0, y:0, z:0, rx:0, ry:0, rz:0, b:'888', mode:4, mix: 0}), ...state, f:0};
-    
-    // 如果模型顶点缓冲区不存在，则构建模型的顶点缓冲区
-    if(W.models[state.type]?.vertices && !W.models?.[state.type].verticesBuffer){
-      W.gl.bindBuffer(34962 /* ARRAY_BUFFER */, W.models[state.type].verticesBuffer = W.gl.createBuffer());
-      W.gl.bufferData(34962 /* ARRAY_BUFFER */, new Float32Array(W.models[state.type].vertices), 35044 /*STATIC_DRAW*/);
-
-      // 如果平滑法线不存在，则计算平滑法线（可选）
-      if(!W.models[state.type].normals && W.smooth) W.smooth(state);
-      
-      // 从平滑/自定义法线（如果有的话）创建缓冲区
-      if(W.models[state.type].normals){
-        W.gl.bindBuffer(34962 /* ARRAY_BUFFER */, W.models[state.type].normalsBuffer = W.gl.createBuffer());
-        W.gl.bufferData(34962 /* ARRAY_BUFFER */, new Float32Array(W.models[state.type].normals.flat()), 35044 /*STATIC_DRAW*/); 
-      }      
-    }
-    
-    // 如果模型的uv缓冲区不存在，则构建模型的uv缓冲区（如果有的话）
-    if(W.models[state.type]?.uv && !W.models[state.type].uvBuffer){
-      W.gl.bindBuffer(34962 /* ARRAY_BUFFER */, W.models[state.type].uvBuffer = W.gl.createBuffer());
-      W.gl.bufferData(34962 /* ARRAY_BUFFER */, new Float32Array( W.models[state.type].uv), 35044 /*STATIC_DRAW*/);  // 可能是内置模型的 UV
-      // .map(val => val === 1 ? 2 : val)
-    }
-    
-    // 构建模型的索引缓冲区（如果有的话）并计算平滑法线（如果不存在）
-    if(W.models[state.type]?.indices && !W.models[state.type].indicesBuffer){
-      W.gl.bindBuffer(34963 /* ELEMENT_ARRAY_BUFFER */, W.models[state.type].indicesBuffer = W.gl.createBuffer());
-      W.gl.bufferData(34963 /* ELEMENT_ARRAY_BUFFER */, new Uint16Array(W.models[state.type].indices), 35044 /* STATIC_DRAW */);
-    }
-    
-    // 如果没有设置纹理，则将mix设置为1
-    if(!state.t){
-      state.mix = 1;
-    }
-
-    // 如果设置了纹理且未设置mix，则默认将mix设置为0
-    else if(state.t && !state.mix){
-      state.mix = 0;
-    }
-    
-    // 保存新状态
-    W.next[state.n] = state;
+        state.n ||= 'o' + W.objs++;  // name 或默认名称（'o' + 自动递增）
+        if(state.size) state.w = state.h = state.d = state.size;  // size 属性
+        if(state.t && state.t.width && !W.textures[state.t.id]){  // 新纹理（W.textures 没有），保存起来
+          texture = W.gl.createTexture();  // 创建纹理
+          W.gl.pixelStorei(37441 /* UNPACK_PREMULTIPLY_ALPHA_WEBGL */, true);  // 启用预乘透明度模式
+          W.gl.bindTexture(3553 /* TEXTURE_2D */, texture);  // 绑定
+          W.gl.pixelStorei(37440 /* UNPACK_FLIP_Y_WEBGL */, 1);  // Y轴翻转状态
+          W.gl.texImage2D(3553 /* TEXTURE_2D */, 0, 6408 /* RGBA */, 6408 /* RGBA */, 5121 /* UNSIGNED_BYTE */, state.t);  // 从用户那里加载纹理
+          W.gl.generateMipmap(3553 /* TEXTURE_2D */);  //生成 2D 纹理的 Mipmap 映射
+          W.textures[state.t.id] = texture;
+        }
+        if(state.fov){  // 根据 fov 计算【投影矩阵】
+          var viewLimit = W.viewLimit;
+          W.projection =
+            new DOMMatrix([
+              (1 / Math.tan(state.fov * Math.PI / 180)) / (W.canvas.width / W.canvas.height), 0, 0, 0, 
+              0, (1 / Math.tan(state.fov * Math.PI / 180)), 0, 0, 
+              0, 0, -(viewLimit + 1) / (viewLimit - 1), -1,
+              0, 0, -(2 * viewLimit + 2) / (viewLimit - 1), 0
+            ]);
+        }
+        state = {  // 保存对象的类型，清零计时器 f
+          type,
+          ...(W.current[state.n] = W.next[state.n] || {w:1, h:1, d:1, x:0, y:0, z:0, rx:0, ry:0, rz:0, b:'888', mode:4, mix: 0}),
+          ...state,
+          f:0
+        };
+        if(W.models[state.type]?.vertices && !W.models?.[state.type].verticesBuffer){  // 构建模型顶点（如果不存在，下同）
+          W.gl.bindBuffer(34962 /* ARRAY_BUFFER */, W.models[state.type].verticesBuffer = W.gl.createBuffer());  // 选择柜子
+          W.gl.bufferData(34962 /* ARRAY_BUFFER */, new Float32Array(W.models[state.type].vertices), 35044 /*STATIC_DRAW*/);  // 装到这个柜子里
+          if(!W.models[state.type].normals && W.smooth) W.smooth(state);  // 计算平滑法线
+          if(W.models[state.type].normals){  // 从法线构建缓冲区
+            W.gl.bindBuffer(34962 /* ARRAY_BUFFER */, W.models[state.type].normalsBuffer = W.gl.createBuffer());
+            W.gl.bufferData(34962 /* ARRAY_BUFFER */, new Float32Array(W.models[state.type].normals.flat()), 35044 /*STATIC_DRAW*/); 
+          }
+        }
+        if(W.models[state.type]?.uv && !W.models[state.type].uvBuffer){  // 构建 UV
+          W.gl.bindBuffer(34962 /* ARRAY_BUFFER */, W.models[state.type].uvBuffer = W.gl.createBuffer());
+          W.gl.bufferData(34962 /* ARRAY_BUFFER */, new Float32Array( W.models[state.type].uv), 35044 /*STATIC_DRAW*/);  // 可能是内置模型的 UV
+          // .map(val => val === 1 ? 2 : val)
+        }
+        if(W.models[state.type]?.indices && !W.models[state.type].indicesBuffer){  // 构建索引
+          W.gl.bindBuffer(34963 /* ELEMENT_ARRAY_BUFFER */, W.models[state.type].indicesBuffer = W.gl.createBuffer());
+          W.gl.bufferData(34963 /* ELEMENT_ARRAY_BUFFER */, new Uint16Array(W.models[state.type].indices), 35044 /* STATIC_DRAW */);
+        }
+        if(!state.t){  // 如果没有设置纹理，则将mix设置为1
+          state.mix = 1;
+        }
+        else if(state.t && !state.mix){ // 如果设置了纹理且未设置mix，则默认将mix设置为0
+          state.mix = 0;
+        }
+        W.next[state.n] = state;  // 下一帧的状态
   },
   
   // 绘制场景
   draw: (now, dt, v, i, transparent = []) => {
-
-    // 循环并测量帧之间的时间差
-    dt = now - W.lastFrame;
-    W.lastFrame = now;
-    requestAnimationFrame(W.draw);
-
-    if(W.next.camera.g){
-      W.render(W.next[W.next.camera.g], dt, 1);
-    }
-    
-    // 创建一个包含当前相机变换的矩阵v
-    v = W.animation('camera');
-    
-    // 如果相机在组中
-    if(W.next?.camera?.g){
-
-      // 将相机矩阵预先乘以组的模型矩阵。
-      v.preMultiplySelf(W.next[W.next.camera.g].M || W.next[W.next.camera.g].m);
-    }
-    
-    // 将其发送到着色器作为Eye矩阵
-    W.gl.uniformMatrix4fv(
-      W.gl.getUniformLocation(W.program, 'eye'),
-      false,
-      v.toFloat32Array()
-    );
-    
-    // 反转以获得View矩阵
-    v.invertSelf();
-
-    // 与透视矩阵预先相乘以获得Projection-View矩阵
-    v.preMultiplySelf(W.projection);
-    
-    // 将其发送到着色器作为pv矩阵
-    W.gl.uniformMatrix4fv(
-      W.gl.getUniformLocation(W.program, 'pv'),
-      false,
-      v.toFloat32Array()
-    );
-
-    // 清除画布
-    W.gl.clear(16640 /* W.gl.COLOR_BUFFER_BIT | W.gl.DEPTH_BUFFER_BIT */);
-    
-    // 渲染场景中的所有对象
-    for(i in W.next){
-      
-      // 渲染没有纹理和没有透明度的形状（RGB1颜色）
-      if(!W.next[i].t && W.col(W.next[i].b)[3] == 1){
-        W.render(W.next[i], dt);
-      }
-      
-      // 将具有透明度（RGBA或纹理）的对象添加到数组中
-      else {
-        transparent.push(W.next[i]);
-      }
-    }
-    
-    // 从后向前排序透明对象
-    transparent.sort((a, b) => {
-      // 如果b比a更接近相机，则返回值 > 0
-      // 如果a比b更接近相机，则返回值 < 0
-      return W.dist(b) - W.dist(a);
-    });
-
-    // 启用alpha混合
-    W.gl.enable(3042 /* BLEND */);
-
-    // 渲染所有透明对象
-    for(i of transparent){
-
-      // 如果是平面或广告牌，则禁用深度缓冲区写入，以更轻松地允许透明对象与平面相交
-      if(["plane","billboard"].includes(i.type)) W.gl.depthMask(0);
-    
-      W.render(i, dt);
-      
-      W.gl.depthMask(1);
-    }
-    
-    // 为下一帧禁用alpha混合
-    W.gl.disable(3042 /* BLEND */);
-    
-    // 过渡光源方向并发送到着色器
-    W.gl.uniform3f(
-      W.gl.getUniformLocation(W.program, 'light'),
-      W.lerp('light','x'), W.lerp('light','y'), W.lerp('light','z')
-    );
+        dt = now - W.lastFrame;  // 循环并测量帧之间的时间差【原理还在研究】
+        W.lastFrame = now;
+        requestAnimationFrame(W.draw);  // 绘制下一帧
+        if(W.next.camera.g){  // 如果相机的group存在
+          W.render(W.next[W.next.camera.g], dt, 1);  // 渲染啥？？
+        }
+        v = W.animation('camera');  // 创建一个包含当前相机变换的矩阵v ，用于下面的各种变换操作
+        if(W.next?.camera?.g){  // 如果相机在组中
+          v.preMultiplySelf(W.next[W.next.camera.g].M || W.next[W.next.camera.g].m);  // 相机以组来计算矩阵
+        }
+        W.gl.uniformMatrix4fv(  // 将相机的矩阵发往 着色器，作为 eye 参数
+          W.gl.getUniformLocation(W.program, 'eye'),
+          false,
+          v.toFloat32Array()
+        );
+        v.invertSelf();  // 视角反转
+        v.preMultiplySelf(W.projection);  // 与透视矩阵自我相乘(该函数是 js 函数，表示自身与一个矩阵相乘)
+        W.gl.uniformMatrix4fv(  // 作为透视矩阵 pv ，传给着色器
+          W.gl.getUniformLocation(W.program, 'pv'),
+          false,
+          v.toFloat32Array()
+        );
+        W.gl.clear(16640 /* W.gl.COLOR_BUFFER_BIT | W.gl.DEPTH_BUFFER_BIT */);  // 画布清空
+        for(i in W.next){  // 遍历所有已绘制的模型对象
+          if(!W.next[i].t && W.col(W.next[i].b)[3] == 1){  // 渲染纯色物体
+            W.render(W.next[i], dt);
+          } else {
+            transparent.push(W.next[i]);  // 把有透明颜色或有纹理的，先装到数组里
+          }
+        }
+        transparent.sort((a, b) => {  // 从后向前排序透明对象（用以不明，还在研究）
+          return W.dist(b) - W.dist(a);
+        });
+        W.gl.enable(3042 /* BLEND */);  // 启用alpha混合，以便渲染透明效果
+        for(i of transparent){  // 遍历渲染透明对象
+          if( ["plane","billboard"].includes(i.type) ) W.gl.depthMask(0);  // 如果是平面或广告牌，则禁用深度缓冲区写入（物体的远近），以更轻松地允许透明对象与平面相交
+          W.render(i, dt);
+          W.gl.depthMask(1);  // 开启深度缓冲区写入
+        }
+        W.gl.disable(3042 /* BLEND */);  // 关闭透明颜色
+        W.gl.uniform3f(  // 把过渡光源的方向，发送到着色器 light
+          W.gl.getUniformLocation(W.program, 'light'),
+          W.lerp('light','x'), W.lerp('light','y'), W.lerp('light','z')
+        );
   },
   
   // 渲染对象
   render: (object, dt, just_compute = ['camera','light','group'].includes(object.type), buffer) => {
+        // 如果对象有纹理
+        if(object.t) {
+          // 设置纹理的目标（2D或立方图）
+          W.gl.bindTexture(3553 /* TEXTURE_2D */, W.textures[object.t.id]);
 
-    // 如果对象有纹理
-    if(object.t) {
-      // 设置纹理的目标（2D或立方图）
-      W.gl.bindTexture(3553 /* TEXTURE_2D */, W.textures[object.t.id]);
-
-      // 将纹理0传递给采样器
-      W.gl.uniform1i(W.gl.getUniformLocation(W.program, 'sampler'), 0);
-      
-      if(object.xNumber){  // 【修改】如果设置了纹理纵横重复，那么就重新搞一下 UV
-        if(!W.uvXnumber[object.xNumber]){
-          var uv32Array = new Float32Array(W.models['cube'].uv);
-          for (let i = 0; i < uv32Array.length; i++) {  // 【修改】每个 UV 值都乘以 纹理纵横
-            uv32Array[i] *= object.xNumber;
-          }
-          W.uvXnumber[object.xNumber] = uv32Array;
+          // 将纹理0传递给采样器
+          W.gl.uniform1i(W.gl.getUniformLocation(W.program, 'sampler'), 0);
         }
-        W.gl.bufferData(34962 /* ARRAY_BUFFER */,  W.uvXnumber[object.xNumber], 35044 /*STATIC_DRAW*/);
-      }
-    }
-
-    // 如果对象有动画，增加其计时器...
-    if(object.f < object.a) object.f += dt;
-    
-    // ...但不要让它超过动画持续时间。
-    if(object.f > object.a) object.f = object.a;
-
-    // 从插值变换组合模型矩阵
-    W.next[object.n].m = W.animation(object.n);
-
-    // 如果对象在组中：
-    if(W.next[object.g]){
-
-      // 将模型矩阵预先乘以组的模型矩阵。
-      W.next[object.n].m.preMultiplySelf(W.next[object.g].M || W.next[object.g].m);
-    }
-
-    // 将模型矩阵发送到顶点着色器
-    W.gl.uniformMatrix4fv(
-      W.gl.getUniformLocation(W.program, 'm'),
-      false,
-      (W.next[object.n].M || W.next[object.n].m).toFloat32Array()
-    );
-    
-    // 将模型矩阵的逆矩阵发送到顶点着色器
-    W.gl.uniformMatrix4fv(
-      W.gl.getUniformLocation(W.program, 'im'),
-      false,
-      (new DOMMatrix(W.next[object.n].M || W.next[object.n].m)).invertSelf().toFloat32Array()
-    );
-    
-    // 不渲染不可见的项目（相机、光源、组、相机的父级）
-    if(!just_compute){
-      // 设置位置缓冲区
-      W.gl.bindBuffer(34962 /* ARRAY_BUFFER */, W.models[object.type].verticesBuffer);
-      W.gl.vertexAttribPointer(buffer = W.gl.getAttribLocation(W.program, 'pos'), 3, 5126 /* FLOAT */, false, 0, 0)
-      W.gl.enableVertexAttribArray(buffer);
-      
-      // 设置纹理坐标缓冲区（如果有的话）
-      if(W.models[object.type].uvBuffer){
-        W.gl.bindBuffer(34962 /* ARRAY_BUFFER */, W.models[object.type].uvBuffer);
-        W.gl.vertexAttribPointer(buffer = W.gl.getAttribLocation(W.program, 'uv'), 2, 5126 /* FLOAT */, false, 0, 0);
-        W.gl.enableVertexAttribArray(buffer);
-      }
-
-
-      
-      // 设置法线缓冲区
-      if((object.s || W.models[object.type].customNormals) && W.models[object.type].normalsBuffer){
-        W.gl.bindBuffer(34962 /* ARRAY_BUFFER */, W.models[object.type].normalsBuffer);
-        W.gl.vertexAttribPointer(buffer = W.gl.getAttribLocation(W.program, 'normal'), 3, 5126 /* FLOAT */, false, 0, 0);
-        W.gl.enableVertexAttribArray(buffer);
-      }
-      
-      // 其他选项：[平滑，启用阴影，环境光，纹理/颜色混合]
-      W.gl.uniform4f(
-
-        W.gl.getUniformLocation(W.program, 'o'), 
-        
-        // 如果"s"为真，则启用平滑阴影
-        object.s,
-        
-        // 如果在TRIANGLE*模式下且object.ns未禁用，则启用阴影
-        ((object.mode > 3) || (W.gl[object.mode] > 3)) && !object.ns ? 1 : 0,
-        
-        // 环境光
-        W.ambientLight || 0.2,
-        
-        // 纹理/颜色混合（如果有纹理。0：完全纹理，1：完全彩色）
-        object.mix
-      );
-      
-      // 如果对象是广告牌：向着色器发送特定统一变量：
-      // [宽度，高度，是广告牌 = 1，0]
-      W.gl.uniform4f(
-        W.gl.getUniformLocation(W.program, 'bb'),
-        
-        // 尺寸
-        object.w,
-        object.h,               
-
-        // 是广告牌
-        object.type == 'billboard',
-        
-        // 保留
-        0
-      );
-      
-      // 设置索引（如果有的话）
-      if(W.models[object.type].indicesBuffer){
-        W.gl.bindBuffer(34963 /* ELEMENT_ARRAY_BUFFER */, W.models[object.type].indicesBuffer);
-      }
-        
-      // 设置对象的颜色
-      W.gl.vertexAttrib4fv(
-        W.gl.getAttribLocation(W.program, 'col'),
-        W.col(object.b)
-      );
-
-      // 绘制
-      // 支持索引和非索引模型。
-      // 如果所有模型都是索引的，可以只保留"drawElements"。
-      if(W.models[object.type].indicesBuffer){
-        W.gl.drawElements(+object.mode || W.gl[object.mode], W.models[object.type].indices.length, 5123 /* UNSIGNED_SHORT */, 0);
-      }
-      else {
-        W.gl.drawArrays(+object.mode || W.gl[object.mode], 0, W.models[object.type].vertices.length / 3);
-      }
-    }
+        if(object.f < object.a) object.f += dt;  // 动画，f 是当前时间，a 是总时间
+        if(object.f > object.a) object.f = object.a;
+        W.next[object.n].m = W.animation(object.n);  // 计算过度项目的结果，给下一帧
+        if(W.next[object.g]){  // 对象在组中
+          W.next[object.n].m.preMultiplySelf(W.next[object.g].M || W.next[object.g].m);  // 组中的对象，以组来计算矩阵
+        }
+        W.gl.uniformMatrix4fv(  // 将 下一帧 的模型矩阵发生到着色器（m）
+          W.gl.getUniformLocation(W.program, 'm'),
+          false,
+          (W.next[object.n].M || W.next[object.n].m).toFloat32Array()
+        );
+        W.gl.uniformMatrix4fv(  // 将 下一帧 的模型逆矩阵发生到着色器（im）(有啥用？)
+          W.gl.getUniformLocation(W.program, 'im'),
+          false,
+          (new DOMMatrix(W.next[object.n].M || W.next[object.n].m)).invertSelf().toFloat32Array()
+        );
+        if(!just_compute){  // 可见项目，（相机、光源、组、相机的父级不可见）
+          W.gl.bindBuffer(34962 /* ARRAY_BUFFER */, W.models[object.type].verticesBuffer);  // 顶点信息
+          W.gl.vertexAttribPointer(buffer = W.gl.getAttribLocation(W.program, 'pos'), 3, 5126 /* FLOAT */, false, 0, 0);  // 定义解析数据的办法
+          W.gl.enableVertexAttribArray(buffer);
+          if(W.models[object.type].uvBuffer){  
+            W.gl.bindBuffer(34962 /* ARRAY_BUFFER */, W.models[object.type].uvBuffer);  // 向纹理缓冲区传数据
+            W.gl.vertexAttribPointer(buffer = W.gl.getAttribLocation(W.program, 'uv'), 2, 5126 /* FLOAT */, false, 0, 0);
+            W.gl.enableVertexAttribArray(buffer);
+          }
+          if((object.s || W.models[object.type].customNormals) && W.models[object.type].normalsBuffer){  // 法线
+            W.gl.bindBuffer(34962 /* ARRAY_BUFFER */, W.models[object.type].normalsBuffer);
+            W.gl.vertexAttribPointer(buffer = W.gl.getAttribLocation(W.program, 'normal'), 3, 5126 /* FLOAT */, false, 0, 0);
+            W.gl.enableVertexAttribArray(buffer);
+          }
+          W.gl.uniform4f(  // 其他选项：[平滑，启用阴影，环境光，纹理/颜色混合]
+            W.gl.getUniformLocation(W.program, 'o'),
+            object.s,  // 如果"s"为真，则启用平滑阴影
+            ((object.mode > 3) || (W.gl[object.mode] > 3)) && !object.ns ? 1 : 0,  // 如果在TRIANGLE*模式下且object.ns未禁用，则启用阴影
+            W.ambientLight || 0.2,  // 环境光
+            object.mix  // 纹理/颜色混合（如果有纹理。0：完全纹理，1：完全彩色）
+          );
+          W.gl.uniform4f(
+            W.gl.getUniformLocation(W.program, 'bb'),  // [宽度，高度，是广告牌 = 1，0]
+            object.w,  // 尺寸
+            object.h,
+            object.type == 'billboard',  // 是广告牌
+            0
+          );
+          if(W.models[object.type].indicesBuffer){  // 设置索引（如果有的话）
+            W.gl.bindBuffer(34963 /* ELEMENT_ARRAY_BUFFER */, W.models[object.type].indicesBuffer);  // 索引放入缓冲区
+          }
+          W.gl.vertexAttrib4fv(  // 设置对象的颜色
+            W.gl.getAttribLocation(W.program, 'col'),  // 着色器里的 col
+            W.col(object.b)
+          );
+          if(W.models[object.type].indicesBuffer){  // 判断是否有索引数据
+            W.gl.drawElements(+object.mode || W.gl[object.mode], W.models[object.type].indices.length, 5123 /* UNSIGNED_SHORT */, 0);  // 索引绘制法
+          }
+          else {
+            W.gl.drawArrays(+object.mode || W.gl[object.mode], 0, W.models[object.type].vertices.length / 3);  // 非索引绘制法
+          }
+        }
   },
   
   // 辅助函数

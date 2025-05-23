@@ -57,13 +57,16 @@ var ccgxk = {
     allGroupNum : 1,  // 玩家、地面、小物件...
     stoneGroupNum : 2,  // 静止石头
 
+    // 物体 name id（递增使用）
+    bodyObjName : 0,
+
     // 添加 box 物体
     addBox : function({
                 DPZ = 2,  // 显示优先级
                 isPhysical = true,  // 是否被物理计算
                 isVisualMode = true,  // 是否渲染
                 colliGroup = 2,  // 碰撞组，全能为 1， 静止石头为 2
-                name = 'k'+(Math.random()*10**9|0),  // 如果没指认，则使用随机数生成 ID
+                name = 'k'+ this.bodyObjName++,  // 如果没指认，则使用随机数生成 ID
                 X = 5, Y = 5, Z = 5,
                 quat = null,
                 shape = 'cube',  // 默认形状
@@ -110,8 +113,6 @@ var ccgxk = {
                 xNumber: XNumber,  // 测试一下
             });
         }
-        
-
         var result = { name, body, X, Y, Z, rX, rY, rZ, isVisualMode, myargs, posID, DPZ, quat};
         switch (true) {  // 看哪个数组接受它
             case isPhysical === false:
@@ -195,7 +196,7 @@ var ccgxk = {
                 { x: -1, y: 0, z: 1 },
                 { x: 1, y: 0, z: -1 }
             ];
-            offsets.forEach(offset => {  // 生成合法地址编码库
+            offsets.forEach(offset => {  // 生成当前合法地址编码库
                 const limits = [
                     { level: 2, len: 450 },
                     { level: 3, len: 45 },
@@ -425,7 +426,7 @@ var ccgxk = {
         return new Promise(resolve => {
             for(var i = 0; i < drawFunclist.length; i++){
                 const img = new Image();
-                img.onload = () => resolve(img);
+                img.onload = () => resolve(img);  // 或许可以直接传入 wjs，以后优化吧
                 img.id = drawFunclist[i].id;
                 img.src = this.dToBase64(drawFunclist[i]);
                 img.hidden = true;  // 一定要隐藏
@@ -436,6 +437,7 @@ var ccgxk = {
 
     // 给定 canvas 绘制程序，可以绘制纹理并返回 base64
     dToBase64 : function(drawItem) {
+        // 【之后优化】复用同一个 canvas 元素（清空并重绘），可以避免频繁创建和销毁 canvas 元素。
         const canvas = document.createElement('canvas');
         canvas.width = canvas.height = 400;
         const ctx = canvas.getContext('2d')
@@ -562,7 +564,7 @@ var ccgxk = {
             this._showMemory();  // 一秒显示一次内存
             this.displayPOS();  // 一秒显示一次显示主角坐标
             var dynaNodesCon = this.dynaNodes();  // 一秒显示一次主角位置编码
-            posIDMVP.textContent = dynaNodesCon.replace(/[Dd]/g,'东').replace(/[Xx]/g,'西').replace(/[Nn]/g,'北').replace(/[Bb]/g,'南');  // 一秒显示一次主角位置编码
+            posIDMVP.textContent = dynaNodesCon.replace(/[Dd]/g,'东').replace(/[Xx]/g,'西').replace(/[Nn]/g,'南').replace(/[Bb]/g,'北');  // 一秒显示一次主角位置编码
             fpsInfo.textContent = ('FPS: ' + fps.toFixed(2));  // 一秒显示一次 FPS
             modListCount.textContent = ('当前模型数：' + this.bodylist.length +
                                         ' - ❀' + this.bodylistNotPys.length +
