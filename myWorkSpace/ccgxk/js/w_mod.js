@@ -48,7 +48,7 @@ W = {
             // 但为了最少改动，我们先这样：如果JS用实例化绘制，它会填充 instanceModelMatrix。
             // 否则，它会像以前一样填充 uniform m。
 
-            // mat4 modelMatrix = m; // 默认为全局 uniform m
+            mat4 modelMatrix = m; // 默认为全局 uniform m
             // 这是一个小技巧：如果instanceModelMatrix的第一个元素（通常是缩放或旋转的一部分）
             // 不是0，那么我们假设它是有效的实例矩阵。通常，一个空的或未初始化的矩阵可能是全0。
             // 在实际的实例化调用中，这个属性会被正确填充。
@@ -61,9 +61,6 @@ W = {
             // 顶点着色器将优先使用 instanceModelMatrix (如果JS端为实例化渲染配置了它)
             // 否则，它将回退到使用全局 uniform m (由JS端为非实例化对象设置)
             // 我们将在JS端确保只有一个被有效使用。
-            mat4 modelMatrix = (instanceModelMatrix[0][0] != 0.0 || instanceModelMatrix[1][1] != 0.0 || instanceModelMatrix[2][2] != 0.0)
-                    ? instanceModelMatrix
-                    : m; // 如果 instanceModelMatrix 无效，则使用全局 uniform m
 
             gl_Position = pv * (                        // 设置顶点位置：p * v * v_pos
               v_pos = bb.z > 0.                         // 设置v_pos可变量：
@@ -121,15 +118,6 @@ W = {
         W.gl.enable(2929 /* DEPTH_TEST */);  // 深度排序
         W.light({y: -1});  // 设置默认光源/相机
         W.camera({fov: 30});
-
-        // 【新增】初始化 instanceModelMatrix 属性的默认值 (全0矩阵)
-        const instanceMatrixLoc = W.gl.getAttribLocation(W.program, 'instanceModelMatrix');
-        for (let i = 0; i < 4; ++i) {
-            W.gl.disableVertexAttribArray(instanceMatrixLoc + i); // 确保初始是禁用状态
-            W.gl.vertexAttrib4f(instanceMatrixLoc + i, 0.0, 0.0, 0.0, 0.0); // 设置默认值为0
-            W.gl.vertexAttribDivisor(instanceMatrixLoc + i, 0); // 确保 divisor 为 0
-        }
-        
         setTimeout(W.draw, 16);  // 开始绘制
   },
 
@@ -158,6 +146,7 @@ W = {
             instanceMatrices.push(...m.toFloat32Array());  // 把所有 模型矩阵 平铺到一个大数组中
           }
           const matrixData = new Float32Array(instanceMatrices);  // 转换成 Float32Array
+          
           const buffer = W.gl.createBuffer();
           W.gl.bindBuffer(W.gl.ARRAY_BUFFER, buffer);  // 选柜子
           W.gl.bufferData(W.gl.ARRAY_BUFFER, matrixData, W.gl.STATIC_DRAW); // 上传数据
@@ -292,7 +281,6 @@ W = {
             }
         }
         if(!just_compute){  // 可见项目，（相机、光源、组、相机的父级不可见）
-          const instanceMatrixLoc = W.gl.getAttribLocation(W.program, 'instanceModelMatrix');  // 获取 instanceModelMatrix 的属性位置（总共4个位置，因为mat4是4个vec4）
           W.gl.bindBuffer(34962 /* ARRAY_BUFFER */, W.models[object.type].verticesBuffer);  // 顶点信息
           W.gl.vertexAttribPointer(buffer = W.gl.getAttribLocation(W.program, 'pos'), 3, 5126 /* FLOAT */, false, 0, 0);  // 定义解析数据的办法
           W.gl.enableVertexAttribArray(buffer);
@@ -329,22 +317,6 @@ W = {
               // This attribute is per-instance, so set the divisor to 1
               W.gl.vertexAttribDivisor(currentLoc, 1);
             }
-          } else {
-            // 【重要】如果不是实例化对象，确保 instanceModelMatrix 属性是禁用状态
-            // 这会导致它从默认值（通常是0）获取数据，从而激活 shader 里的 fallback 逻辑
-            for (let i = 0; i < 4; ++i) {
-              W.gl.disableVertexAttribArray(instanceMatrixLoc + i);
-              W.gl.vertexAttribDivisor(instanceMatrixLoc + i, 0); // 禁用时 divisor 应该为 0
-            }
-            // 另外，对于非实例化对象，我们需要确保 instanceModelMatrix 的值是一个单位矩阵
-            // 因为 shader 会根据 instanceModelMatrix 的值来判断。
-            // 当 attribute 被禁用时，它的值是默认值，通常是0。
-            // 所以 shader 里的 if (instanceModelMatrix[0][0] != 0.0 ...) 逻辑就起作用了。
-            // 但一个单位矩阵 [1,0,0,0, 0,1,0,0, ...] 肯定不是全0，所以需要确保它被禁用。
-            // WebGL2中，禁用属性意味着它会使用glVertexAttrib*f/fv设置的常数值。
-            // 所以，在W.reset时，可以设置一个单位矩阵作为默认值。
-            // 或者，我们可以依赖 shader 的 `m` uniform 始终被设置，然后用一个uniform boolean来控制。
-            // 但既然 shader 已经改了判断，我们现在最主要的就是禁用此属性。
           }
 
 
@@ -370,10 +342,6 @@ W = {
           // 如果需要 per-instance color, 需要另一个 instance attribute
           const colorAttribLoc = W.gl.getAttribLocation(W.program, 'col');
           W.gl.vertexAttrib4fv(colorAttribLoc, W.col(object.b || '888'));
-          // 对于非实例化对象，col 属性是 per-vertex (divisor 0)，
-          // 对于实例化对象，这里我们仍然让它 per-vertex，所有实例共享这个颜色
-          W.gl.vertexAttribDivisor(colorAttribLoc, 0); 
-
           if (object.isInstanced) {
             // 对于当前的绘图，“ col”实际上是此绘制调用中所有实例的恒定顶点属性。
             // 如果我们想要每种构想的颜色，我们将在Vec4 InstanceColor中添加另一个`;`
