@@ -103,7 +103,7 @@ const drawList = [
 k.loadTexture(drawList).then(res => {
     k.addBox({  // 创建一个立方体，测试我的纹理系统
         DPZ : 2,
-        shape : 'sphere',
+        shape : 'sphere', smooth:1,
         name: 'testTexture', X: 60, Y: 200, Z: -60, XNumber: 5,
         mass: 100, size:90, texture: jpflag, mixValue: 0.1
     });

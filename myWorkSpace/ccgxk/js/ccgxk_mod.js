@@ -71,7 +71,7 @@ var ccgxk = {
                 quat = null,
                 shape = 'cube',  // 默认形状
                 mass = 0, width = 1, depth = 1, height = 1, size = 1,
-                texture = null, smooth = 0,  // smooth 暂时为 0，还在调试
+                texture = null, smooth = 0,
                 XNumber = 1,  // 重复平铺纵横数
                 background = '#888', mixValue = 0.71, rX = 0, rY = 0, rZ = 0
             } = {}){

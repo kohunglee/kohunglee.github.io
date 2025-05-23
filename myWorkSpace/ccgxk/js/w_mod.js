@@ -6,6 +6,7 @@ debug = 0; // 启用着色器/程序编译日志（可选）
 W = {
   models: {},  // 模型列表
   uvXnumber: {}, // 【自己添加的】纹理坐标的默认x轴重复次数
+  instanceMatrixBuffers: {}, // 【新增】用于存储每个实例化对象矩阵数据的VBO【】
 
   // 初始化
   reset: canvas => {  // 参数为一个 canvas 元素
@@ -29,18 +30,27 @@ W = {
           `#version 300 es
           precision highp float;                        // 设置默认浮点精度 为 高精度
           in vec4 pos, col, uv, normal;                 // 顶点属性：位置、颜色、纹理坐标、法线（如果有的话）
+
+          // in mat4 instanceModelMatrix;                  // 【】新增：实例的模型矩阵
+          // in vec4 instanceColor;                        // 【】新增：实例的颜色 (如果每个实例颜色不同)
+
           uniform mat4 pv, eye, m, im;                  // 矩阵：投影 * 视图、视线、模型、模型逆矩阵
           uniform vec4 bb;                              // 如果当前形状是广告牌：bb = [w, h, 1.0, 0.0]
           out vec4 v_pos, v_col, v_uv, v_normal;        // 传递给【片段着色器】的可变量：位置、颜色、纹理坐标、法线（如果有的话）
-          void main() {                                 
+          void main() {
+
+            // mat4 m = instanceModelMatrix;               // 【】使用实例的模型矩阵
+
             gl_Position = pv * (                        // 设置顶点位置：p * v * v_pos
               v_pos = bb.z > 0.                         // 设置v_pos可变量：
               ? m[3] + eye * (pos * bb)                 // 【广告牌部分】广告牌总是朝向相机：p * v * 距离 + 眼睛 * (位置 * [w, h, 1.0, 0.0])
               : m * pos                                 // 其他对象正常旋转：p * v * m * 位置
-            );                                          
-            v_col = col;                                // 传给【片段着色器】的部分
+            );  
+
+            v_col = col;                                // 传给【片段着色器】的部分【】
+            // v_col = instanceColor;                        // 使用实例颜色【】
             v_uv = uv;
-            v_normal = transpose(inverse(m)) * normal;  // 重新计算法线以匹配模型变换
+            v_normal = transpose(inverse(m)) * normal;    // 重新计算法线以匹配模型变换
           }`
         );
 
@@ -103,6 +113,27 @@ W = {
           W.gl.generateMipmap(3553 /* TEXTURE_2D */);  //生成 2D 纹理的 Mipmap 映射
           W.textures[state.t.id] = texture;
         }
+        if (state.instances && Array.isArray(state.instances)) {  // 如果使用实例【】
+          state.isInstanced = true; // 标记为实例化对象
+          state.numInstances = state.instances.length; // 存储实例数量
+          for (const instanceProps of state.instances) {  // 遍历实例，为每个实例创建一个 模型矩阵
+            const m = new DOMMatrix();
+            m.translateSelf(instanceProps.x || 0, instanceProps.y || 0, instanceProps.z || 0)
+            .rotateSelf(instanceProps.rx || 0, instanceProps.ry || 0, instanceProps.rz || 0)
+            .scaleSelf(instanceProps.w || 1, instanceProps.h || 1, instanceProps.d || 1);
+            instanceMatrices.push(...m.toFloat32Array());  // 把所有 模型矩阵 平铺到一个大数组中
+          }
+          const matrixData = new Float32Array(instanceMatrices);  // 转换成 Float32Array
+          
+          const buffer = W.gl.createBuffer();
+          W.gl.bindBuffer(W.gl.ARRAY_BUFFER, buffer);  // 选柜子
+          W.gl.bufferData(W.gl.ARRAY_BUFFER, matrixData, W.gl.STATIC_DRAW); // 上传数据
+          W.instanceMatrixBuffers[state.n] = buffer; // 存到我们最顶部的 VBO 里
+          state.instances = null;  // 清理，因为我们不再需要JS端的这个大数组
+        } else {
+          state.isInstanced = false;  // 这是一个非实例化对象【】
+        }
+
         if(state.fov){  // 根据 fov 计算【投影矩阵】
           var viewLimit = W.viewLimit;
           W.projection =
@@ -204,6 +235,7 @@ W = {
           // 将纹理0传递给采样器
           W.gl.uniform1i(W.gl.getUniformLocation(W.program, 'sampler'), 0);
         }
+
         if(object.f < object.a) object.f += dt;  // 动画，f 是当前时间，a 是总时间
         if(object.f > object.a) object.f = object.a;
         W.next[object.n].m = W.animation(object.n);  // 计算过度项目的结果，给下一帧
@@ -220,6 +252,9 @@ W = {
           false,
           (new DOMMatrix(W.next[object.n].M || W.next[object.n].m)).invertSelf().toFloat32Array()
         );
+        if (!object.isInstanced) {
+          
+        }
         if(!just_compute){  // 可见项目，（相机、光源、组、相机的父级不可见）
           W.gl.bindBuffer(34962 /* ARRAY_BUFFER */, W.models[object.type].verticesBuffer);  // 顶点信息
           W.gl.vertexAttribPointer(buffer = W.gl.getAttribLocation(W.program, 'pos'), 3, 5126 /* FLOAT */, false, 0, 0);  // 定义解析数据的办法
