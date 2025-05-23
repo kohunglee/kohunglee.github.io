@@ -1,0 +1,45 @@
+<canvas id="myCanvas" width="800" height="600"></canvas>
+<script src="./js/w_mod.js"></script>
+<script>
+  const canvas = document.getElementById('myCanvas');
+  W.reset(canvas);
+  W.clearColor("333"); // Dark gray background
+  W.camera({ z: 15, y:5, rx: -10 }); // Move camera back and up a bit, look down
+  W.light({ y: 10, z: 10, x: 5 }); // Light from above-right-front
+  W.ambient(0.3); // A bit of ambient light
+
+  // 定义单个立方体对象的多个实例
+  const cubeInstances = [];
+  const numCubes = 5;
+  const spacing = 2.5;
+  for (let i = 0; i < numCubes; i++) {
+    for (let j = 0; j < numCubes; j++) {
+      cubeInstances.push({
+        x: (i - numCubes / 2 + 0.5) * spacing,
+        y: 0,
+        z: (j - numCubes / 2 + 0.5) * spacing,
+        // rx: Math.random() * 360, // Optional: random rotation
+        // ry: Math.random() * 360,
+        b: i % 2 === 0 ? (j % 2 === 0 ? "f00" : "0f0") : (j % 2 === 0 ? "00f" : "ff0") // 通过对象的简单颜色变化
+      });
+    }
+  }
+
+  // 创建一个可以绘制许多立方体的实例立方体对象
+  W.cube({
+    n: 'manyCubes',     // 这个实例对象的唯一名称
+    b: '999',           // 所有实例的基本颜色（如果实例具有颜色道具，则可以覆盖）
+    instances: cubeInstances, // 实例属性的数组
+    s: 1, // 为基础立方体启用光滑的阴影
+    mode: W.gl.TRIANGLES // 标准抽奖模式
+  });
+
+  // 您仍然可以创建常规的，非固定的立方体
+  W.cube({
+      n: 'singleCube',
+      x: 0, y: 3, z: 0,
+      b: 'f0f', // Magenta
+      s: 1
+  });
+
+</script>
