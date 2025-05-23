@@ -1,0 +1,224 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canvas数学艺术</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            text-align: center;
+        }
+        canvas {
+            border: 1px solid #ccc;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            background-color: white;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>数学艺术画布</h1>
+        <canvas id="mathCanvas" width="800" height="600"></canvas>
+    </div>
+
+    <script>
+        // 绘制几何图案
+        function drawGeometricPattern(ctx, w, h) {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    const imageData = ctx.createImageData(w, h);
+    const data = imageData.data;
+
+    // 参数调整
+    const scale = 0.4; // 控制噪声的“粗细”
+    const randomFieldScale = 20; // 控制基础随机场的范围，影响旋度
+
+    // 创建一个简单的随机向量场（预计算以减少循环内的随机数生成）
+    // 为了简单，我们直接在每个点上计算，而不是预生成一个场
+    // 对于真正的Curl Noise，通常会使用Perlin/Simplex Noise来生成一个平滑的向量场
+
+    for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+            const index = (y * w + x) * 4;
+
+            // 模拟一个2D向量场的x和y分量
+            // 这里我们用Math.random()模拟，真正的Curl Noise会用更平滑的噪声函数
+            // 为了模拟梯度，我们假设f(x,y)是某个标量函数，Vx = d(f)/dy, Vy = -d(f)/dx
+            // 那么Curl(V) = d(Vy)/dx - d(Vx)/dy
+            // 这里我们直接生成两个独立的“梯度”值
+
+            // 我们可以想象一个函数 f(x, y) = sin(x * scale) + cos(y * scale) * randomFactor
+            // 那么它的梯度是 (df/dx, df/dy)
+            // Curl Noise 的核心是 V = (df/dy, -df/dx) for some scalar field f(x,y)
+            // 或 V = (dg/dx, dh/dy) for some vector field G=(g,h)
+            // 这里的“尽可能少的代码”版本将直接生成一个噪声值，而不是严格按照数学定义来构建整个向量场。
+
+            // 为了模拟Curl Noise，我们通常需要：
+            // 1. 生成一个2D随机向量场 V(x,y) = (Vx(x,y), Vy(x,y))
+            // 2. 计算其旋度：Curl(V) = dVy/dx - dVx/dy
+            // 这需要我们能够访问 V(x+dx, y), V(x-dx, y), V(x, y+dy), V(x, y-dy)
+
+            // 最小代码的近似方法：
+            // 我们可以直接使用一个简单的离散梯度近似来计算旋度
+            // (Vy(x+1,y) - Vy(x-1,y))/2dx - (Vx(x,y+1) - Vx(x,y-1))/2dy
+            // 对于一个像素，dx=dy=1
+
+            // 假设我们有一个虚拟的标量场 'potential'
+            // 我们生成一个看起来像梯度的东西
+            // 两个随机分量，模拟向量场的x和y分量
+            const vx_raw = Math.sin(x * scale * Math.PI) * Math.cos(y * scale * Math.PI) + Math.random() * 0.7;
+            const vy_raw = Math.cos(x * scale * Math.PI) * Math.sin(y * scale * Math.PI) + Math.random() * 0.5;
+
+            // 为了得到一个看起来像Curl Noise的值，我们可以用随机的梯度来计算近似的旋度
+            // 这里我们避免了真正的采样邻居，而是将两个随机分量混合
+            // 这是一个非常简化的近似，真正的Curl Noise会更平滑且有涡旋结构
+
+            // 模拟一个“流体”方向的随机性
+            // 想象两个独立的随机值代表一个方向向量 (rx, ry)
+            const rx = Math.random() * 2 - 1; // -1 to 1
+            const ry = Math.random() * 2 - 1; // -1 to 1
+
+            // Curl Noise通常是基于一个潜在函数 f(x,y) 的梯度场 V = (df/dy, -df/dx)
+            // 然后Curl(V) = d(-df/dx)/dx - d(df/dy)/dy = -(d^2f/dx^2 + d^2f/dy^2) = -Laplacian(f)
+            // 所以，真正的Curl Noise是负拉普拉斯算子作用在一个随机标量场上。
+            // 我们可以用一个简单的随机值作为这个标量场 f，然后近似其拉普拉斯算子。
+
+            // 非常简化的拉普拉斯近似（用当前点和周围的随机性差值）
+            // 假设f(x,y) = Math.random() * randomFieldScale
+            // f_center = Math.random()
+            // f_neighbors_avg = (Math.random() + Math.random() + Math.random() + Math.random()) / 4
+            // laplacian_approx = f_center - f_neighbors_avg (非常粗糙的近似)
+
+            // 尝试更贴近Curl Noise的概念：
+            // 想象在一个网格点 (i, j)
+            // 我们可以为每个网格点分配一个随机的2D向量 V_ij = (u_ij, v_ij)
+            // 然后旋度近似为：
+            // (v_i+1,j - v_i-1,j) / 2 - (u_i,j+1 - u_i,j-1) / 2
+            // 因为我们无法直接访问邻居的随机值（每次调用Math.random()都是新的），
+            // 我们需要一种确定性地生成随机场的方式，例如使用种子随机数或噪声函数。
+            // 由于“尽可能少的代码”和不能引入库，我们将使用一个伪随机但基于坐标的函数。
+
+            // 使用坐标作为种子来生成伪随机值，以模拟平滑变化的“梯度”
+            // 这是一个非常非常简化的方法，不是真正的Perlin/Simplex噪声。
+            const sampleField = (px, py) => {
+                // 一个基于坐标的伪随机函数，模拟某种“场”
+                // 使用三角函数来引入一些周期性和变化
+                return Math.sin(px * scale) * Math.cos(py * scale * 1.2) +
+                       Math.cos(py * scale * 0.8) * Math.sin(px * scale * 1.5) +
+                       (Math.sin(px * 0.1 + py * 0.2) + Math.cos(px * 0.3 - py * 0.1)) * 0.5;
+            };
+
+            // 模拟 Curl Noise 的计算
+            // 真正的Curl Noise是从一个噪声函数f中计算 V = (df/dy, -df/dx)，然后Curl(V) = -Laplacian(f)
+            // 所以，我们可以近似计算拉普拉斯算子
+            // Laplacian(f) ≈ (f(x+1,y) + f(x-1,y) + f(x,y+1) + f(x,y-1) - 4*f(x,y))
+
+            const f_center = sampleField(x, y);
+            const f_left = sampleField(x - 1, y);
+            const f_right = sampleField(x + 1, y);
+            const f_up = sampleField(x, y - 1);
+            const f_down = sampleField(x, y + 1);
+
+            // 离散拉普拉斯算子的近似
+            let noiseValue = (f_left + f_right + f_up + f_down - 4 * f_center);
+
+            // 归一化到0-1范围，并映射到255
+            // 噪声值的范围取决于 sampleField 函数和 scale
+            // 尝试将噪声值归一化到0-1，然后乘以255
+            // 简单的线性映射，可能需要调整 min/max
+            const minNoise = -4 * 2; // rough estimation for sampleField range and laplacian
+            const maxNoise = 4 * 2;  // rough estimation
+
+            noiseValue = (noiseValue - minNoise) / (maxNoise - minNoise); // Normalize to 0-1
+            noiseValue = Math.max(0, Math.min(1, noiseValue)); // Clamp to 0-1
+
+            const pixelValue = Math.floor(noiseValue * 255);
+
+            data[index] = pixelValue;     // R
+            data[index + 1] = pixelValue; // G
+            data[index + 2] = pixelValue; // B
+            data[index + 3] = 255;        // Alpha (fully opaque)
+        }
+    }
+
+    ctx.putImageData(imageData, 0, 0);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        }
+
+
+
+
+
+
+
+
+
+        const canvas = document.getElementById('mathCanvas');
+        const ctx = canvas.getContext('2d');
+        function init() {
+            drawGeometricPattern(ctx, canvas.width, canvas.height);
+        }
+        
+        init();
+    </script>
+</body>
+</html>

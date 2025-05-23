@@ -8,6 +8,8 @@ W = {
   // 框架可以渲染的3D模型列表
   // （参见文件末尾的内置模型：平面、广告牌、立方体、金字塔等）
   models: {},
+
+  uvXnumber: {}, // 纹理坐标的默认x轴重复次数
   
   // 自定义渲染器列表
   renderers: {},
@@ -187,7 +189,8 @@ W = {
     // 如果模型的uv缓冲区不存在，则构建模型的uv缓冲区（如果有的话）
     if(W.models[state.type]?.uv && !W.models[state.type].uvBuffer){
       W.gl.bindBuffer(34962 /* ARRAY_BUFFER */, W.models[state.type].uvBuffer = W.gl.createBuffer());
-      W.gl.bufferData(34962 /* ARRAY_BUFFER */, new Float32Array(W.models[state.type].uv), 35044 /*STATIC_DRAW*/); 
+      W.gl.bufferData(34962 /* ARRAY_BUFFER */, new Float32Array( W.models[state.type].uv), 35044 /*STATIC_DRAW*/);  // 可能是内置模型的 UV
+      // .map(val => val === 1 ? 2 : val)
     }
     
     // 构建模型的索引缓冲区（如果有的话）并计算平滑法线（如果不存在）
@@ -310,6 +313,17 @@ W = {
 
       // 将纹理0传递给采样器
       W.gl.uniform1i(W.gl.getUniformLocation(W.program, 'sampler'), 0);
+      
+      if(object.xNumber){  // 【修改】如果设置了纹理纵横重复，那么就重新搞一下 UV
+        if(!W.uvXnumber[object.xNumber]){
+          var uv32Array = new Float32Array(W.models['cube'].uv);
+          for (let i = 0; i < uv32Array.length; i++) {  // 【修改】每个 UV 值都乘以 纹理纵横
+            uv32Array[i] *= object.xNumber;
+          }
+          W.uvXnumber[object.xNumber] = uv32Array;
+        }
+        W.gl.bufferData(34962 /* ARRAY_BUFFER */,  W.uvXnumber[object.xNumber], 35044 /*STATIC_DRAW*/);
+      }
     }
 
     // 如果对象有动画，增加其计时器...
@@ -355,6 +369,8 @@ W = {
         W.gl.vertexAttribPointer(buffer = W.gl.getAttribLocation(W.program, 'uv'), 2, 5126 /* FLOAT */, false, 0, 0);
         W.gl.enableVertexAttribArray(buffer);
       }
+
+
       
       // 设置法线缓冲区
       if((object.s || W.models[object.type].customNormals) && W.models[object.type].normalsBuffer){

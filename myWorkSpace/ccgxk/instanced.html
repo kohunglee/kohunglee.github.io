@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebGL Instanced Rendering</title>
+    <style>
+        body { margin: 0; overflow: hidden; display: flex; justify-content: center; align-items: center; min-height: 100vh; background-color: #222; }
+        canvas { border: 1px solid #444; }
+    </style>
+</head>
+<body>
+    <canvas id="glCanvas" width="800" height="600"></canvas>
+    <script>
+        // main.js
+        window.onload = () => {
+            const canvas = document.getElementById('glCanvas');
+            const gl = canvas.getContext('webgl2'); // WebGL2 支持实例化渲染，WebGL1 需要扩展
+
+            if (!gl) {
+                alert('Your browser does not support WebGL2!');
+                return;
+            }
+
+            // 1. 顶点着色器 (Vertex Shader)
+            // 这个着色器负责将模型顶点数据 和 实例化数据 结合起来
+            const vsSource = `#version 300 es
+                in vec4 a_position;    // 普通顶点属性：模型顶点位置
+                in vec4 a_color;       // 实例化属性：每个实例的颜色
+                in vec2 a_offset;      // 实例化属性：每个实例的偏移量 (位置)
+
+                out lowp vec4 v_color; // 传递给片段着色器
+
+                void main() {
+                    // 将模型顶点位置加上实例偏移量，得到最终的世界坐标
+                    gl_Position = a_position + vec4(a_offset, 0.0, 0.0);
+                    v_color = a_color; // 将实例颜色传递给片段着色器
+                }
+            `;
+
+            // 2. 片段着色器 (Fragment Shader)
+            // 这个着色器负责为每个像素上色
+            const fsSource = `#version 300 es
+                precision lowp float;
+                in lowp vec4 v_color; // 从顶点着色器接收的颜色
+                out vec4 outColor;     // 输出颜色
+
+                void main() {
+                    outColor = v_color; // 直接使用传入的颜色
+                }
+            `;
+
+            // 3. 编译和链接着色器
+            function createShader(gl, type, source) {
+                const shader = gl.createShader(type);
+                gl.shaderSource(shader, source);
+                gl.compileShader(shader);
+                if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+                    console.error('Shader compile error:', gl.getShaderInfoLog(shader));
+                    gl.deleteShader(shader);
+                    return null;
+                }
+                return shader;
+            }
+
+            const vertexShader = createShader(gl, gl.VERTEX_SHADER, vsSource);  // 这几行，把着色器们搞进去了
+            const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fsSource);
+            const program = gl.createProgram();  
+            gl.attachShader(program, vertexShader);
+            gl.attachShader(program, fragmentShader);
+            gl.linkProgram(program);
+            if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+                console.error('Program link error:', gl.getProgramInfoLog(program));
+                return;
+            }
+            gl.useProgram(program);
+
+            // 4. 定义通用的模型数据 (一个单位正方形的顶点)
+            // 两个三角形构成一个正方形
+            const positions = new Float32Array([
+                -0.05, -0.05, // bottom-left
+                0.05, -0.05, // bottom-right
+                -0.05,  0.05, // top-left
+                -0.05,  0.05, // top-left
+                0.05, -0.05, // bottom-right
+                0.05,  0.05  // top-right
+            ]);
+
+            const positionBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);  // 把数据扔进缓冲区
+
+            const positionAttributeLocation = gl.getAttribLocation(program, 'a_position');  // 这是一个目的地
+            gl.enableVertexAttribArray(positionAttributeLocation);  // 顶点属性数组
+            gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);  // 解析我们的数据
+
+            // 5. 定义实例化数据 (100个实例的颜色和偏移量)
+            const NUM_INSTANCES = 100_0000;  // 数量
+            const offsets = new Float32Array(NUM_INSTANCES * 2); // 每个实例2个浮点数 (x, y)
+            const colors = new Float32Array(NUM_INSTANCES * 4);  // 每个实例4个浮点数 (r, g, b, a)
+
+            for (let i = 0; i < NUM_INSTANCES; ++i) {  // 使用循环，把偏移量和颜色数据填进去
+                // 随机偏移量
+                offsets[i * 2 + 0] = Math.random() * 1.8 - 0.9; // x (-0.9 to 0.9)
+                offsets[i * 2 + 1] = Math.random() * 1.8 - 0.9; // y (-0.9 to 0.9)
+
+                // 随机颜色
+                colors[i * 4 + 0] = Math.random(); // r
+                colors[i * 4 + 1] = Math.random(); // g
+                colors[i * 4 + 2] = Math.random(); // b
+                colors[i * 4 + 3] = 0.1;           // a (full opacity)
+            }
+
+            // 6. 创建实例化属性的缓冲区和设置
+            // a_offset (实例偏移量)
+            const offsetBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, offsetBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, offsets, gl.STATIC_DRAW);  // 把偏移量传到了缓冲区
+
+            const offsetAttributeLocation = gl.getAttribLocation(program, 'a_offset');  // 然后紧接着传给了着色器
+            gl.enableVertexAttribArray(offsetAttributeLocation);
+            gl.vertexAttribPointer(offsetAttributeLocation, 2, gl.FLOAT, false, 0, 0);  // 解析我们的数据
+            // !!! 关键一步：设置这个属性为“实例化”属性
+            // gl.VERTEX_ATTRIB_ARRAY_DIVISOR 代表这个属性每个 `divisor` 个实例更新一次。
+            // 如果 divisor 为 1，则每个实例更新一次。
+            // 如果 divisor 为 0（默认），则每个顶点更新一次。
+            gl.vertexAttribDivisor(offsetAttributeLocation, 1);  // 【实例化设置了】设置为每个实例更新一次
+
+            // a_color (实例颜色)
+            const colorBuffer = gl.createBuffer();  // 上面都是 位置大小，这里才是颜色
+            gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, colors, gl.STATIC_DRAW);  // 颜色也传到缓存
+
+            const colorAttributeLocation = gl.getAttribLocation(program, 'a_color');
+            gl.enableVertexAttribArray(colorAttributeLocation);
+            gl.vertexAttribPointer(colorAttributeLocation, 4, gl.FLOAT, false, 0, 0);
+            // !!! 关键一步：设置这个属性为“实例化”属性
+            gl.vertexAttribDivisor(colorAttributeLocation, 1);  // 和上面一样，颜色也开始【实例化设置】。两个都实例化了
+
+            // 7. 渲染设置
+            gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);  // 窗口大小
+            gl.clearColor(0.2, 0.2, 0.2, 1.0);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+
+            // 8. 绘制命令：使用 gl.drawArraysInstanced (WebGL2)
+            // mode: 绘制图元类型 (TRIANGLES, LINES, POINTS, etc.)
+            // first: 从顶点数组的哪个索引开始绘制
+            // count: 绘制多少个顶点 (对于一个正方形，是6个顶点)
+            // instanceCount: 要绘制多少个实例
+            gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, NUM_INSTANCES);
+
+            console.log(`Successfully rendered ${NUM_INSTANCES} instances.`);
+        };
+    </script>
+</body>
+</html>

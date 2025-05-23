@@ -2,22 +2,30 @@
 
 // 项目对象
 var ccgxk = {
-    // ccgxk 的 cannon.js 物理世界
-    world : null,
 
-    // 初始化物理世界
+    // 配置区
+    speedH : 0.1,  // Q 键最高速度的反数
+
+    // 初始化
     initWorld : function(){
         W.camera({n:'camera'});  // 初始化相机
-        W.camera({fov: 40});  // 相机视野为 40
+        W.camera({fov: 35});  // 相机视野为 35
         this.world = new CANNON.World();
         this.world.gravity.set(0, -9.82, 0); // 地球重力9.82m/s²
-        this.world.broadphase = new CANNON.NaiveBroadphase(); // 碰撞检测（所有刚体件都进行碰撞）
-        this.world.solver.iterations = 20; // 物理迭代
+        this.world.broadphase = new CANNON.SAPBroadphase(this.world); // 宽相检测算法
+        this.world.solver.iterations = 10; // 物理迭代
         this.world.addContactMaterial(this.cannonDefaultCantactMaterial);  // 默认材质关联
         this.eventListener();  // 事件监听
         this.animate(); // 动画
-        shiftInfo.innerHTML = '速度:' + 0 + ' | ' // 【测试，临时】
+        shiftInfo.textContent = '速度:' + 0 + ' | ' // 【测试，临时】
     },
+
+
+    /********************** 杂项：数学、列表... **********************/
+
+
+    // ccgxk 的 cannon.js 物理世界
+    world : null,
 
     // 默认材质关联材质
     cannonDefaultCantactMaterial : new CANNON.ContactMaterial( // 默认材质关联材质
@@ -26,149 +34,6 @@ var ccgxk = {
             friction: 0.1, // 摩擦力
             restitution: 0.1, // 弹性系数
     }),
-
-    // 物体列表
-    bodylist : new Array(),
-
-    // 隐藏的物体列表
-    hiddenBodylist : new Array(),
-
-    // 添加 box 物理体
-    addPhysicalBox : function({
-                dispZIndex = 2,  // 显示优先级
-                isPhysical = true,  // 是否被物理计算
-                isVisualMode = true,  // 是否渲染
-                name = 'k'+(Math.random()*10**9|0),  // 如果没指认，则使用随机数生成 ID
-                X = 5, Y = 5, Z = 5,
-                quat = null,
-                mass = 0, width = 1, depth = 1, height = 1, size = 1,
-                texture = null, smooth = 0,  // 因为 W.js 版本问题， smooth 暂时为 0
-                background = '#888', mixValue = 0.71, rX = 0, rY = 0, rZ = 0 } = {}){
-        var myargs = Array.from(arguments);  // 备份参数
-        var posID = this.calPosID(X, Y, Z, dispZIndex);
-        if(this.legalPosID.includes(posID) === false && dispZIndex !== 1){  // 位置编码和优先级不合法
-            this.hiddenBodylist.push({posID, myargs});  // 放入隐藏列表
-            return 0;
-        }
-
-        if(size !== 1){  // 处理体积大小
-            width =  depth =  height = size;
-        }
-        var body = null;
-        if(isPhysical){  // 是否创建物理计算体
-            body = new CANNON.Body({
-                mass : mass,
-                shape: new CANNON.Box(new CANNON.Vec3(width/2, height/2, depth/2)),
-                position: new CANNON.Vec3(X, Y, Z),
-                material: this.cannonDefaultCantactMaterial,
-            });
-            this.world.addBody(body);
-            if(quat){
-                body.quaternion.set(quat.x, quat.y, quat.z, quat.w);
-            }
-            quat = body.quaternion;
-        }
-        if(isVisualMode){  // 是否可视化
-            W.cube({
-                n: name,
-                w: width, d: depth, h: height,
-                x: X, y:Y, z:Z, t: texture, s: smooth,
-                rx: rX, ry: rY, rz: rZ, b: background, mix: mixValue
-            });
-        }
-        var result = { name, body, X, Y, Z, rX, rY, rZ, isVisualMode, myargs, posID, dispZIndex, quat};
-        this.bodylist.push(result);
-        return result;
-    },
-
-    // 根据 name 删除（暂时隐藏）某个物体
-    removeBody : function(name){
-        for (let index = 0; index < this.bodylist.length; index++) {
-            let indexItem = this.bodylist[index];
-            if(indexItem.name === name){
-                this.world.removeBody(indexItem.body);  // 删除物理计算体
-                W.delete(name);  // 删除可视化物体
-                this.hiddenBodylist.push(indexItem);  // 将删除的物体放入隐藏列表
-                this.bodylist.splice(index, 1);  // 删除物体列表中的物体
-                break;
-            }
-        }
-    },
-
-    // 预留函数位，每 10 秒将所有隐藏物体，坐标和旋转保留一位小数
-    tofixedHiddenlist : null,
-
-    // 计算位置的简码
-    calPosID : function(x, y, z, zindex){
-        const foo = {2: 1000, 3: 100, 4: 40}[zindex] || 0;
-        if(foo === 0){ return 0; }
-        var dirctionA = (Math.sign(x) === -1) ? 'X' : 'D';
-        var dirctionB = (Math.sign(z) === -1) ? 'B' : 'N';
-        var numberA = Math.ceil(x / foo * Math.sign(x));
-        var numberB = Math.ceil(z / foo * Math.sign(z));
-        return zindex + dirctionA + numberA + dirctionB + numberB;
-    },
-
-    // 合法能被现实的位置简码
-    legalPosID : new Array(),
-
-    // 根据主角的位置简码，动态增删物体
-    dynaNodes : function(){
-        if(this.mainVPlayer !== null) {
-            var mVP = this.mainVPlayer;
-            this.legalPosID.length = 0;
-            var mainVPPosID = this.calPosID(mVP.X, mVP.Y, mVP.Z, 2);
-            const offsets = [  // 八个方向查找临近的区域编码
-                { x: 1, y: 0, z: 0 },
-                { x: -1, y: 0, z: 0 },
-                { x: 0, y: 0, z: 1 },
-                { x: 0, y: 0, z: -1 },
-                { x: 1, y: 0, z: 1 },
-                { x: -1, y: 0, z: -1 },
-                { x: -1, y: 0, z: 1 },
-                { x: 1, y: 0, z: -1 }
-            ];
-            offsets.forEach(offset => {  // 生成合法地址编码库（2级和3级）
-                const limitLen2 = 450;  // 方圆合法的距离(2级)
-                const limitLen3 = 45;   // 方圆合法的距离(3级)
-                const limitLen4 = 15;   // 方圆合法的距离(4级)
-                const posID2 = this.calPosID(mVP.X + offset.x * limitLen2, mVP.Y + offset.y * limitLen2, mVP.Z + offset.z * limitLen2, 2);
-                if (!this.legalPosID.includes(posID2)) {
-                    this.legalPosID.push(posID2);
-                }
-                const posID3 = this.calPosID(mVP.X + offset.x * limitLen3, mVP.Y + offset.y * limitLen3, mVP.Z + offset.z * limitLen3, 3);
-                if (!this.legalPosID.includes(posID3)) {
-                    this.legalPosID.push(posID3);
-                }
-                const posID4 = this.calPosID(mVP.X + offset.x * limitLen4, mVP.Y + offset.y * limitLen4, mVP.Z + offset.z * limitLen4, 4);
-                if (!this.legalPosID.includes(posID4)) {
-                    this.legalPosID.push(posID4);
-                }
-            });
-            
-            for (let i = 0; i < this.bodylist.length; i++) {  // 把已经显示的非法物体删去
-                let indexItem = this.bodylist[i];
-                if(this.legalPosID.includes(indexItem.posID) === false && indexItem.dispZIndex !== 1){
-                    this.removeBody(indexItem.name);
-                }
-            }
-            for (let i = 0; i < this.hiddenBodylist.length; i++) {  // 恢复已经合法的隐藏物体
-                let indexItem = this.hiddenBodylist[i];
-                if(this.legalPosID.includes(indexItem.posID)){
-                    var myargs = indexItem.myargs[0];
-                    if(indexItem.X){
-                        myargs.X = indexItem.X;
-                        myargs.Y = indexItem.Y;
-                        myargs.Z = indexItem.Z;
-                        myargs.quat = indexItem.quat;
-                    }
-                    this.addPhysicalBox(myargs);
-                    this.hiddenBodylist.splice(i, 1);
-                }
-            }
-            return mainVPPosID;
-        }
-    },
 
     // 四元数转化为欧拉数
     quaternionToEuler: function(q){
@@ -181,35 +46,201 @@ var ccgxk = {
         return { rX: toDeg(roll), rY: toDeg(pitch), rZ: toDeg(yaw)};
     },
 
-    // 按照列表将 物理体 逐个 物理计算 和 可视化 更新
-    updataBodylist : function(){
-        for (let i = 0; i < this.bodylist.length; i++) {
-            let indexItem = this.bodylist[i];
-            if(indexItem.body !== null){ 
-                let pos = indexItem.body.position;
-                let quat = indexItem.body.quaternion;
-                let indexItemEuler = this.quaternionToEuler(quat);
-                indexItem.quat = quat;
-                indexItem.rX = indexItemEuler.rX;
-                indexItem.rY = indexItemEuler.rY;
-                indexItem.rZ = indexItemEuler.rZ;
-                indexItem.X = pos.x;
-                indexItem.Y = pos.y;
-                indexItem.Z = pos.z;
+    // 物体列表
+    bodylist : new Array(),  // 有质量，有物理计算，可视化
+    bodylistNotPys : new Array(),  // 纯模型，不进行物理计算
+    bodylistMass0 : new Array(),  // 无质量的可视模型
+
+    /********************** 添加物体 **********************/
+
+    // 碰撞计算组
+    allGroupNum : 1,  // 玩家、地面、小物件...
+    stoneGroupNum : 2,  // 静止石头
+
+    // 添加 box 物体
+    addBox : function({
+                DPZ = 2,  // 显示优先级
+                isPhysical = true,  // 是否被物理计算
+                isVisualMode = true,  // 是否渲染
+                colliGroup = 2,  // 碰撞组，全能为 1， 静止石头为 2
+                name = 'k'+(Math.random()*10**9|0),  // 如果没指认，则使用随机数生成 ID
+                X = 5, Y = 5, Z = 5,
+                quat = null,
+                shape = 'cube',  // 默认形状
+                mass = 0, width = 1, depth = 1, height = 1, size = 1,
+                texture = null, smooth = 0,  // smooth 暂时为 0，还在调试
+                XNumber = 1,  // 重复平铺纵横数
+                background = '#888', mixValue = 0.71, rX = 0, rY = 0, rZ = 0
+            } = {}){
+        var myargs = Array.from(arguments);  // 备份参数
+        var posID = this.calPosID(X, Y, Z, DPZ);
+        if(this.legalPosID.includes(posID) === false && DPZ !== 1){  // 位置编码和优先级不合法
+            this.hiddenBodylist.push({posID, myargs});  // 放入隐藏列表
+            return 0;
+        }
+        if(size !== 1){  // 处理体积大小
+            width =  depth =  height = size;
+        }
+        var body = null;
+        if(isPhysical){  // 是否创建物理计算体
+            body = new CANNON.Body({
+                mass : mass,
+                shape: new CANNON.Box(new CANNON.Vec3(width/2, height/2, depth/2)),
+                position: new CANNON.Vec3(X, Y, Z),
+                material: this.cannonDefaultCantactMaterial,
+            });
+            body.collisionFilterGroup = colliGroup;  // 这 6 行，为物理体分配碰撞组。只有玩家和地面与石头碰撞，石头间不会（小物件除外）
+            const collisionFilterMaskMap = {
+                1: this.stoneGroupNum | this.allGroupNum,
+                2: this.allGroupNum,
+            };
+            body.collisionFilterMask = collisionFilterMaskMap[colliGroup];
+            this.world.addBody(body);
+            if(quat){
+                body.quaternion.set(quat.x, quat.y, quat.z, quat.w);
             }
-            if(indexItem.isVisualMode && W.next[indexItem.name]){
-                W.move({
-                    n: indexItem.name,
-                    x: indexItem.X,
-                    y: indexItem.Y,
-                    z: indexItem.Z,
-                    rx: indexItem.rX,
-                    ry: indexItem.rY,
-                    rz: indexItem.rZ,
+            quat = body.quaternion;
+        }
+        if(isVisualMode){  // 是否可视化
+            W[shape]({
+                n: name,
+                w: width, d: depth, h: height,
+                x: X, y:Y, z:Z, t: texture, s: smooth,
+                rx: rX, ry: rY, rz: rZ, b: background, mix: mixValue,
+                xNumber: XNumber,  // 测试一下
+            });
+        }
+        
+
+        var result = { name, body, X, Y, Z, rX, rY, rZ, isVisualMode, myargs, posID, DPZ, quat};
+        switch (true) {  // 看哪个数组接受它
+            case isPhysical === false:
+                this.bodylistNotPys.push(result);  // 纯模型
+                break;
+            case mass === 0:
+                this.bodylistMass0.push(result);  // 无质量
+                break;
+            default:
+                this.bodylist.push(result);
+        }
+        return result;
+    },
+
+
+    /********************** 八方向模型计算 **********************/
+
+    // 隐藏的物体列表
+    hiddenBodylist : new Array(),
+
+    // 实时存储合法的位置简码
+    legalPosID : new Array(),
+
+    // 根据 name 删除（暂时隐藏）某个物体
+    removeBody : function(name, bodyArrlist, isPhysical = false){
+        for (let index = 0; index < bodyArrlist.length; index++) {
+            let indexItem = bodyArrlist[index];
+            if(indexItem.name === name){
+                if(isPhysical){
+                    this.world.removeBody(indexItem.body);  // 删除物理计算体
+                }
+                W.delete(name);  // 删除可视化物体
+                this.hiddenBodylist.push({  // 将删除的物体放入隐藏列表
+                    posID : indexItem.posID,
+                    quat : indexItem.quat,
+                    X : indexItem.X,
+                    Y : indexItem.Y,
+                    Z : indexItem.Z,
+                    myargs : indexItem.myargs,
                 });
+                bodyArrlist.splice(index, 1);  // 删除物体列表中的物体
+                break;
             }
         }
     },
+
+    // 预留函数位，每 10 秒将所有隐藏物体，坐标和旋转保留一位小数
+    tofixedHiddenlist : null,
+
+    // 计算位置的简码
+    calPosID : function(x, y, z, zindex){
+        const foo = {2: 1000, 3: 100, 4: 40}[zindex] || 0;
+        if (zindex === 2) {zindex = ''};
+        if(foo === 0){ return 0; }
+        var dirctionA = (Math.sign(x) === -1) ? 'X' : 'D';
+        var dirctionB = (Math.sign(z) === -1) ? 'B' : 'N';
+        var numberA = Math.ceil(x / foo * Math.sign(x));
+        var numberB = Math.ceil(z / foo * Math.sign(z));
+        return zindex + dirctionA + numberA + dirctionB + numberB;
+    },
+
+    // 根据主角的位置简码，动态增删物体
+    dynaLock : false,  // 动态增删锁
+    dynaNodes : function(){
+        if(this.mainVPlayer !== null) {
+            var mVP = this.mainVPlayer;
+            var mainVPPosID = this.calPosID(mVP.X, mVP.Y, mVP.Z, 2);
+            if(this.dynaLock){  // 加锁，防止频繁增删导致 BUG
+                return mainVPPosID;
+            } else {
+                this.dynaLock = true;
+            }
+            this.legalPosID.length = 0;
+            const offsets = [  // 八个方向查找临近的区域编码
+                { x: 1, y: 0, z: 0 },
+                { x: -1, y: 0, z: 0 },
+                { x: 0, y: 0, z: 1 },
+                { x: 0, y: 0, z: -1 },
+                { x: 1, y: 0, z: 1 },
+                { x: -1, y: 0, z: -1 },
+                { x: -1, y: 0, z: 1 },
+                { x: 1, y: 0, z: -1 }
+            ];
+            offsets.forEach(offset => {  // 生成合法地址编码库
+                const limits = [
+                    { level: 2, len: 450 },
+                    { level: 3, len: 45 },
+                    { level: 4, len: 15 }
+                ];
+                limits.forEach(({ level, len }) => {
+                    const posID = this.calPosID(mVP.X + offset.x * len, mVP.Y + offset.y * len, mVP.Z + offset.z * len, level);
+                    if (!this.legalPosID.includes(posID)) {
+                        this.legalPosID.push(posID);
+                    }
+                });
+            });
+            const removeIllegalBodies = (bodyArrList, isphysical = false) => {
+                for (let i = bodyArrList.length - 1; i >= 0; i--) {  // 从后向前遍历，避免splice影响索引
+                    let indexItem = bodyArrList[i];
+                    if (!this.legalPosID.includes(indexItem.posID) && indexItem.DPZ !== 1) {
+                        this.removeBody(indexItem.name, bodyArrList, isphysical);
+                    }
+                }
+            };
+            removeIllegalBodies(this.bodylist, true);  // 检测增删 普通模型
+            removeIllegalBodies(this.bodylistNotPys);  // .. 纯模型
+            removeIllegalBodies(this.bodylistMass0); // .. 无质量物体
+            for (let i = 0; i < this.hiddenBodylist.length; i++) {  // 恢复已经合法的隐藏物体
+                let indexItem = this.hiddenBodylist[i];
+                if(this.legalPosID.includes(indexItem.posID)){
+                    var myargs = indexItem.myargs[0];
+                    if(indexItem.X){
+                        myargs.X = indexItem.X;
+                        myargs.Y = indexItem.Y;
+                        myargs.Z = indexItem.Z;
+                        myargs.quat = indexItem.quat;
+                    }
+                    this.addBox(myargs);
+                    this.hiddenBodylist.splice(i, 1);
+                }
+            }
+            this.dynaLock = false;
+            return mainVPPosID;
+        }
+        return '';
+    },
+
+    /********************** 第一视角实现 **********************/
+
 
     // 主角被手动操纵的状态值
     keys : {
@@ -304,7 +335,7 @@ var ccgxk = {
     displayPOS : function(){
         var posInfo = document.getElementById('posInfo');
         if(this.mainVPlayer !== null){
-            posInfo.innerHTML = (
+            posInfo.textContent = (
                 '位置: X:' + this.mainVPlayer.body.position.x.toFixed(2) +
                 ', Y:' + this.mainVPlayer.body.position.y.toFixed(2) +
                 ', Z:' + this.mainVPlayer.body.position.z.toFixed(2) + ', | '
@@ -316,8 +347,8 @@ var ccgxk = {
     calMovePara : function(X, Y, Z, RX, RY, RZ){
         const keys = this.keys;
         if (keys.viewForward || keys.viewBackward) { // 前后平移
-            var speed = (this.isShiftPress) ? Math.max(0.6,4-(this.forwardAcc+=0.01)) :4+0*(this.forwardAcc=0.01);  // 加速度
-            shiftInfo.innerHTML = '速度:' + Math.round((100 / speed)) + ' | ';
+            var speed = (this.isShiftPress) ? Math.max(this.speedH,4-(this.forwardAcc+=0.01)) :4+0*(this.forwardAcc=0.01);  // 加速度
+            shiftInfo.textContent = '速度:' + Math.round((100 / speed)) + ' | ';
             Z += (-keys.viewForward + keys.viewBackward) * Math.cos(RY * Math.PI / 180) / speed;
             X += (-keys.viewForward + keys.viewBackward) * Math.sin(RY * Math.PI / 180) / speed;
             this.displayPOS();
@@ -382,9 +413,46 @@ var ccgxk = {
         W.camera({g:mVP.name, x:cam.pos.x, y:cam.pos.y, z:cam.pos.z, rx: cam.qua.rx, rz: cam.qua.rz})  // 摄像机只旋转 X 和 Z 轴
         cam.groupName = mVP.name;
         mVP.posID = this.calPosID(mVP.X, mVP.Y, mVP.Z, 2);
-
         return 0;
     },
+
+
+    /********************** 纹理异步加载 **********************/
+
+
+    // 一个异步函数，用于加载纹理
+    loadTexture : function(drawFunclist) {
+        return new Promise(resolve => {
+            for(var i = 0; i < drawFunclist.length; i++){
+                const img = new Image();
+                img.onload = () => resolve(img);
+                img.id = drawFunclist[i].id;
+                img.src = this.dToBase64(drawFunclist[i]);
+                img.hidden = true;  // 一定要隐藏
+                document.body.appendChild(img);
+            }
+        });
+    },
+
+    // 给定 canvas 绘制程序，可以绘制纹理并返回 base64
+    dToBase64 : function(drawItem) {
+        const canvas = document.createElement('canvas');
+        canvas.width = canvas.height = 400;
+        const ctx = canvas.getContext('2d')
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        drawItem.func(ctx, canvas.width, canvas.height);
+        if(drawItem.type === 'png'){  // 为透明化作铺垫
+            return canvas.toDataURL('image/png');
+        } else {
+            var quality = drawItem.quality || 0.7;
+            return canvas.toDataURL('image/jpeg', quality);
+        }
+    },
+
+
+    /********************** 试验中，自定义模型 **********************/
+
 
     // 将顶点数据转化成 cannon.js 可用的格式
     returnVec3Data : function(verticesData, indicesData){
@@ -400,7 +468,7 @@ var ccgxk = {
         return convexPolyhedron;
     },
 
-    // 添加自定义顶点数据的物体
+    // 添加自定义顶点数据的物体（临近作废）
     addCustomDataObj : function({ 
                 name = 'custom'+(Math.random()*10**9|0),  // 如果没指认，则使用随机数生成 ID
                 modelName = null,  // 模型名
@@ -430,6 +498,47 @@ var ccgxk = {
         this.bodylist.push(result);  // 向 CCGXK 项目内追加
     },
 
+
+    /********************** 动画进程相关 **********************/
+
+    // 按照列表将 物理体 逐个 物理计算可视化 更新
+    updataBodylist : function(){
+        for (let i = 0; i < this.bodylist.length; i++) {
+            let indexItem = this.bodylist[i];
+            if(indexItem.body !== null){ 
+                let pos = indexItem.body.position;
+                const dx = pos.x - indexItem.X;
+                const dy = pos.y - indexItem.Y;
+                var disten = Math.sqrt(dx*dx + dy*dy);  // 计算与自身上次的距离（必须大于 0.001 才能被可视化）
+                let quat = indexItem.body.quaternion;
+                let indexItemEuler = this.quaternionToEuler(quat);
+                indexItem.quat = quat;
+                indexItem.rX = indexItemEuler.rX;
+                indexItem.rY = indexItemEuler.rY;
+                indexItem.rZ = indexItemEuler.rZ;
+                indexItem.X = pos.x;
+                indexItem.Y = pos.y;
+                indexItem.Z = pos.z;
+            }
+            if(
+                (indexItem.isVisualMode && W.next[indexItem.name] && disten > 0.001)
+                ||
+                indexItem.name === 'mainPlayer'
+            ){
+                W.move({
+                    n: indexItem.name,
+                    x: indexItem.X,
+                    y: indexItem.Y,
+                    z: indexItem.Z,
+                    rx: indexItem.rX,
+                    ry: indexItem.rY,
+                    rz: indexItem.rZ,
+                });
+            }
+        }
+        if(this.legalPosID.length < 1){ this.dynaNodes(); }  // 在启动程序后，要预热 legalPosID
+    },
+
     // 计算一次物理世界
     cannonAni : function(){
         this.world.step(1 / 60); // 时间步长 1/60，用于更新物理世界
@@ -452,9 +561,14 @@ var ccgxk = {
             this.lastTime = currentTime;
             this._showMemory();  // 一秒显示一次内存
             this.displayPOS();  // 一秒显示一次显示主角坐标
-            posIDMVP.innerHTML = this.dynaNodes();  // 一秒显示一次主角位置编码
-            fpsInfo.innerHTML = ('<br>FPS: ' + fps.toFixed(2));  // 一秒显示一次 FPS
-            modListCount.innerHTML = ('当前模型数：' + this.bodylist.length + ' |');  // 一秒显示一次模型数
+            var dynaNodesCon = this.dynaNodes();  // 一秒显示一次主角位置编码
+            posIDMVP.textContent = dynaNodesCon.replace(/[Dd]/g,'东').replace(/[Xx]/g,'西').replace(/[Nn]/g,'北').replace(/[Bb]/g,'南');  // 一秒显示一次主角位置编码
+            fpsInfo.textContent = ('FPS: ' + fps.toFixed(2));  // 一秒显示一次 FPS
+            modListCount.textContent = ('当前模型数：' + this.bodylist.length +
+                                        ' - ❀' + this.bodylistNotPys.length +
+                                        ' - 口' + this.bodylistMass0.length +
+                                        ' - ⚠️' +this.hiddenBodylist.length +
+                                                     ' |');  // 一秒显示一次模型数
         }
     },
 
@@ -463,7 +577,7 @@ var ccgxk = {
         var output = document.getElementById('metrics');
         if (performance.memory) {
             const mem = performance.memory;
-            output.innerHTML = `内存: ${(mem.usedJSHeapSize/1048576).toFixed(1)}MB/` +
+            output.textContent = `内存: ${(mem.usedJSHeapSize/1048576).toFixed(1)}MB/` +
                     `${(mem.jsHeapSizeLimit/1048576).toFixed(1)}MB`  + ' | ';
         }
     },
