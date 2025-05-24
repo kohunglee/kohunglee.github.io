@@ -34,29 +34,31 @@ W.light({ x: 0.5, y: -0.3, z: -0.5});
 W.clearColor("8Af");
 
 // 绘制原点坐标轴
-W.group({n:'posZero',x:0,y:1,z:0});
-W.cube({g:'posZero',x:5,w:10,h:.5,d:.5,b:"f44"});
-W.cube({g:'posZero',y:5,h:10,w:.5,d:.5,b:"4f4"});
-W.cube({g:'posZero',z:5,d:10,w:.5,h:.5,b:"44f"});
-W.pyramid({g:'posZero',size:1,x:10,rz:-90,b:"f44"});
-W.pyramid({g:'posZero',size:1,y:10,b:"4f4"});
-W.pyramid({g:'posZero', n:'test0001' ,size:1,z:10,rx:90,b:"44f"});
-W.sphere({n:'posZeroSphere',x:0, y:0, z:0, size:5, s:1, b:"#FF145B"});
+// W.group({n:'posZero',x:0,y:1,z:0});
+// W.cube({g:'posZero',x:5,w:10,h:.5,d:.5,b:"f44"});
+// W.cube({g:'posZero',y:5,h:10,w:.5,d:.5,b:"4f4"});
+// W.cube({g:'posZero',z:5,d:10,w:.5,h:.5,b:"44f"});
+// W.pyramid({g:'posZero',size:1,x:10,rz:-90,b:"f44"});
+// W.pyramid({g:'posZero',size:1,y:10,b:"4f4"});
+// W.pyramid({g:'posZero', n:'test0001' ,size:1,z:10,rx:90,b:"44f"});
+// W.sphere({n:'posZeroSphere',x:0, y:0, z:0, size:5, s:1, b:"#FF145B"});
 
 
   // 定义单个立方体对象的多个实例
   const cubeInstances = [];
-  const numCubes = 100;
+  const numCubes = 1;
   const spacing = 2.5;
   for (let i = 0; i < numCubes; i++) {
     for (let j = 0; j < numCubes; j++) {
       cubeInstances.push({
         x: (i - numCubes / 2 + 0.5) * spacing,
-        y: 0,
+        y: 10,
         z: (j - numCubes / 2 + 0.5) * spacing,
+        w:1,
+        d:1,
         // rx: Math.random() * 360, // Optional: random rotation
         // ry: Math.random() * 360,
-        b: i % 2 === 0 ? (j % 2 === 0 ? "f00" : "0f0") : (j % 2 === 0 ? "00f" : "ff0") // 通过对象的简单颜色变化
+        b: Math.random() * 360,
       });
     }
   }
@@ -64,16 +66,43 @@ W.sphere({n:'posZeroSphere',x:0, y:0, z:0, size:5, s:1, b:"#FF145B"});
   // 创建一个可以绘制许多立方体的实例立方体对象
   W.cube({
     n: 'manyCubes',     // 这个实例对象的唯一名称
-    b: '999',           // 所有实例的基本颜色（如果实例具有颜色道具，则可以覆盖）
+    // b: '999',           // 所有实例的基本颜色（如果实例具有颜色道具，则可以覆盖）
     instances: cubeInstances, // 实例属性的数组
     s: 0, // 为基础立方体启用光滑的阴影
-    mode: W.gl.TRIANGLES // 标准抽奖模式
+    mode: W.gl.TRIANGLES, // 标准抽奖模式
+    y:100,
   });
 
+    // 定义单个立方体对象的多个实例
+  const cubeInstances2 = [];
+  cubeInstances.push({
+    x: 0,
+    y: 0,
+    z: 0,
+  });
+
+//   // 创建一个可以绘制许多立方体的实例立方体对象
+//   W.cube({
+//     n: 'manyCubes',     // 这个实例对象的唯一名称
+//     b: '999',           // 所有实例的基本颜色（如果实例具有颜色道具，则可以覆盖）
+//     instances: cubeInstances2, // 实例属性的数组
+//     s: 0, // 为基础立方体启用光滑的阴影
+//     mode: W.gl.TRIANGLES // 标准抽奖模式
+//   });
 
 
 
 
+
+
+
+
+
+
+
+
+
+  
 
 
 var k = ccgxk;
@@ -89,20 +118,6 @@ k.mainVPlayer = k.addBox({  // 创建一个立方体，并设置为主角
     mass: 50, texture: marble
 });
 
-k.addBox({  // 创建一个 旋转测试 细长物理体
-    DPZ : 2,
-    colliGroup: 1,
-    name: 'longThin', X: 20, Y: 10, Z: -30,
-    mass: 1, width: 40, depth: 2, height: 2, texture: marble
-});
-
-k.addBox({  // 创建一个 旋转测试 细长物理体
-    DPZ : 1,
-    colliGroup: 2,
-    name: 'longThin02', X: 20, Y: 10, Z: -50,
-    mass: 1, width: 40, depth: 2, height: 2, texture: marble
-});
-
 k.addBox({  // 创建地面
     DPZ : 1,
     colliGroup: 1,
@@ -112,79 +127,79 @@ k.addBox({  // 创建地面
     XNumber: 10
 });
 
-// 随机生成 n 个模型
-var yVlaue = 10;
-for(var i = 0; i < 100; i++){
-    k.addBox({
-        DPZ : 1,
-        isPhysical: true,
-        X: Math.floor( Math.random() * 9900 + 1 - 5000), Y: yVlaue, Z: Math.floor( Math.random() * 9900 + 1 - 5000),
-        mass: 0, width: Math.floor( Math.random() * 30 + 1), depth: 5, height: Math.floor( Math.random() * 5 + 1),
-        background: `#${Math.floor(Math.random() * 16777216).toString(16).padStart(6, '0')}`, mixValue: 0.71,
-        texture: marble,
-    });
-}
+// // 随机生成 n 个模型
+// var yVlaue = 10;
+// for(var i = 0; i < 100; i++){
+//     k.addBox({
+//         DPZ : 1,
+//         isPhysical: true,
+//         X: Math.floor( Math.random() * 9900 + 1 - 5000), Y: yVlaue, Z: Math.floor( Math.random() * 9900 + 1 - 5000),
+//         mass: 0, width: Math.floor( Math.random() * 30 + 1), depth: 5, height: Math.floor( Math.random() * 5 + 1),
+//         background: `#${Math.floor(Math.random() * 16777216).toString(16).padStart(6, '0')}`, mixValue: 0.71,
+//         texture: marble,
+//     });
+// }
 
-// 绘制模型
-const drawList = [
-    {func:drawRandomNoise, id:'xnoise'},
-    {func:drawjpflag, id:'jpflag'},
-    {func:drawText, id:'xjapangood'}
-];
+// // 绘制模型
+// const drawList = [
+//     {func:drawRandomNoise, id:'xnoise'},
+//     {func:drawjpflag, id:'jpflag'},
+//     {func:drawText, id:'xjapangood'}
+// ];
 
-k.loadTexture(drawList).then(res => {
-    k.addBox({  // 创建一个立方体，测试我的纹理系统
-        DPZ : 2,
-        shape : 'sphere', smooth:1,
-        name: 'testTexture', X: 60, Y: 200, Z: -60, XNumber: 5,
-        mass: 100, size:90, texture: jpflag, mixValue: 0.1
-    });
+// k.loadTexture(drawList).then(res => {
+//     k.addBox({  // 创建一个立方体，测试我的纹理系统
+//         DPZ : 2,
+//         shape : 'sphere', smooth:1,
+//         name: 'testTexture', X: 60, Y: 200, Z: -60, XNumber: 5,
+//         mass: 100, size:90, texture: jpflag, mixValue: 0.1
+//     });
     
-})
+// })
 
-function drawRedDot(canvas) {
-    const ctx = canvas.getContext('2d');
-    const centerX = canvas.width / 2;
-    const centerY = canvas.height / 2;
+// function drawRedDot(canvas) {
+//     const ctx = canvas.getContext('2d');
+//     const centerX = canvas.width / 2;
+//     const centerY = canvas.height / 2;
     
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, 5, 0, Math.PI * 2);
-    ctx.fillStyle = 'red';
-    ctx.fill();
-}
+//     ctx.beginPath();
+//     ctx.arc(centerX, centerY, 5, 0, Math.PI * 2);
+//     ctx.fillStyle = 'red';
+//     ctx.fill();
+// }
 
-// 日本国旗
-function drawjpflag(ctx, w, h) {
-    const radius = 150;
-    ctx.beginPath();
-    ctx.arc(w / 2, h / 2, radius, 0, Math.PI * 2);
-    ctx.fillStyle = 'red';
-    ctx.fill();
-    ctx.stroke();
-}
+// // 日本国旗
+// function drawjpflag(ctx, w, h) {
+//     const radius = 150;
+//     ctx.beginPath();
+//     ctx.arc(w / 2, h / 2, radius, 0, Math.PI * 2);
+//     ctx.fillStyle = 'red';
+//     ctx.fill();
+//     ctx.stroke();
+// }
 
-// 随机噪音
-function drawRandomNoise(ctx, w, h) {
-    ctx.fillStyle = '#8B8B83'; ctx.fillRect(0, 0, w, h);
-    for(let i = 0; i < 50; i++) {
-        const x = Math.random()*w, y = Math.random()*h;
-        const s = Math.random()*30, c = `rgba(10,0,10,${Math.random()*0.3})`;
-        ctx.fillStyle = c; ctx.beginPath();
-        ctx.arc(x, y, s, 0, Math.PI*2); ctx.fill();
-    }
-}
+// // 随机噪音
+// function drawRandomNoise(ctx, w, h) {
+//     ctx.fillStyle = '#8B8B83'; ctx.fillRect(0, 0, w, h);
+//     for(let i = 0; i < 50; i++) {
+//         const x = Math.random()*w, y = Math.random()*h;
+//         const s = Math.random()*30, c = `rgba(10,0,10,${Math.random()*0.3})`;
+//         ctx.fillStyle = c; ctx.beginPath();
+//         ctx.arc(x, y, s, 0, Math.PI*2); ctx.fill();
+//     }
+// }
 
 
 
-// 写字
-function drawText(ctx){
-    ctx.font = "30px Arial";          // 字体大小和类型
-    ctx.fillStyle = "red";            // 填充颜色
-    ctx.strokeStyle = "blue";         // 描边颜色
-    ctx.textAlign = "center";         // 水平对齐方式（left/center/right）
-    ctx.textBaseline = "middle";      // 垂直对齐方式（top/middle/bottom）
-    ctx.fillText("日本狗香", 150, 50);
-}
+// // 写字
+// function drawText(ctx){
+//     ctx.font = "30px Arial";          // 字体大小和类型
+//     ctx.fillStyle = "red";            // 填充颜色
+//     ctx.strokeStyle = "blue";         // 描边颜色
+//     ctx.textAlign = "center";         // 水平对齐方式（left/center/right）
+//     ctx.textBaseline = "middle";      // 垂直对齐方式（top/middle/bottom）
+//     ctx.fillText("日本狗香", 150, 50);
+// }
 
 // 一个能跑起来的计算角度的函数，凑合用吧
 function calculateNorthAngle(t,a,h){var t=-t*Math.PI/180,a=-a*Math.PI/180,h=h*Math.PI/180,M=Math.cos(t),
@@ -193,7 +208,7 @@ function calculateNorthAngle(t,a,h){var t=-t*Math.PI/180,a=-a*Math.PI/180,h=h*Ma
     return n=(n=h*o[2]-t*o[0]<0?-n:n)>-Math.PI/2&&n<Math.PI/2?2*Math.PI-n:n}
 
 // 绘制小地图
-const mapUpdatax = setInterval(() => { drawRedDot(posMap); }, 500);
+const mapUpdatax = setInterval(() => { drawRedDot(posMap); }, 500);  // 间隔毫秒
 function drawRedDot(t){var l=t.getContext("2d"),e=t.width/2,i=t.height/2,a=k.mainVPlayer.X/5e3*e,r=k.mainVPlayer.Z/5e3*i,
     h=(l.clearRect(0,0,t.width,t.height),t.width/10);l.fillStyle="#fff",l.fillRect(0,0,t.width,t.height),l.fillStyle="#F5F7FF";
     for(let e=0;e<10;e++)for(let t=0;t<10;t++)(e+t)%2==0&&l.fillRect(e*h,t*h,h,h);t=e+a,a=i+r,l.beginPath(),l.arc(e,i,2,0,2*Math.PI),

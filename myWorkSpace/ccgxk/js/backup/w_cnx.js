@@ -6,7 +6,6 @@ debug = 0; // 启用着色器/程序编译日志（可选）
 W = {
   models: {},  // 模型列表
   uvXnumber: {}, // 【自己添加的】纹理坐标的默认x轴重复次数
-  instanceMatrixBuffers: {}, // 【新增】用于存储每个实例化对象矩阵数据的VBO【】
 
   // 初始化
   reset: canvas => {  // 参数为一个 canvas 元素
@@ -30,48 +29,18 @@ W = {
           `#version 300 es
           precision highp float;                        // 设置默认浮点精度 为 高精度
           in vec4 pos, col, uv, normal;                 // 顶点属性：位置、颜色、纹理坐标、法线（如果有的话）
-
-          // 新增：实例的模型矩阵 (每个实例不同)
-          in mat4 instanceModelMatrix;
-
           uniform mat4 pv, eye, m, im;                  // 矩阵：投影 * 视图、视线、模型、模型逆矩阵
-                                                        // 注意：对于实例化渲染，'m' 和 'im' 将不会直接来自这里，而是来自 instanceModelMatrix
           uniform vec4 bb;                              // 如果当前形状是广告牌：bb = [w, h, 1.0, 0.0]
           out vec4 v_pos, v_col, v_uv, v_normal;        // 传递给【片段着色器】的可变量：位置、颜色、纹理坐标、法线（如果有的话）
-          void main() {
-
-            // 决定使用哪个模型矩阵：实例的还是全局的
-            // 为了简单起见，我们稍后会在JS中决定是否上传 instanceModelMatrix
-            // 如果是实例化绘制，JS端不会使用全局的 'm' 和 'im' uniform
-            // 这里我们先假设，如果 instanceModelMatrix 被有效地绑定了，它就是非零的（这不完全准确，但对逻辑有用）
-            // 一个更好的方法是在JS中有一个标志，并可能使用不同的着色器或uniform来控制行为。
-            // 但为了最少改动，我们先这样：如果JS用实例化绘制，它会填充 instanceModelMatrix。
-            // 否则，它会像以前一样填充 uniform m。
-
-            mat4 modelMatrix = m; // 默认为全局 uniform m
-            // 这是一个小技巧：如果instanceModelMatrix的第一个元素（通常是缩放或旋转的一部分）
-            // 不是0，那么我们假设它是有效的实例矩阵。通常，一个空的或未初始化的矩阵可能是全0。
-            // 在实际的实例化调用中，这个属性会被正确填充。
-            // 对于非实例化调用，这个属性不会被填充，其值未定义，但通常默认为0。
-            // 这个判断条件 is_instanced_rendering 应该由JS逻辑控制，而不是在shader里猜测。
-            // 为了简化，我们将修改JS逻辑，使其在实例化时使用 instanceModelMatrix
-            // 并在非实例化时依赖全局 m。
-
-            // 【重要修改】使用实例的模型矩阵 (如果可用)
-            // 顶点着色器将优先使用 instanceModelMatrix (如果JS端为实例化渲染配置了它)
-            // 否则，它将回退到使用全局 uniform m (由JS端为非实例化对象设置)
-            // 我们将在JS端确保只有一个被有效使用。
-
+          void main() {                                 
             gl_Position = pv * (                        // 设置顶点位置：p * v * v_pos
               v_pos = bb.z > 0.                         // 设置v_pos可变量：
-              ? instanceModelMatrix[3] + eye * (pos * bb) // 【广告牌部分，使用实例矩阵】
-              : instanceModelMatrix * pos               // 【其他对象，使用实例矩阵】
-            );  
-
+              ? m[3] + eye * (pos * bb)                 // 【广告牌部分】广告牌总是朝向相机：p * v * 距离 + 眼睛 * (位置 * [w, h, 1.0, 0.0])
+              : m * pos                                 // 其他对象正常旋转：p * v * m * 位置
+            );                                          
             v_col = col;                                // 传给【片段着色器】的部分
             v_uv = uv;
-            // 【重要修改】法线变换也需要使用相应的模型矩阵
-            v_normal = transpose(inverse(instanceModelMatrix)) * normal; // 使用实例矩阵
+            v_normal = transpose(inverse(m)) * normal;  // 重新计算法线以匹配模型变换
           }`
         );
 
@@ -134,28 +103,6 @@ W = {
           W.gl.generateMipmap(3553 /* TEXTURE_2D */);  //生成 2D 纹理的 Mipmap 映射
           W.textures[state.t.id] = texture;
         }
-        if (state.instances && Array.isArray(state.instances)) {  // 如果使用实例【】
-          state.isInstanced = true; // 标记为实例化对象
-          state.numInstances = state.instances.length; // 存储实例数量
-          const instanceMatrices = [];
-          for (const instanceProps of state.instances) {  // 遍历实例，为每个实例创建一个 模型矩阵
-            const m = new DOMMatrix();
-            m.translateSelf(instanceProps.x || 0, instanceProps.y || 0, instanceProps.z || 0)
-            .rotateSelf(instanceProps.rx || 0, instanceProps.ry || 0, instanceProps.rz || 0)
-            .scaleSelf(instanceProps.w || 1, instanceProps.h || 1, instanceProps.d || 1);
-            instanceMatrices.push(...m.toFloat32Array());  // 把所有 模型矩阵 平铺到一个大数组中
-          }
-          const matrixData = new Float32Array(instanceMatrices);  // 转换成 Float32Array
-          
-          const buffer = W.gl.createBuffer();
-          W.gl.bindBuffer(W.gl.ARRAY_BUFFER, buffer);  // 选柜子
-          W.gl.bufferData(W.gl.ARRAY_BUFFER, matrixData, W.gl.STATIC_DRAW); // 上传数据
-          W.instanceMatrixBuffers[state.n] = buffer; // 存到我们最顶部的 VBO 里
-          state.instances = null;  // 清理，因为我们不再需要JS端的这个大数组
-        } else {
-          state.isInstanced = false;  // 这是一个非实例化对象【】
-        }
-
         if(state.fov){  // 根据 fov 计算【投影矩阵】
           var viewLimit = W.viewLimit;
           W.projection =
@@ -257,75 +204,36 @@ W = {
           // 将纹理0传递给采样器
           W.gl.uniform1i(W.gl.getUniformLocation(W.program, 'sampler'), 0);
         }
-
-        
-        if (!object.isInstanced) {  // 非实例化对象，按照以往方式渲染【】
-            if(object.f < object.a) object.f += dt;  // 动画，f 是当前时间，a 是总时间
-            if(object.f > object.a) object.f = object.a;
-            W.next[object.n].m = W.animation(object.n);  // 计算过度项目的结果，给下一帧
-            if(W.next[object.g]){  // 对象在组中
-              W.next[object.n].m.preMultiplySelf(W.next[object.g].M || W.next[object.g].m);  // 组中的对象，以组来计算矩阵
-            }
-
-            if(!just_compute){  // 确保不是 camera, light, group
-              W.gl.uniformMatrix4fv(  // 将 下一帧 的模型矩阵发生到着色器（m）
-                W.gl.getUniformLocation(W.program, 'm'),
-                false,
-                (W.next[object.n].M || W.next[object.n].m).toFloat32Array()
-              );
-              W.gl.uniformMatrix4fv(  // 将 下一帧 的模型逆矩阵发生到着色器（im）(有啥用？)
-                W.gl.getUniformLocation(W.program, 'im'),
-                false,
-                (new DOMMatrix(W.next[object.n].M || W.next[object.n].m)).invertSelf().toFloat32Array()
-              );
-            }
+        if(object.f < object.a) object.f += dt;  // 动画，f 是当前时间，a 是总时间
+        if(object.f > object.a) object.f = object.a;
+        W.next[object.n].m = W.animation(object.n);  // 计算过度项目的结果，给下一帧
+        if(W.next[object.g]){  // 对象在组中
+          W.next[object.n].m.preMultiplySelf(W.next[object.g].M || W.next[object.g].m);  // 组中的对象，以组来计算矩阵
         }
+        W.gl.uniformMatrix4fv(  // 将 下一帧 的模型矩阵发生到着色器（m）
+          W.gl.getUniformLocation(W.program, 'm'),
+          false,
+          (W.next[object.n].M || W.next[object.n].m).toFloat32Array()
+        );
+        W.gl.uniformMatrix4fv(  // 将 下一帧 的模型逆矩阵发生到着色器（im）(有啥用？)
+          W.gl.getUniformLocation(W.program, 'im'),
+          false,
+          (new DOMMatrix(W.next[object.n].M || W.next[object.n].m)).invertSelf().toFloat32Array()
+        );
         if(!just_compute){  // 可见项目，（相机、光源、组、相机的父级不可见）
-
-           
- 
-
-
           W.gl.bindBuffer(34962 /* ARRAY_BUFFER */, W.models[object.type].verticesBuffer);  // 顶点信息
           W.gl.vertexAttribPointer(buffer = W.gl.getAttribLocation(W.program, 'pos'), 3, 5126 /* FLOAT */, false, 0, 0);  // 定义解析数据的办法
           W.gl.enableVertexAttribArray(buffer);
-          W.gl.vertexAttribDivisor(buffer, 0);  // 【重要修改】确保实例化对象的顶点属性除数为0（即每个顶点都获取数据）【】
           if(W.models[object.type].uvBuffer){  
             W.gl.bindBuffer(34962 /* ARRAY_BUFFER */, W.models[object.type].uvBuffer);  // 向纹理缓冲区传数据
             W.gl.vertexAttribPointer(buffer = W.gl.getAttribLocation(W.program, 'uv'), 2, 5126 /* FLOAT */, false, 0, 0);
             W.gl.enableVertexAttribArray(buffer);
-            W.gl.vertexAttribDivisor(buffer, 0); // 【新增】确保UV属性除数为0【】
           }
           if((object.s || W.models[object.type].customNormals) && W.models[object.type].normalsBuffer){  // 法线
             W.gl.bindBuffer(34962 /* ARRAY_BUFFER */, W.models[object.type].normalsBuffer);
             W.gl.vertexAttribPointer(buffer = W.gl.getAttribLocation(W.program, 'normal'), 3, 5126 /* FLOAT */, false, 0, 0);
             W.gl.enableVertexAttribArray(buffer);
-            W.gl.vertexAttribDivisor(buffer, 0); // 【新增】确保法线属性除数为0【】
           }
-
-          // 【新增】设置实例化矩阵属性 【看不懂】【】
-          if (object.isInstanced && W.instanceMatrixBuffers[object.n]) {
-            const instanceMatrixBuffer = W.instanceMatrixBuffers[object.n];
-            W.gl.bindBuffer(W.gl.ARRAY_BUFFER, instanceMatrixBuffer);
-
-            const loc = W.gl.getAttribLocation(W.program, 'instanceModelMatrix');
-            const bytesPerMatrix = 4 * 4 * Float32Array.BYTES_PER_ELEMENT; // 16 floats per matrix
-            // A mat4 attribute is treated as 4 vec4 attributes
-            for (let i = 0; i < 4; ++i) {
-              const currentLoc = loc + i;
-              W.gl.enableVertexAttribArray(currentLoc);
-              // void gl.vertexAttribPointer(index, size, type, normalized, stride, offset);
-              // size = 4 (vec4)
-              // stride = bytesPerMatrix (move to the next matrix after 4 vec4s)
-              // offset = i * 4 * Float32Array.BYTES_PER_ELEMENT (offset for the current vec4 within the matrix)
-              W.gl.vertexAttribPointer(currentLoc, 4, W.gl.FLOAT, false, bytesPerMatrix, i * 4 * Float32Array.BYTES_PER_ELEMENT);
-              // This attribute is per-instance, so set the divisor to 1
-              W.gl.vertexAttribDivisor(currentLoc, 1);
-            }
-          }
-
-
-
           W.gl.uniform4f(  // 其他选项：[平滑，启用阴影，环境光，纹理/颜色混合]
             W.gl.getUniformLocation(W.program, 'o'),
             object.s,  // 如果"s"为真，则启用平滑阴影
@@ -340,63 +248,9 @@ W = {
             object.type == 'billboard',  // 是广告牌
             0
           );
-
-
-          // 【修改】使用 object.b (如果存在), 否则使用默认颜色【看不懂】【】
-          // 这个颜色是 per-object/per-draw-call, 不是 per-instance
-          // 如果需要 per-instance color, 需要另一个 instance attribute
-          const colorAttribLoc = W.gl.getAttribLocation(W.program, 'col');
-          W.gl.vertexAttrib4fv(colorAttribLoc, W.col(object.b || '888'));
-          if (object.isInstanced) {
-            // 对于当前的绘图，“ col”实际上是此绘制调用中所有实例的恒定顶点属性。
-            // 如果我们想要每种构想的颜色，我们将在Vec4 InstanceColor中添加另一个`;`
-            // 并使用类似于InstanceModelMatrix的VertexAttribDivisor（...，1）设置它。
-            // 目前，此对象的所有实例都将共享相同的“对象”颜色。
-            W.gl.vertexAttribDivisor(colorAttribLoc, 0); // 这样可以确保“ col”读取每个vertex（在此呼叫中的所有情况下有效地稳定）
-                                                        // 或者，如果我们希望它是真正的恒定而不是属性，那么
-                                                        // 我们可以将“ Col”制成统一并上传一次。
-                                                        // 但是vertexattrib4fv有效地使其在绘制呼叫中稳定。
-          }
-
-
-
-
           if(W.models[object.type].indicesBuffer){  // 设置索引（如果有的话）
             W.gl.bindBuffer(34963 /* ELEMENT_ARRAY_BUFFER */, W.models[object.type].indicesBuffer);  // 索引放入缓冲区
-            if (object.isInstanced) { // 【新增】实例化绘制
-              W.gl.drawElementsInstanced(
-                +object.mode || W.gl[object.mode],
-                W.models[object.type].indices.length,
-                W.gl.UNSIGNED_SHORT,
-                0, // offset
-                object.numInstances // instanceCount
-              );
-            } else { // 原来的绘制
-              W.gl.drawElements(+object.mode || W.gl[object.mode], W.models[object.type].indices.length, 5123 /* UNSIGNED_SHORT */, 0);
-            }
           }
-          else { // 非索引绘制 (如果 cube 支持非索引，也需要类似修改)
-            if (object.isInstanced) { // 【新增】实例化绘制
-              W.gl.drawArraysInstanced(
-                +object.mode || W.gl[object.mode],
-                0, // first
-                W.models[object.type].vertices.length / 3, // count
-                object.numInstances // instanceCount
-              );
-            } else { // 原来的绘制
-              W.gl.drawArrays(+object.mode || W.gl[object.mode], 0, W.models[object.type].vertices.length / 3);
-            }
-          }
-          if (object.isInstanced) {
-            const loc = W.gl.getAttribLocation(W.program, 'instanceModelMatrix');
-            for (let i = 0; i < 4; ++i) {
-              W.gl.vertexAttribDivisor(loc + i, 0); // Reset divisor
-              // W.gl.disableVertexAttribArray(loc + i); // Optionally disable, but will be re-enabled/disabled next frame
-            }
-          }
-
-
-
           W.gl.vertexAttrib4fv(  // 设置对象的颜色
             W.gl.getAttribLocation(W.program, 'col'),  // 着色器里的 col
             W.col(object.b)
