@@ -5,7 +5,6 @@ debug = 0; // 启用着色器/程序编译日志（可选）
 
 W = {
   models: {},  // 模型列表
-  uvXnumber: {}, // 【自己添加的】纹理坐标的默认x轴重复次数
 
   // 初始化
   reset: canvas => {  // 参数为一个 canvas 元素

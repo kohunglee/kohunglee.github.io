@@ -9,7 +9,7 @@
         margin-top: -22px;
     }
 </style>
-<script src="./js/w_mod.js"></script>
+<script src="./js/backup/w_cnx.js"></script>
 <script src="./js/cannon.js"></script>
 <script src="./js/mymode.js"></script>
 <script src="./js/ccgxk_mod.js"></script>
@@ -42,6 +42,10 @@ W.pyramid({g:'posZero',size:1,x:10,rz:-90,b:"f44"});
 W.pyramid({g:'posZero',size:1,y:10,b:"4f4"});
 W.pyramid({g:'posZero', n:'test0001' ,size:1,z:10,rx:90,b:"44f"});
 W.sphere({n:'posZeroSphere',x:0, y:0, z:0, size:5, s:1, b:"#FF145B"});
+
+
+
+
 
 
 var k = ccgxk;
@@ -110,16 +114,6 @@ k.loadTexture(drawList).then(res => {
     
 })
 
-function drawRedDot(canvas) {
-    const ctx = canvas.getContext('2d');
-    const centerX = canvas.width / 2;
-    const centerY = canvas.height / 2;
-    
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, 5, 0, Math.PI * 2);
-    ctx.fillStyle = 'red';
-    ctx.fill();
-}
 
 // 日本国旗
 function drawjpflag(ctx, w, h) {
