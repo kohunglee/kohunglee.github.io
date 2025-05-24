@@ -9,7 +9,7 @@
         margin-top: -22px;
     }
 </style>
-<script src="./js/w_cnx.js"></script>
+<script src="./js/w_ins.js"></script>
 <script src="./js/cannon.js"></script>
 <script src="./js/mymode.js"></script>
 <script src="./js/ccgxk_mod.js"></script>
@@ -42,7 +42,38 @@ W.pyramid({g:'posZero',size:1,x:10,rz:-90,b:"f44"});
 W.pyramid({g:'posZero',size:1,y:10,b:"4f4"});
 W.pyramid({g:'posZero', n:'test0001' ,size:1,z:10,rx:90,b:"44f"});
 W.sphere({n:'posZeroSphere',x:0, y:0, z:0, size:5, s:1, b:"#FF145B"});
-W.billboard({n:'billboard',x:0, y:10, z:0, size:5,});
+
+
+// 定义单个立方体对象的多个实例
+const cubeInstances = [];
+  const numCubes = 1_00;
+  const spacing = 2.5;
+  for (let i = 0; i < numCubes; i++) {
+    for (let j = 0; j < numCubes; j++) {
+      cubeInstances.push({
+        x: (i - numCubes / 2 + 0.5) * spacing,
+        y: 10,
+        z: (j - numCubes / 2 + 0.5) * spacing,
+        w:Math.random() * 0.3 + 0.1 ,
+        d:1,
+        // rx: Math.random() * 360, // Optional: random rotation
+        // ry: Math.random() * 360,
+        b: '#444',
+      });
+    }
+  }
+
+  // 创建一个可以绘制许多立方体的实例立方体对象
+  W.cube({
+    n: 'manyCubes',     // 这个实例对象的唯一名称
+    b: '#444',           // 所有实例的基本颜色（如果实例具有颜色道具，则可以覆盖）
+    instances: cubeInstances, // 实例属性的数组
+    s: 0, // 为基础立方体启用光滑的阴影
+    mode: W.gl.TRIANGLES, // 标准抽奖模式
+    y:100,
+  });
+
+
 
 var k = ccgxk;
 k.initWorld();
@@ -74,8 +105,6 @@ k.addBox({  // 创建一个 旋转测试 细长物理体
 k.addBox({  // 创建地面
     DPZ : 1,
     colliGroup: 1,
-    smooth:1,
-    tiling : 10,
     name: 'groundPlane', X: 0, Y: -0.5, Z: 0,
     mass: 0, width: 10000, depth: 10000, height: 2,
     texture: marble, background: '#FFF', mixValue: 0.71,
@@ -104,9 +133,8 @@ const drawList = [
 
 k.loadTexture(drawList).then(res => {
     k.addBox({  // 创建一个立方体，测试我的纹理系统
-        DPZ : 1,
-        shape : 'cube',
-        tiling : 3,
+        DPZ : 2,
+        shape : 'sphere', smooth:1,
         name: 'testTexture', X: 60, Y: 200, Z: -60, XNumber: 5,
         mass: 100, size:90, texture: jpflag, mixValue: 0.1
     });
@@ -123,6 +151,7 @@ function drawjpflag(ctx, w, h) {
     ctx.fill();
     ctx.stroke();
 }
+
 // 随机噪音
 function drawRandomNoise(ctx, w, h) {
     ctx.fillStyle = '#8B8B83'; ctx.fillRect(0, 0, w, h);
@@ -133,6 +162,9 @@ function drawRandomNoise(ctx, w, h) {
         ctx.arc(x, y, s, 0, Math.PI*2); ctx.fill();
     }
 }
+
+
+
 // 写字
 function drawText(ctx){
     ctx.font = "30px Arial";          // 字体大小和类型

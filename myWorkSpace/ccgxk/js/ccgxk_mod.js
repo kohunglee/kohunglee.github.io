@@ -69,6 +69,7 @@ var ccgxk = {
                 name = 'k'+ this.bodyObjName++,  // 如果没指认，则使用随机数生成 ID
                 X = 5, Y = 5, Z = 5,
                 quat = null,
+                tiling = [1, 1],  // 纹理平铺
                 shape = 'cube',  // 默认形状
                 mass = 0, width = 1, depth = 1, height = 1, size = 1,
                 texture = null, smooth = 0,
@@ -105,10 +106,12 @@ var ccgxk = {
             quat = body.quaternion;
         }
         if(isVisualMode){  // 是否可视化
+            if(typeof tiling === 'number'){ tiling = [tiling, tiling] }  // 处理平铺数
             W[shape]({
                 n: name,
                 w: width, d: depth, h: height,
-                x: X, y:Y, z:Z, t: texture, s: smooth,
+                x: X, y:Y, z:Z,
+                t: texture, s: smooth, tile: tiling,
                 rx: rX, ry: rY, rz: rZ, b: background, mix: mixValue,
                 xNumber: XNumber,  // 测试一下
             });
@@ -166,7 +169,7 @@ var ccgxk = {
     calPosID : function(x, y, z, zindex){
         const foo = {2: 1000, 3: 100, 4: 40}[zindex] || 0;
         if (zindex === 2) {zindex = ''};
-        if(foo === 0){ return 0; }
+        if(foo === 0){ return 0 }
         var dirctionA = (Math.sign(x) === -1) ? 'X' : 'D';
         var dirctionB = (Math.sign(z) === -1) ? 'B' : 'N';
         var numberA = Math.ceil(x / foo * Math.sign(x));
@@ -511,7 +514,7 @@ var ccgxk = {
                 let pos = indexItem.body.position;
                 const dx = pos.x - indexItem.X;
                 const dy = pos.y - indexItem.Y;
-                var disten = Math.sqrt(dx*dx + dy*dy);  // 计算与自身上次的距离（必须大于 0.001 才能被可视化）
+                var disten = Math.sqrt(dx*dx + dy*dy);  // 计算与自身上次的距离（必须大于 某个值 才能被可视化）
                 let quat = indexItem.body.quaternion;
                 let indexItemEuler = this.quaternionToEuler(quat);
                 indexItem.quat = quat;
@@ -523,7 +526,7 @@ var ccgxk = {
                 indexItem.Z = pos.z;
             }
             if(
-                (indexItem.isVisualMode && W.next[indexItem.name] && disten > 0.001)
+                (indexItem.isVisualMode && W.next[indexItem.name] && disten > 0.00001)  // 运动幅度大于这个值，才更新
                 ||
                 indexItem.name === 'mainPlayer'
             ){

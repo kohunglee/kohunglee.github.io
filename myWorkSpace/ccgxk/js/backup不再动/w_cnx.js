@@ -36,7 +36,7 @@ W = {
               v_pos = bb.z > 0.                         // 设置v_pos可变量：
               ? m[3] + eye * (pos * bb)                 // 【广告牌部分】广告牌总是朝向相机：p * v * 距离 + 眼睛 * (位置 * [w, h, 1.0, 0.0])
               : m * pos                                 // 其他对象正常旋转：p * v * m * 位置
-            );                                          
+            );                     
             v_col = col;                                // 传给【片段着色器】的部分
             v_uv = uv;
             v_normal = transpose(inverse(m)) * normal;  // 重新计算法线以匹配模型变换
