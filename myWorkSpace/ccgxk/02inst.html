@@ -11,8 +11,6 @@
 </style>
 <script src="./js/w_ins.js"></script>
 <script src="./js/cannon.js"></script>
-<script src="./js/mymode.js"></script>
-<script src="./js/ccgxk_mod.js"></script>
 <img src='./img/texture.jpeg' id=marble hidden>
 <canvas id=c width=320 height=300></canvas>
 <div id="fpsInfo"></div>
@@ -24,14 +22,16 @@
 <span id="posIDMVP"></span>
 <canvas id="posMap" width="100" height="100"></canvas>
 <!-- <span> <a href="http://127.0.0.1:5505/emloglab/workspace/%E4%B8%89%E7%BB%B4%E6%B2%99%E7%9B%92/obj.html">obj</a></span> -->
-<script>
+<script type="module">
+import ccgxkApp from './js/tryjs/ccgxk.js';
+
 // w.js 初始化
 c.width = window.innerWidth - 100
 c.height = window.innerHeight - 100
 W.reset(c);
 W.ambient(0.7);
 W.light({ x: 0.5, y: -0.3, z: -0.5});
-W.clearColor("8Af");
+W.clearColor("#F0FFA3");
 
 // 绘制原点坐标轴
 W.group({n:'posZero',x:0,y:1,z:0});
@@ -51,14 +51,16 @@ const cubeInstances = [];
   for (let i = 0; i < numCubes; i++) {
     for (let j = 0; j < numCubes; j++) {
       cubeInstances.push({
-        x: (i - numCubes / 2 + 0.5) * spacing,
-        y: 10,
-        z: (j - numCubes / 2 + 0.5) * spacing,
-        w:Math.random() * 0.3 + 0.1 ,
-        d:1,
+        x: Math.floor( Math.random() * 9900 + 1 - 5000),
+        y: Math.floor( Math.random() * 500),
+        z: Math.floor( Math.random() * 9900 + 1 - 5000),
+        // w: Math.floor( Math.random() * 30 + 1),
+        w: 1,
+        d: 1,
+        h: Math.floor( Math.random() * 5 + 1),
+        b:`#${Math.floor(Math.random() * 16777216).toString(16).padStart(6, '0')}`,
         // rx: Math.random() * 360, // Optional: random rotation
         // ry: Math.random() * 360,
-        b: '#444',
       });
     }
   }
@@ -66,16 +68,16 @@ const cubeInstances = [];
   // 创建一个可以绘制许多立方体的实例立方体对象
   W.cube({
     n: 'manyCubes',     // 这个实例对象的唯一名称
-    b: '#444',           // 所有实例的基本颜色（如果实例具有颜色道具，则可以覆盖）
+    b: '#AA80FF',           // 所有实例的基本颜色（如果实例具有颜色道具，则可以覆盖）
     instances: cubeInstances, // 实例属性的数组
     s: 0, // 为基础立方体启用光滑的阴影
-    mode: W.gl.TRIANGLES, // 标准抽奖模式
+    mode: W.gl.TRIANGLES, // 标准模式
     y:100,
   });
 
 
 
-var k = ccgxk;
+var k = ccgxkApp;
 k.initWorld();
 var list = k.bodylist;
 
@@ -105,6 +107,7 @@ k.addBox({  // 创建一个 旋转测试 细长物理体
 k.addBox({  // 创建地面
     DPZ : 1,
     colliGroup: 1,
+    tiling : 3,
     name: 'groundPlane', X: 0, Y: -0.5, Z: 0,
     mass: 0, width: 10000, depth: 10000, height: 2,
     texture: marble, background: '#FFF', mixValue: 0.71,
@@ -124,7 +127,7 @@ for(var i = 0; i < 100; i++){
     });
 }
 
-// 绘制模型
+// 绘制纹理
 const drawList = [
     {func:drawRandomNoise, id:'xnoise'},
     {func:drawjpflag, id:'jpflag'},
@@ -133,8 +136,8 @@ const drawList = [
 
 k.loadTexture(drawList).then(res => {
     k.addBox({  // 创建一个立方体，测试我的纹理系统
-        DPZ : 2,
-        shape : 'sphere', smooth:1,
+        DPZ : 1,
+        tiling : 3,
         name: 'testTexture', X: 60, Y: 200, Z: -60, XNumber: 5,
         mass: 100, size:90, texture: jpflag, mixValue: 0.1
     });
@@ -190,5 +193,6 @@ function drawRedDot(t){var l=t.getContext("2d"),e=t.width/2,i=t.height/2,a=k.mai
     r=W.current.mainPlayer,e=calculateNorthAngle(r.rx,r.ry,r.rz);l.lineTo(t-100*Math.sin(e),a-100*Math.cos(e)),l.stroke()}
 
 
-
+window.k = k;
+window.list = list;
 </script>
