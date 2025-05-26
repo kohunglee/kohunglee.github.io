@@ -1,7 +1,7 @@
 // WebGL框架
 // ===============
 
-W = {
+const W = {
   models: {},
   instanceMatrixBuffers: {}, // 实例化对象的矩阵数据
 
@@ -21,7 +21,7 @@ W = {
     W.program = W.gl.createProgram();
     W.gl.enable(2884);  // 隐藏不可见面
     
-    
+    var t;
     W.gl.shaderSource(
           // 顶点着色器
           t = W.gl.createShader(35633 ),
@@ -127,7 +127,6 @@ W = {
         } else {
           state.isInstanced = false;
         }
-
         if(state.fov){  // 根据 fov 计算【投影矩阵】
           var viewLimit = W.viewLimit;
           W.projection =
@@ -371,8 +370,8 @@ W.smooth = (state, dict = {}, vertices = [], iterate, iterateSwitch, i, j, A, B,
     A = vertices[Ai = iterateSwitch ? W.models[state.type].indices[j] : j];
     B = vertices[Bi = iterateSwitch ? W.models[state.type].indices[j+1] : j+1];
     C = vertices[Ci = iterateSwitch ? W.models[state.type].indices[j+2] : j+2];
-    AB = [B[0] - A[0], B[1] - A[1], B[2] - A[2]];
-    BC = [C[0] - B[0], C[1] - B[1], C[2] - B[2]];
+    var AB = [B[0] - A[0], B[1] - A[1], B[2] - A[2]];
+    var BC = [C[0] - B[0], C[1] - B[1], C[2] - B[2]];
     normal = i > j ? [0,0,0] : [AB[1] * BC[2] - AB[2] * BC[1], AB[2] * BC[0] - AB[0] * BC[2], AB[0] * BC[1] - AB[1] * BC[0]];
     dict[A[0]+"_"+A[1]+"_"+A[2]] ||= [0,0,0];
     dict[B[0]+"_"+B[1]+"_"+B[2]] ||= [0,0,0];
@@ -511,3 +510,5 @@ W.add("pyramid", {
   }
   W.add("sphere", {vertices, uv, indices});
 })();
+
+export default W;

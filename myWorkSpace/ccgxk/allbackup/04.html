@@ -1,0 +1,178 @@
+<meta http-equiv="cache-control" content="no-cache">
+<meta http-equiv="expires" content="0">
+<meta http-equiv="pragma" content="no-cache">
+<style>
+    body{margin: 0;}
+    #posMap {
+        position: fixed;
+        right: 230px;
+        margin-top: -22px;
+    }
+</style>
+<script src="./js/cannon.js"></script>
+<img src='./img/texture.jpeg' id=marble hidden>
+<canvas id=c width=320 height=300></canvas>
+<div id="fpsInfo"></div>
+<span id="shiftInfo"></span>
+<span id="posInfo"></span>
+<span id="metrics"></span>
+<span id="cpuInfo"></span>
+<span id="modListCount"></span>
+<span id="posIDMVP"></span>
+<canvas id="posMap" width="100" height="100"></canvas>
+<!-- <span> <a href="http://127.0.0.1:5505/emloglab/workspace/%E4%B8%89%E7%BB%B4%E6%B2%99%E7%9B%92/obj.html">obj</a></span> -->
+<script type="module">
+
+import ccgxkApp from './js/tryjs/ccgxk.js';
+
+// 初始化沙盒
+var k = ccgxkApp;
+k.initWorld(c);
+var list = k.bodylist;
+
+// 定义单个立方体对象的多个实例
+const cubeInstances = [];
+  const numCubes = 1_00;
+  const spacing = 2.5;
+  const random = k.genPR(123, numCubes * numCubes * 4);  // 伪随机数
+  for (let i = 0; i < numCubes; i++) {
+    for (let j = 0; j < numCubes; j++) {
+      var index = i * numCubes + j;
+      cubeInstances.push({
+        x: Math.floor( random[index] * 990 + 1 - 500),
+        y: Math.floor( random[index + 1] * 50),
+        z: Math.floor( random[index + 2] * 990 + 1 - 500),
+        w: 1,
+        d: 1,
+        h: Math.floor( random[index + 3] * 5 + 1),
+        b:`#${Math.floor(random[index + 4] * 16777216).toString(16).padStart(6, '0')}`,
+      });
+    }
+  }
+
+  // 创建一个可以绘制许多立方体的实例立方体对象
+  k.W.sphere({
+    n: 'manyCubes',
+    b: '#AA80FF',           // 所有实例的基本颜色
+    instances: cubeInstances, // 实例属性的数组
+    s: 1, // 为基础立方体启用光滑的阴影
+  });
+
+k.mainVPlayer = k.addBox({  // 创建一个立方体，并设置为主角
+    name: 'mainPlayer', DPZ : 1,
+    colliGroup: 1,
+    // X: cPos().x + 15, Y: 20, Z: cPos().z + 30,
+    X:4.25, Y:1.00, Z:12.09,
+    rX: 0, rY: 0, rZ: 0, size:1,
+    mass: 50, texture: marble
+});
+
+k.addBox({  // 创建一个 旋转测试 细长物理体
+    DPZ : 2,
+    colliGroup: 1,
+    name: 'longThin', X: 20, Y: 10, Z: -30,
+    mass: 1, width: 40, depth: 2, height: 2, texture: marble
+});
+
+k.addBox({  // 创建一个 旋转测试 细长物理体
+    DPZ : 1,
+    colliGroup: 2,
+    name: 'longThin02', X: 20, Y: 10, Z: -50,
+    mass: 1, width: 40, depth: 2, height: 2, texture: marble
+});
+
+k.addBox({  // 创建地面
+    DPZ : 1,
+    colliGroup: 1,
+    tiling : 10,
+    name: 'groundPlane', X: 0, Y: -0.5, Z: 0,
+    mass: 0, width: 10000, depth: 10000, height: 2,
+    texture: marble, background: '#287A17', mixValue: 0.71,
+    XNumber: 10
+});
+
+// 随机生成 n 个模型
+var yVlaue = 10;
+for(var i = 0; i < 100; i++){
+    k.addBox({
+        DPZ : 1,
+        isPhysical: true,
+        X: Math.floor( Math.random() * 9900 + 1 - 5000), Y: yVlaue, Z: Math.floor( Math.random() * 9900 + 1 - 5000),
+        mass: 0, width: Math.floor( Math.random() * 30 + 1), depth: 5, height: Math.floor( Math.random() * 5 + 1),
+        background: `#${Math.floor(Math.random() * 16777216).toString(16).padStart(6, '0')}`, mixValue: 0.71,
+        texture: marble,
+    });
+}
+
+// 绘制纹理
+const drawList = [
+    {func:drawRandomNoise, id:'xnoise'},
+    {func:drawjpflag, id:'jpflag'},
+    {func:drawText, id:'xjapangood'}
+];
+
+k.loadTexture(drawList).then(res => {
+    k.addBox({  // 创建一个立方体，测试我的纹理系统
+        DPZ : 1,
+        tiling : 3,
+        name: 'testTexture', X: 60, Y: 200, Z: -60, XNumber: 5,
+        mass: 100, size:90, texture: jpflag, mixValue: 0.1
+    });
+    
+})
+
+
+// 日本国旗
+function drawjpflag(ctx, w, h) {
+    const radius = 150;
+    ctx.beginPath();
+    ctx.arc(w / 2, h / 2, radius, 0, Math.PI * 2);
+    ctx.fillStyle = 'red';
+    ctx.fill();
+    ctx.stroke();
+}
+
+// 随机噪音
+function drawRandomNoise(ctx, w, h) {
+    ctx.fillStyle = '#8B8B83'; ctx.fillRect(0, 0, w, h);
+    for(let i = 0; i < 50; i++) {
+        const x = Math.random()*w, y = Math.random()*h;
+        const s = Math.random()*30, c = `rgba(10,0,10,${Math.random()*0.3})`;
+        ctx.fillStyle = c; ctx.beginPath();
+        ctx.arc(x, y, s, 0, Math.PI*2); ctx.fill();
+    }
+}
+
+
+
+// 写字
+function drawText(ctx){
+    ctx.font = "30px Arial";          // 字体大小和类型
+    ctx.fillStyle = "red";            // 填充颜色
+    ctx.strokeStyle = "blue";         // 描边颜色
+    ctx.textAlign = "center";         // 水平对齐方式（left/center/right）
+    ctx.textBaseline = "middle";      // 垂直对齐方式（top/middle/bottom）
+    ctx.fillText("日本狗香", 150, 50);
+}
+
+// 一个能跑起来的计算角度的函数，凑合用吧
+function calculateNorthAngle(t,a,h){var t=-t*Math.PI/180,a=-a*Math.PI/180,h=h*Math.PI/180,M=Math.cos(t),
+    t=Math.sin(t),o=Math.cos(a),a=Math.sin(a),h=(Math.cos(h),Math.sin(h),a*M),a=-t,t=o*M,o=[0,0,1],M=t,
+    a=Math.sqrt(Math.pow(h,2)+Math.pow(a,2)+Math.pow(t,2));let n=Math.acos(Math.min(1,Math.max(-1,M/a)));
+    return n=(n=h*o[2]-t*o[0]<0?-n:n)>-Math.PI/2&&n<Math.PI/2?2*Math.PI-n:n}
+
+// 绘制小地图
+const mapUpdatax = setInterval(() => { drawRedDot(posMap); }, 100);
+function drawRedDot(t){var l=t.getContext("2d"),e=t.width/2,i=t.height/2,a=k.mainVPlayer.X/5e3*e,r=k.mainVPlayer.Z/5e3*i,
+    h=(l.clearRect(0,0,t.width,t.height),t.width/10);l.fillStyle="#fff",l.fillRect(0,0,t.width,t.height),l.fillStyle="#F5F7FF";
+    for(let e=0;e<10;e++)for(let t=0;t<10;t++)(e+t)%2==0&&l.fillRect(e*h,t*h,h,h);t=e+a,a=i+r,l.beginPath(),l.arc(e,i,2,0,2*Math.PI),
+    l.arc(t,a,1,0,2*Math.PI),l.fillStyle="red",l.fill(),l.strokeStyle="#9AFF4D",l.lineWidth=1,l.beginPath(),l.moveTo(t,a),
+    r=k.W.current.mainPlayer,e=calculateNorthAngle(r.rx,r.ry,r.rz);l.lineTo(t-100*Math.sin(e),a-100*Math.cos(e)),l.stroke()}
+
+
+window.k = k;
+window.list = list;
+
+
+
+</script>
