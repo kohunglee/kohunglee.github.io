@@ -5,21 +5,30 @@
     body{margin: 0;}
     #posMap {
         position: fixed;
-        right: 230px;
-        margin-top: -22px;
+        right: 50px;
+        margin-top: -100px;
+        opacity: 0.8;
+    }
+    .myHUD {
+        position: absolute;
+        bottom: 0;
+        padding: 1em;
+        color: #ffffff;
     }
 </style>
 <script src="cannon.js"></script>
 <img src='./img/texture.jpeg' id=marble hidden>
 <canvas id=c width=320 height=300></canvas>
-<div id="fpsInfo"></div>
-<span id="shiftInfo"></span>
-<span id="posInfo"></span>
-<span id="metrics"></span>
-<span id="cpuInfo"></span>
-<span id="modListCount"></span>
-<span id="posIDMVP"></span>
-<canvas id="posMap" width="100" height="100"></canvas>
+<div id="myHUD" class="myHUD">
+    <div id="fpsInfo"></div>
+    <span id="shiftInfo"></span>
+    <span id="posInfo"></span>
+    <span id="metrics"></span>
+    <span id="cpuInfo"></span>
+    <span id="modListCount"></span>
+    <span id="posIDMVP"></span>
+    <canvas id="posMap" width="100" height="100"></canvas>
+</div>
 <script type="module">
 
 import ccgxkApp from '../src/ccgxk.js';
@@ -31,16 +40,16 @@ var list = k.bodylist;
 
 // 定义单个立方体对象的多个实例
 const cubeInstances = [];
-  const numCubes = 1_00;
+  const numCubes = 1_0;
   const spacing = 2.5;
   const random = k.genPR(123, numCubes * numCubes * 4);  // 伪随机数
   for (let i = 0; i < numCubes; i++) {
     for (let j = 0; j < numCubes; j++) {
       var index = i * numCubes + j;
       cubeInstances.push({
-        x: Math.floor( random[index] * 990 + 1 - 500),
+        x: Math.floor( random[index] * 99 + 1 - 50),
         y: Math.floor( random[index + 1] * 50),
-        z: Math.floor( random[index + 2] * 990 + 1 - 500),
+        z: Math.floor( random[index + 2] * 99 + 1 - 50),
         w: 1,
         d: 1,
         h: Math.floor( random[index + 3] * 5 + 1),
@@ -50,17 +59,15 @@ const cubeInstances = [];
   }
 
   // 创建一个可以绘制许多立方体的实例立方体对象
-  k.W.sphere({
+  k.W.cube({
     n: 'manyCubes',
-    b: '#AA80FF',           // 所有实例的基本颜色
     instances: cubeInstances, // 实例属性的数组
-    s: 1, // 为基础立方体启用光滑的阴影
+    texture: marble,
   });
 
 k.mainVPlayer = k.addBox({  // 创建一个立方体，并设置为主角
     name: 'mainPlayer', DPZ : 1,
     colliGroup: 1,
-    // X: cPos().x + 15, Y: 20, Z: cPos().z + 30,
     X:4.25, Y:1.00, Z:12.09,
     rX: 0, rY: 0, rZ: 0, size:1,
     mass: 50, texture: marble

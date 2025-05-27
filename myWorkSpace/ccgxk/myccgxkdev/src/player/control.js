@@ -71,6 +71,12 @@ export default {
                 isMouseMove = false;
             }
         }
+        window.addEventListener('resize', () => {  // 重置窗口大小
+            c.width = window.innerWidth;
+            c.height = window.innerHeight;
+            this.W.resetView();
+        });
+
     },
 
     // 键盘事件处理逻辑

@@ -4,6 +4,7 @@
 const W = {
   models: {},
   instanceMatrixBuffers: {}, // 实例化对象的矩阵数据
+  instanceColorBuffers: {},  // 实例化颜色数据
 
   // 初始化
   reset: canvas => {
@@ -20,6 +21,9 @@ const W = {
     W.gl.activeTexture(33984);
     W.program = W.gl.createProgram();
     W.gl.enable(2884);  // 隐藏不可见面
+    W.instanceColorBuffers = {};  // 初始化颜色实例化数据
+    W.lastFrame = 0;
+    W.fps = 0;       // 初始化 FPS 变量
     
     var t;
     W.gl.shaderSource(
@@ -110,20 +114,25 @@ const W = {
           state.isInstanced = true;
           state.numInstances = state.instances.length;
           const instanceMatrices = [];
-          for (const instanceProps of state.instances) {
+          const instanceColors = [];
+          for (const instanceProps of state.instances) {  // 实例顶点
             const m = new DOMMatrix();
             m.translateSelf(instanceProps.x || 0, instanceProps.y || 0, instanceProps.z || 0)
             .rotateSelf(instanceProps.rx || 0, instanceProps.ry || 0, instanceProps.rz || 0)
             .scaleSelf(instanceProps.w || 1, instanceProps.h || 1, instanceProps.d || 1);
             instanceMatrices.push(...m.toFloat32Array());
           }
+          for (const p of state.instances) {  // 实例颜色
+            instanceColors.push(...W.col(p.b || '888'));
+          }
           const matrixData = new Float32Array(instanceMatrices);
-          
           const buffer = W.gl.createBuffer();
           W.gl.bindBuffer(W.gl.ARRAY_BUFFER, buffer);
           W.gl.bufferData(W.gl.ARRAY_BUFFER, matrixData, W.gl.STATIC_DRAW);
           W.instanceMatrixBuffers[state.n] = buffer;
-          state.instances = null;  // 清理，因为我们不再需要JS端的这个大数组
+          W.gl.bindBuffer(W.gl.ARRAY_BUFFER, W.instanceColorBuffers[state.n] = W.gl.createBuffer());
+          W.gl.bufferData(W.gl.ARRAY_BUFFER, new Float32Array(instanceColors), W.gl.STATIC_DRAW);
+          state.instances = null;  // 清理，因为我们不再需要 JS 端的这个大数组
         } else {
           state.isInstanced = false;
         }
@@ -172,6 +181,7 @@ const W = {
   // 绘制场景
   draw: (now, dt, v, i, transparent = []) => {
         dt = now - W.lastFrame;
+        W.fps = 1000 / dt; // 计算 FPS
         W.lastFrame = now;
         requestAnimationFrame(W.draw);
         if(W.next.camera.g){  W.render(W.next[W.next.camera.g], dt, 1); }
@@ -254,7 +264,6 @@ const W = {
             W.gl.vertexAttribDivisor(buffer, 0);
           }
           W.gl.uniform1i(W.gl.getUniformLocation(W.program, 'isInstanced'), object.isInstanced ? 1 : 0);  // 实例化布尔值->着色器
-
           if (object.isInstanced && W.instanceMatrixBuffers[object.n]) {  // 实例化对象的各种数据
             const instanceMatrixBuffer = W.instanceMatrixBuffers[object.n];
             W.gl.bindBuffer(W.gl.ARRAY_BUFFER, instanceMatrixBuffer);
@@ -267,8 +276,6 @@ const W = {
               W.gl.vertexAttribDivisor(currentLoc, 1);
             }
           }
-
-
           W.gl.uniform4f(  // o选项->着色器（o）
             W.gl.getUniformLocation(W.program, 'o'),
             object.s,
@@ -284,9 +291,14 @@ const W = {
             0
           );
           const colorAttribLoc = W.gl.getAttribLocation(W.program, 'col');
-          W.gl.vertexAttrib4fv(colorAttribLoc, W.col(object.b || '888'));  // 颜色->着色器（col）
-          if (object.isInstanced) {
-            W.gl.vertexAttribDivisor(colorAttribLoc, 0);  // 设置实例化对象颜色 Divisor
+          
+          if (object.isInstanced) {  // （实例化和普通）颜色->着色器（col）
+            W.gl.enableVertexAttribArray(colorAttribLoc);
+            W.gl.bindBuffer(W.gl.ARRAY_BUFFER, W.instanceColorBuffers[object.n]);
+            W.gl.vertexAttribPointer(colorAttribLoc, 4, W.gl.FLOAT, false, 0, 0);
+            W.gl.vertexAttribDivisor(colorAttribLoc, 1);
+          } else {
+            W.gl.vertexAttrib4fv(colorAttribLoc, W.col(object.b || '888'));
           }
           if(W.models[object.type].indicesBuffer){  // 存在索引的绘制
             W.gl.bindBuffer(34963 , W.models[object.type].indicesBuffer);
@@ -311,6 +323,8 @@ const W = {
               W.gl.vertexAttribDivisor(loc + i, 0);
               W.gl.disableVertexAttribArray(loc + i);
             }
+            W.gl.vertexAttribDivisor(colorAttribLoc, 0);
+            W.gl.disableVertexAttribArray(colorAttribLoc);
           }
         }
   },
@@ -347,6 +361,12 @@ const W = {
     W.models[name] = objects;
     if(objects.normals){ W.models[name].customNormals = 1 }
     W[name] = settings => W.setState(settings, name);
+  },
+
+  // 根据新的 canvas 大小重置画面
+  resetView : () => {
+    W.gl.viewport(0, 0, W.gl.canvas.width, W.gl.canvas.height);
+    W.setState({ n: 'camera', fov: W.next.camera.fov });
   },
   
   // 内置对象

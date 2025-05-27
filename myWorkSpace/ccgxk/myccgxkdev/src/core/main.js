@@ -30,8 +30,8 @@ export default {
     // 初始化 W 引擎
     initW : function(c){
         const W = wjs;
-        c.width = window.innerWidth - 100;
-        c.height = window.innerHeight - 100;
+        c.width = window.innerWidth;
+        c.height = window.innerHeight;
         W.reset(c);
         W.ambient(0.7);
         W.light({ x: 0.5, y: -0.3, z: -0.5});
