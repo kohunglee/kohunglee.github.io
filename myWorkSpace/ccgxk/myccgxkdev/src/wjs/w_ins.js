@@ -171,8 +171,7 @@ const W = {
         }
         if(!state.t){  // mix 默认为 1
           state.mix = 1;
-        }
-        else if(state.t && !state.mix){ // 有纹理，mix 为 0
+        } else if(state.t && !state.mix){ // 有纹理，mix 为 0
           state.mix = 0;
         }
         W.next[state.n] = state;  // 下一帧的状态
