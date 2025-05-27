@@ -30,7 +30,7 @@ const W = {
           // 顶点着色器
           t = W.gl.createShader(35633 ),
           `#version 300 es
-          precision highp float;                        
+          precision lowp float;                        
           in vec4 pos, col, uv, normal;                 // 普通模型的 位置、颜色、纹理坐标、法线...
           in mat4 instanceModelMatrix;                  // 实例化模型的 模型
           uniform mat4 pv, eye, m, im;                  // 矩阵：投影 * 视图、视线、模型、模型逆矩阵
@@ -51,7 +51,7 @@ const W = {
             );
             v_col = col;
             v_uv = uv;
-            v_normal = transpose(inverse(currentModelMatrix)) * normal; // 使用实例矩阵
+            v_normal = transpose(isInstanced ? inverse(currentModelMatrix) : im) * normal;  // 必要时使用实例矩阵
           }`
         );
 
@@ -62,7 +62,7 @@ const W = {
         W.gl.shaderSource(
           t = W.gl.createShader(35632 ),
           `#version 300 es
-          precision highp float;                  
+          precision lowp float;                  
           in vec4 v_pos, v_col, v_uv, v_normal;
           uniform vec3 light;
           uniform vec2 tiling;
@@ -117,9 +117,14 @@ const W = {
           const instanceColors = [];
           for (const instanceProps of state.instances) {  // 实例顶点
             const m = new DOMMatrix();
-            m.translateSelf(instanceProps.x || 0, instanceProps.y || 0, instanceProps.z || 0)
+            m.translateSelf(instanceProps.x + (state.x|0) | 0,
+                            instanceProps.y + (state.y|0) | 0,
+                            instanceProps.z + (state.z|0) | 0)
             .rotateSelf(instanceProps.rx || 0, instanceProps.ry || 0, instanceProps.rz || 0)
             .scaleSelf(instanceProps.w || 1, instanceProps.h || 1, instanceProps.d || 1);
+
+            // m.preMultiplySelf(state.m); // <-- 核心修改行1/2
+
             instanceMatrices.push(...m.toFloat32Array());
           }
           for (const p of state.instances) {  // 实例颜色
