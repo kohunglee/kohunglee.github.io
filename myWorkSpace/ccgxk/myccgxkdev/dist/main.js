@@ -894,7 +894,7 @@ __webpack_require__.r(__webpack_exports__);
                 if(isPhysical){
                     this.world.removeBody(indexItem.body);  // 删除物理计算体
                 }
-                W.delete(name);  // 删除可视化物体
+                this.W.delete(name);  // 删除可视化物体
                 this.hiddenBodylist.push({  // 将删除的物体放入隐藏列表
                     posID : indexItem.posID,
                     quat : indexItem.quat,
@@ -1320,15 +1320,6 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _obj_addobj_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(7);
 /* harmony import */ var _obj_addcustobj_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(8);
 /* harmony import */ var _core_animate_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(9);
-
-
-
-
-
-
-
-
-
 
 
 // 主对象

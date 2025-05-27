@@ -18,3 +18,9 @@ module.exports = {
     })
   ],
 };
+
+/*
+
+npm run build  构造命令
+
+*/
