@@ -9,12 +9,16 @@ var SHADOW_VSHADER_SOURCE =
 
 // Fragment shader program for generating a shadow map // 这是电影的第一部分，由“光影摄影师”使用的“片元着色器”剧本。
 var SHADOW_FSHADER_SOURCE =
-  '#ifdef GL_ES\n' +             // 魔法世界的规定：
-  'precision mediump float;\n' + // 告诉GPU：“我只需要中等精度，别浪费墨水！”
-  '#endif\n' +                   // 魔法规定结束。
-  'void main() {\n' +            // 片元着色器小精灵的“表演开始”：
-  '  gl_FragColor = vec4(gl_FragCoord.z, 0.0, 0.0, 0.0);\n' + // 将当前片元（像素点）从光源看过去的“深度”（距离），秘密地写进输出颜色的“红色通道”（R），其他通道就放空吧。
-  '}\n';                         // 小精灵“表演结束”。
+  '#ifdef GL_ES\n' +
+  'precision mediump float;\n' +
+  '#endif\n' +
+  'void main() {\n' +
+  '  const vec4 bitShift = vec4(1.0, 256.0, 256.0 * 256.0, 256.0 * 256.0 * 256.0);\n' +
+  '  const vec4 bitMask = vec4(1.0/256.0, 1.0/256.0, 1.0/256.0, 0.0);\n' +
+  '  vec4 rgbaDepth = fract(gl_FragCoord.z * bitShift);\n' + // Calculate the value stored into each byte
+  '  rgbaDepth -= rgbaDepth.gbaa * bitMask;\n' + // Cut off the value which do not fit in 8 bits
+  '  gl_FragColor = rgbaDepth;\n' +
+  '}\n';
 
 // Vertex shader program for regular drawing // 这是电影的第二部分，由“主摄像师”使用的“顶点着色器”剧本。
 var VSHADER_SOURCE =
@@ -49,8 +53,8 @@ var FSHADER_SOURCE =
   '  gl_FragColor = vec4(v_Color.rgb * visibility, v_Color.a);\n' + // 最后，把我的“服装颜色”乘以“可见度”，就是我最终的颜色啦！
   '}\n';                                                               // 小精灵“表演结束”。
 
-var OFFSCREEN_WIDTH = OFFSCREEN_HEIGHT = 2**8; // 光影摄影师的“照片”（阴影贴图）尺寸，越大越清晰，但越耗资源。
-var LIGHT_X = 0, LIGHT_Y = 7, LIGHT_Z = 2; // 光源的“灯位”：我们的“太阳”在这个舞台的哪里？
+var OFFSCREEN_WIDTH = OFFSCREEN_HEIGHT = 2**10; // 光影摄影师的“照片”（阴影贴图）尺寸，越大越清晰，但越耗资源。
+var LIGHT_X = 0, LIGHT_Y = 40, LIGHT_Z = 2; // 光源的“灯位”：我们的“太阳”在这个舞台的哪里？
 
 function main() { // 导演的“大制作”开始了！
   // Retrieve <canvas> element // 找到我们的“大屏幕” (`canvas` 元素)。
@@ -147,6 +151,8 @@ function main() { // 导演的“大制作”开始了！
   };
   tick(); // 动画开始，导演：“开拍！”
 }
+
+
 
 // Coordinate transformation matrix // 这是一个用于处理各种“姿态变化”的矩阵团队。
 var g_modelMatrix = new Matrix4(); // 全局的“模型姿态”记录本，记录演员的平移、旋转、缩放。
