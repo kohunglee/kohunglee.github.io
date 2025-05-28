@@ -83,7 +83,7 @@ export default {
     _handleKey : function(e, value) {
         var action = this.keyMap[e.key.toLowerCase()];
         if (action) { this.keys[action] = value; }
-        if ((e.keyCode === 32 || e.key.toLowerCase() === 'e') && this.mainVPlayer !== null) {  // e 或 空格键
+        if ((e.keyCode === 32 || e.key.toLowerCase() === 'e') && this.mainVPlayer !== null) {  // e 或 空格键，飞翔
             var limit = this.mainVPlayer.body.position.y <= 10000;
             if (this.keys.jumping === 0 && limit) {
                 this.mainVPlayer.body.velocity.y = 10;

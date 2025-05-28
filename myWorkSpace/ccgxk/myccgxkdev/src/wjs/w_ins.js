@@ -123,9 +123,6 @@ const W = {
                             instanceProps.z + (state.z|0) | 0)
             .rotateSelf(instanceProps.rx || 0, instanceProps.ry || 0, instanceProps.rz || 0)
             .scaleSelf(instanceProps.w || 1, instanceProps.h || 1, instanceProps.d || 1);
-
-            // m.preMultiplySelf(state.m); // <-- 核心修改行1/2
-
             instanceMatrices.push(...m.toFloat32Array());
           }
           for (const p of state.instances) {  // 实例颜色

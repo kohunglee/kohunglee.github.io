@@ -1,10 +1,10 @@
-// cuon-utils.js (c) 2012 kanda and matsuda
+// Cuon-utils.js（C）2012 Kanda and Matsuda
 /**
- * Create a program object and make current
- * @param gl GL context
- * @param vshader a vertex shader program (string)
- * @param fshader a fragment shader program (string)
- * @return true, if the program object was created and successfully made current 
+ * 创建一个程序对象并使当前
+ * @param gl GL上下文
+ * @param vshader 顶点着色器程序（字符串）
+ * @param fshader 片段着色器程序（字符串）
+ * @return 是的，如果创建程序对象并成功地使当前 
  */
 function initShaders(gl, vshader, fshader) {
   var program = createProgram(gl, vshader, fshader);
@@ -20,11 +20,11 @@ function initShaders(gl, vshader, fshader) {
 }
 
 /**
- * Create the linked program object
- * @param gl GL context
- * @param vshader a vertex shader program (string)
- * @param fshader a fragment shader program (string)
- * @return created program object, or null if the creation has failed
+ * 创建链接程序对象
+ * @param gl GL上下文
+ * @param vshader 顶点着色器程序（字符串）
+ * @param fshader 片段着色器程序（字符串）
+ * @return 创建的程序对象，如果创建失败了
  */
 function createProgram(gl, vshader, fshader) {
   // Create shader object
@@ -61,11 +61,11 @@ function createProgram(gl, vshader, fshader) {
 }
 
 /**
- * Create a shader object
- * @param gl GL context
- * @param type the type of the shader object to be created
- * @param source shader program (string)
- * @return created shader object, or null if the creation has failed.
+ * 创建着色器对象
+ * @param gl GL上下文
+ * @param type 要创建的着色器对象的类型
+ * @param source 着色器程序（字符串）
+ * @return 创建的着色器对象，如果创建失败，则为空。
  */
 function loadShader(gl, type, source) {
   // Create shader object
@@ -94,10 +94,10 @@ function loadShader(gl, type, source) {
 }
 
 /** 
- * Initialize and get the rendering for WebGL
- * @param canvas <cavnas> element
- * @param opt_debug flag to initialize the context for debugging
- * @return the rendering context for WebGL
+ * 初始化并获取WebGL的渲染
+ * @param canvas <cavnas>元素
+ * @param opt_debug 标志以初始化调试上下文
+ * @return WebGL的渲染上下文
  */
 function getWebGLContext(canvas, opt_debug) {
   // Get the rendering context for WebGL

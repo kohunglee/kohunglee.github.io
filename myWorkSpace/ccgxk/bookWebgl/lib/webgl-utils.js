@@ -1,69 +1,69 @@
 /*
- * Copyright 2010, Google Inc.
- * All rights reserved.
+ * 版权所有2010，Google Inc.
+ * 版权所有。
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are
- * met:
+ * 在源和二进制形式中重新分配和使用，有或没有
+ * 如果以下条件为
+ * 大都会：
  *
- *     * Redistributions of source code must retain the above copyright
- * notice, this list of conditions and the following disclaimer.
- *     * Redistributions in binary form must reproduce the above
- * copyright notice, this list of conditions and the following disclaimer
- * in the documentation and/or other materials provided with the
- * distribution.
- *     * Neither the name of Google Inc. nor the names of its
- * contributors may be used to endorse or promote products derived from
- * this software without specific prior written permission.
+ *     * 源代码的再分配必须保留上述版权
+ * 请注意，此条件列表和以下免责声明。
+ *     * 以二进制形式重新分配必须复制上述
+ * 版权通知，此条件列表和以下免责声明
+ * 在文档和/或其他材料中
+ * 分配。
+ *     * Google Inc.的名称也不是其名称
+ * 贡献者可用于认可或推广从
+ * 该软件未经特定事先书面许可。
  *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
- * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * 该软件由版权所有者和贡献者提供
+ * “按原样”以及任何明示或暗示的保证，包括但不
+ * 仅限于适销性和健身的隐含保证
+ * 特定目的被否决。在任何情况下都不会版权
+ * 所有者或贡献者对任何直接，间接，偶然的责任负责
+ * 特殊，示例性或结果损失（包括但不包括
+ * 仅限于替代商品或服务的采购；失去使用，
+ * 数据或利润；或业务中断）但是
+ * 责任理论，无论是合同，严格的责任还是侵权理论
+ * （包括疏忽或其他）以任何方式出现
+ * 即使告知这种损坏的可能性，该软件也是如此。
  */
 
 
 /**
- * @fileoverview This file contains functions every webgl program will need
- * a version of one way or another.
+ * @fileoverview 该文件包含每个WebGL程序都需要的功能
+ * 一种或另一种方式的版本。
  *
- * Instead of setting up a context manually it is recommended to
- * use. This will check for success or failure. On failure it
- * will attempt to present an approriate message to the user.
+ * 而不是手动设置上下文，建议
+ * 使用。这将检查成功或失败。关于失败
+ * 将尝试向用户介绍一条学术消息。
  *
- *       gl = WebGLUtils.setupWebGL(canvas);
+ *       gl = webglutils.setupwebgl（canvas）;
  *
- * For animated WebGL apps use of setTimeout or setInterval are
- * discouraged. It is recommended you structure your rendering
- * loop like this.
+ * 用于动画WebGL应用程序的使用Settimeout或SetInterval是
+ * 灰心。建议您构建渲染
+ * 这样的循环。
  *
- *       function render() {
- *         window.requestAnimationFrame(render, canvas);
+ *       函数渲染（）{
+ *         window.requestanimationframe（渲染，画布）;
  *
- *         // do rendering
+ *         //渲染
  *         ...
  *       }
- *       render();
+ *       使成为（）;
  *
- * This will call your rendering function up to the refresh rate
- * of your display but will stop rendering if your app is not
- * visible.
+ * 这将使您的渲染功能达到刷新率
+ * 您的显示的内容，但如果您的应用不是
+ * 可见的。
  */
 
 WebGLUtils = function() {
 
 /**
- * Creates the HTLM for a failure message
- * @param {string} canvasContainerId id of container of th
- *        canvas.
- * @return {string} The html.
+ * 为故障消息创建HTML
+ * @param {string} canvasContainerId 容器的ID
+ *        帆布。
+ * @return {string} HTML。
  */
 var makeFailHTML = function(msg) {
   return '' +
@@ -78,7 +78,7 @@ var makeFailHTML = function(msg) {
 };
 
 /**
- * Mesasge for getting a webgl browser
+ * 获取WebGL浏览器的消息
  * @type {string}
  */
 var GET_A_WEBGL_BROWSER = '' +
@@ -94,16 +94,16 @@ var OTHER_PROBLEM = '' +
   '<a href="http://get.webgl.org">Click here for more information.</a>';
 
 /**
- * Creates a webgl context. If creation fails it will
- * change the contents of the container of the <canvas>
- * tag to an error message with the correct links for WebGL.
- * @param {Element} canvas. The canvas element to create a
- *     context from.
- * @param {WebGLContextCreationAttirbutes} opt_attribs Any
- *     creation attributes you want to pass in.
- * @param {function:(msg)} opt_onError An function to call
- *     if there is an error during creation.
- * @return {WebGLRenderingContext} The created context.
+ * 创建一个WebGL上下文。如果创建失败，它将
+ * 更改<canvas>容器的内容物
+ * 标记到具有WebGL的正确链接的错误消息。
+ * @param {Element} canvas. 帆布元素创建一个
+ *     上下文。
+ * @param {WebGLContextCreationAttirbutes} opt_attribs 任何
+ *     您要传递的创建属性。
+ * @param {function:(msg)} opt_onError 致电的功能
+ *     如果创建过程中存在错误。
+ * @return {WebGLRenderingContext} 创建的上下文。
  */
 var setupWebGL = function(canvas, opt_attribs, opt_onError) {
   function handleCreationError(msg) {
@@ -140,10 +140,10 @@ var setupWebGL = function(canvas, opt_attribs, opt_onError) {
 };
 
 /**
- * Creates a webgl context.
- * @param {!Canvas} canvas The canvas tag to get context
- *     from. If one is not passed in one will be created.
- * @return {!WebGLContext} The created context.
+ * 创建一个WebGL上下文。
+ * @param {!Canvas} canvas 帆布标签以获取上下文
+ *     从。如果未传递，将创建一个。
+ * @return {!WebGLContext} 创建的上下文。
  */
 var create3DContext = function(canvas, opt_attribs) {
   var names = ["webgl", "experimental-webgl", "webkit-3d", "moz-webgl"];
@@ -166,8 +166,8 @@ return {
 }();
 
 /**
- * Provides requestAnimationFrame in a cross browser
- * way.
+ * 在交叉浏览器中提供requestAnimationFrame
+ * 方式。
  */
 if (!window.requestAnimationFrame) {
   window.requestAnimationFrame = (function() {
@@ -182,11 +182,11 @@ if (!window.requestAnimationFrame) {
   })();
 }
 
-/** * ERRATA: 'cancelRequestAnimationFrame' renamed to 'cancelAnimationFrame' to reflect an update to the W3C Animation-Timing Spec. 
+/** * Errata：“ CancelRequestanimationFrame”重命名为“ UccutAnimationFrame”，以反映W3C动画定时规格的更新。 
  * 
- * Cancels an animation frame request. 
- * Checks for cross-browser support, falls back to clearTimeout. 
- * @param {number}  Animation frame request. */
+ * 取消动画框架请求。 
+ * 检查跨浏览器支持，返回到ClearTimeout。 
+ * @param {number}  Animation 框架请求。 */
 if (!window.cancelAnimationFrame) {
   window.cancelAnimationFrame = (window.cancelRequestAnimationFrame ||
                                  window.webkitCancelAnimationFrame || window.webkitCancelRequestAnimationFrame ||
