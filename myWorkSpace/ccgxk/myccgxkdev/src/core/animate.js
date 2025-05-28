@@ -64,7 +64,7 @@ export default {
             this.displayPOS();  // 一秒显示一次显示主角坐标
             var dynaNodesCon = this.dynaNodes();  // 一秒显示一次主角位置编码
             posIDMVP.textContent = dynaNodesCon.replace(/[Dd]/g,'东').replace(/[Xx]/g,'西').replace(/[Nn]/g,'南').replace(/[Bb]/g,'北');  // 一秒显示一次主角位置编码
-            fpsInfo.textContent = ('FPS: 计算 ' + fps.toFixed(1) + ' ，渲染  ' + this.W.fps.toFixed(1) );  // 一秒显示一次 FPS
+            fpsInfo.textContent = ('FPS：' + fps.toFixed(1) + '  ，渲染：' + this.W.drawTime );  // 一秒显示一次 FPS
             modListCount.textContent = ('当前模型数：' + this.bodylist.length +
                                         ' - ❀' + this.bodylistNotPys.length +
                                         ' - 口' + this.bodylistMass0.length +

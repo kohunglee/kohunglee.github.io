@@ -23,7 +23,8 @@ const W = {
     W.gl.enable(2884);  // 隐藏不可见面
     W.instanceColorBuffers = {};  // 初始化颜色实例化数据
     W.lastFrame = 0;
-    W.fps = 0;       // 初始化 FPS 变量
+    W.drawTime = 0;         // 初始化 绘制 时间
+    W.lastReportTime = 0;   // 时间戳临时变量（用于确定一秒）
     
     var t;
     W.gl.shaderSource(
@@ -182,8 +183,8 @@ const W = {
   
   // 绘制场景
   draw: (now, dt, v, i, transparent = []) => {
+        const frameRenderStart = performance.now();  // 记录开始的时间
         dt = now - W.lastFrame;
-        W.fps = 1000 / dt; // 计算 FPS
         W.lastFrame = now;
         requestAnimationFrame(W.draw);
         if(W.next.camera.g){  W.render(W.next[W.next.camera.g], dt, 1); }
@@ -215,6 +216,10 @@ const W = {
           W.gl.getUniformLocation(W.program, 'light'),
           W.lerp('light','x'), W.lerp('light','y'), W.lerp('light','z')
         );
+        if (now - W.lastReportTime >= 1000) {  // 每秒执行一次，用于测量
+            W.drawTime = (performance.now() - frameRenderStart).toFixed(2) + 'ms';  // 每帧的绘制时间
+            W.lastReportTime = now;
+        }
   },
   
   // 渲染对象

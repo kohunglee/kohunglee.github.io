@@ -39,16 +39,17 @@ var FSHADER_SOURCE =
   'varying vec4 v_PositionFromLight;\n' + // 接收从顶点着色器小精灵传来的“从光源看的位置”。
   'varying vec4 v_Color;\n' +            // 接收从顶点着色器小精灵传来的“服装颜色”。
   'void main() {\n' +                    // 片元着色器小精灵的“表演开始”：
-  '  vec3 shadowCoord = (v_PositionFromLight.xyz/v_PositionFromLight.w)/2.0 + 0.5;\n' + // 把从光源看的位置，转化成“深度照片”上的“查阅坐标”（UV）。
-                                                                                      // v_PositionFromLight.xyz/v_PositionFromLight.w 是透视校正，相当于把光源眼中的“三维空间”拍扁。
-                                                                                      // /2.0 + 0.5 是把 [-1, 1] 的坐标范围，映射到 [0, 1] 的纹理坐标范围，方便去查阅“深度照片”。
+   // 把从光源看的位置，转化成“深度照片”上的“查阅坐标”（UV）。
+  // v_PositionFromLight.xyz/v_PositionFromLight.w 是透视校正，相当于把光源眼中的“三维空间”拍扁。
+  // /2.0 + 0.5 是把 [-1, 1] 的坐标范围，映射到 [0, 1] 的纹理坐标范围，方便去查阅“深度照片”。
+  '  vec3 shadowCoord = (v_PositionFromLight.xyz/v_PositionFromLight.w)/2.0 + 0.5;\n' +
   '  vec4 rgbaDepth = texture2D(u_ShadowMap, shadowCoord.xy);\n' + // 从“深度照片”上，根据查阅坐标，找到那里的“记录深度”。
   '  float depth = rgbaDepth.r;\n' +     // 把记录的“深度”从红色通道里读出来。（因为光影摄影师只把深度写在R通道）。
   '  float visibility = (shadowCoord.z > depth + 0.005) ? 0.7 : 1.0;\n' + // 判断：如果“我”（当前片元）离光源比“深度照片”上记录的最近的物体还远一点点（+0.005是防止“阴影痤疮”，像皮肤病一样不均匀），那就说明我被挡住了（可见度0.7，变暗），否则我就是被照亮的（可见度1.0，原色）。
   '  gl_FragColor = vec4(v_Color.rgb * visibility, v_Color.a);\n' + // 最后，把我的“服装颜色”乘以“可见度”，就是我最终的颜色啦！
   '}\n';                                                               // 小精灵“表演结束”。
 
-var OFFSCREEN_WIDTH = 2048, OFFSCREEN_HEIGHT = 2048; // 光影摄影师的“照片”（阴影贴图）尺寸，越大越清晰，但越耗资源。
+var OFFSCREEN_WIDTH = OFFSCREEN_HEIGHT = 2**8; // 光影摄影师的“照片”（阴影贴图）尺寸，越大越清晰，但越耗资源。
 var LIGHT_X = 0, LIGHT_Y = 7, LIGHT_Z = 2; // 光源的“灯位”：我们的“太阳”在这个舞台的哪里？
 
 function main() { // 导演的“大制作”开始了！
@@ -386,4 +387,4 @@ function animate(angle) { // 动作指导员：计算演员应该转到哪个角
 *   **深度图是核心：** 阴影效果完全依赖于这张从光源角度拍下的“深度照片”。
 *   **“阴影痤疮”：** `+ 0.005` 是一个小的偏移量，用来防止“阴影痤疮”（Shadow Acne）。由于浮点精度问题，物体表面可能错误地被自身判断为在阴影中。加一个微小的偏移量可以“抬高”深度图上的表面，避免这种自遮挡问题。
 
-希望这个拟人化的注释和解释能帮助你在1小时内掌握这个原理！
+希望这个拟人化的注释和解释能帮助你在1小时内掌握这个原理！*/

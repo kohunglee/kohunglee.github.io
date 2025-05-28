@@ -42,7 +42,7 @@ var FSHADER_SOURCE =
   '  vec3 shadowCoord = (v_PositionFromLight.xyz/v_PositionFromLight.w)/2.0 + 0.5;\n' +  // 不懂，阴影贴图
   '  vec4 rgbaDepth = texture2D(u_ShadowMap, shadowCoord.xy);\n' +
   '  float depth = rgbaDepth.r;\n' + // 取出深度值
-  '  float visibility = (shadowCoord.z > depth + 0.005) ? 0.7 : 1.0;\n' +  // 阴影
+  '  float visibility = (shadowCoord.z > depth + 0.005) ? 1.0 : 1.0;\n' +  // 阴影
   '  gl_FragColor = vec4(v_Color.rgb * visibility, v_Color.a);\n' +  // 计算最终的颜色
   '}\n';
 
