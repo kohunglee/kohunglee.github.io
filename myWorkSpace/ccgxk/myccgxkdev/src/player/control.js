@@ -86,7 +86,7 @@ export default {
         if ((e.keyCode === 32 || e.key.toLowerCase() === 'e') && this.mainVPlayer !== null) {  // e 或 空格键，飞翔
             var limit = this.mainVPlayer.body.position.y <= 10000;
             if (this.keys.jumping === 0 && limit) {
-                this.mainVPlayer.body.velocity.y = 10;
+                this.mainVPlayer.body.velocity.y = this.jumpYVel;
             }
             this.keys.jumping = value;
         }
@@ -114,7 +114,9 @@ export default {
     calMovePara : function(X, Y, Z, RX, RY, RZ){
         const keys = this.keys;
         if (keys.viewForward || keys.viewBackward) { // 前后平移
-            var speed = (this.isShiftPress) ? Math.max(this.speedH,4-(this.forwardAcc+=0.01)) :4+0*(this.forwardAcc=0.01);  // 加速度
+            var speed = (this.isShiftPress)
+                        ? Math.max(this.speedH,this.speedL-(this.forwardAcc+=this.speedAdd))
+                        : this.speedL+0*(this.forwardAcc=0.01);  // 加速度
             shiftInfo.textContent = '速度:' + Math.round((100 / speed)) + ' | ';
             Z += (-keys.viewForward + keys.viewBackward) * Math.cos(RY * Math.PI / 180) / speed;
             X += (-keys.viewForward + keys.viewBackward) * Math.sin(RY * Math.PI / 180) / speed;

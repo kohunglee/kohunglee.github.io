@@ -40,7 +40,7 @@ var list = k.bodylist;
 
 // 定义单个立方体对象的多个实例
 const cubeInstances = [];
-  const numCubes = 8_0;
+  const numCubes = 1_0;
   const spacing = 2.5;
   const random = k.genPR(123, numCubes * numCubes * 4);  // 伪随机数
   for (let i = 0; i < numCubes; i++) {
@@ -50,22 +50,27 @@ const cubeInstances = [];
         x: Math.floor(random[index] * 9900 + 1 - 5000),
         y: Math.floor(random[index + 1] * 50),
         z: Math.floor(random[index + 2] * 9900 + 1 - 5000),
-        w: 1,
-        d: 1,
+        w: 100,
+        d: 100,
         h: Math.floor(random[index + 3] * 5 + 1),
         b:`#${Math.floor(random[index + 4] * 16777216).toString(16).padStart(6, '0')}`,
       });
     }
   }
 
-  // 创建一个可以绘制许多立方体的实例立方体对象
+
+
+// 创建 n 个可以绘制许多立方体的实例立方体对象
+for (let index = 0; index < 100; index++) {
   k.W.cube({
-    n: 'manyCubes',
+    n: 'manyCubes' + index,
     instances: cubeInstances, // 实例属性的数组
     t: marble,
     mix: 0.5,
-    // y:50,
+    y:50 * index,
   });
+}
+
 
 
 
@@ -90,7 +95,26 @@ k.addBox({  // 创建地面
     name: 'groundPlane', X: 0, Y: -0.5, Z: 0,
     mass: 0, width: 10000, depth: 10000, height: 2,
     texture: marble, background: '#287A17', mixValue: 0.71,
-    XNumber: 10
+});
+
+k.addBox({  // 创建一个参考1米的使用的辅助图片。它会拉低渲染，所以要记得删去
+    DPZ : 1,
+    colliGroup: 1,
+    tiling : 10000,
+    shape: 'plane',
+    isPhysical: false,
+    name: 'groundPlaneAux', X: 0, Y: 0.6, Z: 0, rX: -90,
+    mass: 0, width: 10000, depth: 0, height: 10000,
+    texture: marble, background: '#171f7a14', mixValue: 0.71,
+});
+
+k.addBox({  // 创建一个静止的墙
+    DPZ : 1,
+    colliGroup: 2,
+    tiling : 1,
+    name: 'testWall', X: -30, Y: 3, Z: -20,
+    mass: 0, width: 10, depth: 9, height: 10,
+    texture: marble, background: '#287A17', mixValue: 0.71,
 });
 
 // 随机生成 n 个模型
@@ -125,8 +149,8 @@ k.loadTexture(drawList).then(res => {
         name: 'mainPlayer', DPZ : 1,
         colliGroup: 1,
         X:4.25, Y:1.00, Z:12.09,
-        rX: 0, rY: 0, rZ: 0, size:1, mixValue:0,
-        mass: 50, texture: jpflag
+        rX: 0, rY: 0, rZ: 0, size:1, mixValue:0.7,
+        mass: 50, texture: marble
 });
     
 })

@@ -11,8 +11,7 @@ export default {
                 img.onload = () => resolve(img);  // 或许可以直接传入 wjs，以后优化吧
                 img.id = drawFunclist[i].id;
                 img.src = this.dToBase64(drawFunclist[i]);
-                img.hidden = true;  // 一定要隐藏
-                document.body.appendChild(img);
+                window[img.id] = img;
             }
         });
     },
