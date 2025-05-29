@@ -310,6 +310,7 @@ WebGLUtils = function() {
     }
     return context;
   }
+
   return {
     create3DContext: create3DContext,
     setupWebGL: setupWebGL
