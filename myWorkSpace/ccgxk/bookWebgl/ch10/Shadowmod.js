@@ -154,8 +154,8 @@ function draw(gl, program, o, viewProjMatrix) {
     initAttributeVariable(gl, program.a_Color, o.colorBuffer); 
   }
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, o.indexBuffer); 
-  g_mvpMatrix.set(viewProjMatrix); 
-  g_mvpMatrix.multiply(g_modelMatrix); 
+  g_mvpMatrix.set(viewProjMatrix);
+  g_mvpMatrix.multiply(g_modelMatrix);
   gl.uniformMatrix4fv(program.u_MvpMatrix, false, g_mvpMatrix.elements); 
   gl.drawElements(gl.TRIANGLES, o.numIndices, gl.UNSIGNED_BYTE, 0); 
 }
@@ -299,11 +299,6 @@ function animate(angle) {
 
 /*******************/
 
-// 初始化并获取WebGL的渲染
-function getWebGLContext(canvas, opt_debug) {
-  var gl = WebGLUtils.setupWebGL(canvas);
-  return gl;
-}
 
 // 创建链接程序对象
 function createProgram(gl, vshader, fshader) {
