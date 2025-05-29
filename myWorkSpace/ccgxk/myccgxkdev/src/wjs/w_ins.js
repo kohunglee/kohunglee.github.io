@@ -38,14 +38,18 @@ const W = {
           uniform vec4 bb;                              // 广告牌：bb = [w, h, 1.0, 0.0]
           out vec4 v_pos, v_col, v_uv, v_normal;
           uniform bool isInstanced;              // 是不是实例化绘制
+
+          uniform mat4 u_MvpMatrixFromLight;       // 光源的 MVP 矩阵
+          out vec4 v_PositionFromLight;            // 输出，顶点在光源眼中的位置
+
           void main() {
-            mat4 currentModelMatrix;             // 当前的模型矩阵
+            mat4 currentModelMatrix;  // 当前的模型矩阵
             if (isInstanced) {
               currentModelMatrix = instanceModelMatrix;
             } else {
               currentModelMatrix = m;
             }
-            gl_Position = pv * (                        // 设置顶点位置：p * v * v_pos
+            gl_Position = pv * (    // 设置顶点位置：p * v * v_pos
               v_pos = bb.z > 0.                         
               ? currentModelMatrix[3] + eye * (pos * bb) // 广告牌
               : currentModelMatrix * pos               
@@ -53,6 +57,8 @@ const W = {
             v_col = col;
             v_uv = uv;
             v_normal = transpose(isInstanced ? inverse(currentModelMatrix) : im) * normal;  // 必要时使用实例矩阵
+            v_PositionFromLight = u_MvpMatrixFromLight *  // 计算顶点在光源眼中的位置
+                                 (isInstanced ? instanceModelMatrix * pos : m * pos);
           }`
         );
 
@@ -71,7 +77,22 @@ const W = {
           uniform sampler2D sampler;
           out vec4 c;
 
+          in vec4 v_PositionFromLight;   // 接收灯光视角的位置
+          uniform sampler2D u_ShadowMap;  // 接收阴影深度图
+
           void main() {
+            /* 阴影处理逻辑 */
+            vec3 shadowCoord = (v_PositionFromLight.xyz    // 创建阴影映射
+                                / v_PositionFromLight.w)
+                                / 2.0 + 0.5;
+            float shadowVisibility = 1.0;  // 非阴影部分亮度
+            vec4 rgbaDepth = texture(u_ShadowMap, shadowCoord.xy);  // 解析深度
+            const vec4 bitShift = vec4(1.0, 1.0/256.0, 1.0/(256.0*256.0), 1.0/(256.0*256.0*256.0));
+            float depth = dot(rgbaDepth, bitShift);  // 当前顶点的深度
+            if (shadowCoord.z > depth + 0.005) {  // 计算有没有被遮挡
+                shadowVisibility = 0.5;
+            }
+
             c = mix(texture(sampler, v_uv.xy * tiling), v_col, o[3]);
             if(o[1] > 0.){
               c = vec4(
@@ -80,9 +101,11 @@ const W = {
                   ? vec3(v_normal.xyz)
                   : cross(dFdx(v_pos.xyz), dFdy(v_pos.xyz))
                 )))
-                + o[2]),
+                + o[2]) * shadowVisibility,
                 c.a
               );
+            } else {
+              c.rgb *= shadowVisibility;
             }
           }`
         );
@@ -93,10 +116,11 @@ const W = {
         W.gl.useProgram(W.program);
         W.clearColor = c => W.gl.clearColor(...W.col(c));
         W.clearColor("fff");
-        W.gl.enable(2929 );
+        W.gl.enable(2929);
         W.light({y: -1});  
         W.camera({fov: 30});
         setTimeout(W.draw, 16);  // 开始绘制
+        W.shadowFunc001(W.gl);  // 初始化阴影
   },
 
   // 设置对象的状态
@@ -196,7 +220,9 @@ const W = {
         v.invertSelf();
         v.preMultiplySelf(W.projection);
         W.gl.uniformMatrix4fv( W.gl.getUniformLocation(W.program, 'pv'), false, v.toFloat32Array());  // 处理好 pv ，传给着色器
-        W.gl.clear(16640 );
+        W.shadowFunc002(W.gl);  // 阴影的秘密摄影
+        W.gl.useProgram(W.program);   // 阴影绘制完，激活主绘制器
+        W.gl.clear(16640);
         for(i in W.next){  // 遍历渲染模型
           if(!W.next[i].t && W.col(W.next[i].b)[3] == 1){
             W.render(W.next[i], dt);
@@ -537,5 +563,958 @@ W.add("pyramid", {
   }
   W.add("sphere", {vertices, uv, indices});
 })();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+var Matrix4 = function(opt_src) {
+  var i, s, d;
+  if (opt_src && typeof opt_src === 'object' && opt_src.hasOwnProperty('elements')) {
+    s = opt_src.elements;
+    d = new Float32Array(16);
+    for (i = 0; i < 16; ++i) {
+      d[i] = s[i];
+    }
+    this.elements = d;
+  } else {
+    this.elements = new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]);
+  }
+};
+
+/**
+ * Set the identity matrix.
+ * @return this
+ */
+Matrix4.prototype.setIdentity = function() {
+  var e = this.elements;
+  e[0] = 1;   e[4] = 0;   e[8]  = 0;   e[12] = 0;
+  e[1] = 0;   e[5] = 1;   e[9]  = 0;   e[13] = 0;
+  e[2] = 0;   e[6] = 0;   e[10] = 1;   e[14] = 0;
+  e[3] = 0;   e[7] = 0;   e[11] = 0;   e[15] = 1;
+  return this;
+};
+
+/**
+ * Copy matrix.
+ * @param src source matrix
+ * @return this
+ */
+Matrix4.prototype.set = function(src) {
+  var i, s, d;
+
+  s = src.elements;
+  d = this.elements;
+
+  if (s === d) {
+    return;
+  }
+    
+  for (i = 0; i < 16; ++i) {
+    d[i] = s[i];
+  }
+
+  return this;
+};
+
+/**
+ * Multiply the matrix from the right.
+ * @param other The multiply matrix
+ * @return this
+ */
+Matrix4.prototype.concat = function(other) {
+  var i, e, a, b, ai0, ai1, ai2, ai3;
+  
+  // Calculate e = a * b
+  e = this.elements;
+  a = this.elements;
+  b = other.elements;
+  
+  // If e equals b, copy b to temporary matrix.
+  if (e === b) {
+    b = new Float32Array(16);
+    for (i = 0; i < 16; ++i) {
+      b[i] = e[i];
+    }
+  }
+  
+  for (i = 0; i < 4; i++) {
+    ai0=a[i];  ai1=a[i+4];  ai2=a[i+8];  ai3=a[i+12];
+    e[i]    = ai0 * b[0]  + ai1 * b[1]  + ai2 * b[2]  + ai3 * b[3];
+    e[i+4]  = ai0 * b[4]  + ai1 * b[5]  + ai2 * b[6]  + ai3 * b[7];
+    e[i+8]  = ai0 * b[8]  + ai1 * b[9]  + ai2 * b[10] + ai3 * b[11];
+    e[i+12] = ai0 * b[12] + ai1 * b[13] + ai2 * b[14] + ai3 * b[15];
+  }
+  
+  return this;
+};
+Matrix4.prototype.multiply = Matrix4.prototype.concat;
+
+/**
+ * Multiply the three-dimensional vector.
+ * @param pos  The multiply vector
+ * @return The result of multiplication(Float32Array)
+ */
+Matrix4.prototype.multiplyVector3 = function(pos) {
+  var e = this.elements;
+  var p = pos.elements;
+  var v = new Vector3();
+  var result = v.elements;
+
+  result[0] = p[0] * e[0] + p[1] * e[4] + p[2] * e[ 8] + e[12];
+  result[1] = p[0] * e[1] + p[1] * e[5] + p[2] * e[ 9] + e[13];
+  result[2] = p[0] * e[2] + p[1] * e[6] + p[2] * e[10] + e[14];
+
+  return v;
+};
+
+/**
+ * Multiply the four-dimensional vector.
+ * @param pos  The multiply vector
+ * @return The result of multiplication(Float32Array)
+ */
+Matrix4.prototype.multiplyVector4 = function(pos) {
+  var e = this.elements;
+  var p = pos.elements;
+  var v = new Vector4();
+  var result = v.elements;
+
+  result[0] = p[0] * e[0] + p[1] * e[4] + p[2] * e[ 8] + p[3] * e[12];
+  result[1] = p[0] * e[1] + p[1] * e[5] + p[2] * e[ 9] + p[3] * e[13];
+  result[2] = p[0] * e[2] + p[1] * e[6] + p[2] * e[10] + p[3] * e[14];
+  result[3] = p[0] * e[3] + p[1] * e[7] + p[2] * e[11] + p[3] * e[15];
+
+  return v;
+};
+
+/**
+ * Transpose the matrix.
+ * @return this
+ */
+Matrix4.prototype.transpose = function() {
+  var e, t;
+
+  e = this.elements;
+
+  t = e[ 1];  e[ 1] = e[ 4];  e[ 4] = t;
+  t = e[ 2];  e[ 2] = e[ 8];  e[ 8] = t;
+  t = e[ 3];  e[ 3] = e[12];  e[12] = t;
+  t = e[ 6];  e[ 6] = e[ 9];  e[ 9] = t;
+  t = e[ 7];  e[ 7] = e[13];  e[13] = t;
+  t = e[11];  e[11] = e[14];  e[14] = t;
+
+  return this;
+};
+
+/**
+ * Calculate the inverse matrix of specified matrix, and set to this.
+ * @param other The source matrix
+ * @return this
+ */
+Matrix4.prototype.setInverseOf = function(other) {
+  var i, s, d, inv, det;
+
+  s = other.elements;
+  d = this.elements;
+  inv = new Float32Array(16);
+
+  inv[0]  =   s[5]*s[10]*s[15] - s[5] *s[11]*s[14] - s[9] *s[6]*s[15]
+            + s[9]*s[7] *s[14] + s[13]*s[6] *s[11] - s[13]*s[7]*s[10];
+  inv[4]  = - s[4]*s[10]*s[15] + s[4] *s[11]*s[14] + s[8] *s[6]*s[15]
+            - s[8]*s[7] *s[14] - s[12]*s[6] *s[11] + s[12]*s[7]*s[10];
+  inv[8]  =   s[4]*s[9] *s[15] - s[4] *s[11]*s[13] - s[8] *s[5]*s[15]
+            + s[8]*s[7] *s[13] + s[12]*s[5] *s[11] - s[12]*s[7]*s[9];
+  inv[12] = - s[4]*s[9] *s[14] + s[4] *s[10]*s[13] + s[8] *s[5]*s[14]
+            - s[8]*s[6] *s[13] - s[12]*s[5] *s[10] + s[12]*s[6]*s[9];
+
+  inv[1]  = - s[1]*s[10]*s[15] + s[1] *s[11]*s[14] + s[9] *s[2]*s[15]
+            - s[9]*s[3] *s[14] - s[13]*s[2] *s[11] + s[13]*s[3]*s[10];
+  inv[5]  =   s[0]*s[10]*s[15] - s[0] *s[11]*s[14] - s[8] *s[2]*s[15]
+            + s[8]*s[3] *s[14] + s[12]*s[2] *s[11] - s[12]*s[3]*s[10];
+  inv[9]  = - s[0]*s[9] *s[15] + s[0] *s[11]*s[13] + s[8] *s[1]*s[15]
+            - s[8]*s[3] *s[13] - s[12]*s[1] *s[11] + s[12]*s[3]*s[9];
+  inv[13] =   s[0]*s[9] *s[14] - s[0] *s[10]*s[13] - s[8] *s[1]*s[14]
+            + s[8]*s[2] *s[13] + s[12]*s[1] *s[10] - s[12]*s[2]*s[9];
+
+  inv[2]  =   s[1]*s[6]*s[15] - s[1] *s[7]*s[14] - s[5] *s[2]*s[15]
+            + s[5]*s[3]*s[14] + s[13]*s[2]*s[7]  - s[13]*s[3]*s[6];
+  inv[6]  = - s[0]*s[6]*s[15] + s[0] *s[7]*s[14] + s[4] *s[2]*s[15]
+            - s[4]*s[3]*s[14] - s[12]*s[2]*s[7]  + s[12]*s[3]*s[6];
+  inv[10] =   s[0]*s[5]*s[15] - s[0] *s[7]*s[13] - s[4] *s[1]*s[15]
+            + s[4]*s[3]*s[13] + s[12]*s[1]*s[7]  - s[12]*s[3]*s[5];
+  inv[14] = - s[0]*s[5]*s[14] + s[0] *s[6]*s[13] + s[4] *s[1]*s[14]
+            - s[4]*s[2]*s[13] - s[12]*s[1]*s[6]  + s[12]*s[2]*s[5];
+
+  inv[3]  = - s[1]*s[6]*s[11] + s[1]*s[7]*s[10] + s[5]*s[2]*s[11]
+            - s[5]*s[3]*s[10] - s[9]*s[2]*s[7]  + s[9]*s[3]*s[6];
+  inv[7]  =   s[0]*s[6]*s[11] - s[0]*s[7]*s[10] - s[4]*s[2]*s[11]
+            + s[4]*s[3]*s[10] + s[8]*s[2]*s[7]  - s[8]*s[3]*s[6];
+  inv[11] = - s[0]*s[5]*s[11] + s[0]*s[7]*s[9]  + s[4]*s[1]*s[11]
+            - s[4]*s[3]*s[9]  - s[8]*s[1]*s[7]  + s[8]*s[3]*s[5];
+  inv[15] =   s[0]*s[5]*s[10] - s[0]*s[6]*s[9]  - s[4]*s[1]*s[10]
+            + s[4]*s[2]*s[9]  + s[8]*s[1]*s[6]  - s[8]*s[2]*s[5];
+
+  det = s[0]*inv[0] + s[1]*inv[4] + s[2]*inv[8] + s[3]*inv[12];
+  if (det === 0) {
+    return this;
+  }
+
+  det = 1 / det;
+  for (i = 0; i < 16; i++) {
+    d[i] = inv[i] * det;
+  }
+
+  return this;
+};
+
+/**
+ * Calculate the inverse matrix of this, and set to this.
+ * @return this
+ */
+Matrix4.prototype.invert = function() {
+  return this.setInverseOf(this);
+};
+
+/**
+ * Set the orthographic projection matrix.
+ * @param left The coordinate of the left of clipping plane.
+ * @param right The coordinate of the right of clipping plane.
+ * @param bottom The coordinate of the bottom of clipping plane.
+ * @param top The coordinate of the top top clipping plane.
+ * @param near The distances to the nearer depth clipping plane. This value is minus if the plane is to be behind the viewer.
+ * @param far The distances to the farther depth clipping plane. This value is minus if the plane is to be behind the viewer.
+ * @return this
+ */
+Matrix4.prototype.setOrtho = function(left, right, bottom, top, near, far) {
+  var e, rw, rh, rd;
+
+  if (left === right || bottom === top || near === far) {
+    throw 'null frustum';
+  }
+
+  rw = 1 / (right - left);
+  rh = 1 / (top - bottom);
+  rd = 1 / (far - near);
+
+  e = this.elements;
+
+  e[0]  = 2 * rw;
+  e[1]  = 0;
+  e[2]  = 0;
+  e[3]  = 0;
+
+  e[4]  = 0;
+  e[5]  = 2 * rh;
+  e[6]  = 0;
+  e[7]  = 0;
+
+  e[8]  = 0;
+  e[9]  = 0;
+  e[10] = -2 * rd;
+  e[11] = 0;
+
+  e[12] = -(right + left) * rw;
+  e[13] = -(top + bottom) * rh;
+  e[14] = -(far + near) * rd;
+  e[15] = 1;
+
+  return this;
+};
+
+/**
+ * Multiply the orthographic projection matrix from the right.
+ * @param left The coordinate of the left of clipping plane.
+ * @param right The coordinate of the right of clipping plane.
+ * @param bottom The coordinate of the bottom of clipping plane.
+ * @param top The coordinate of the top top clipping plane.
+ * @param near The distances to the nearer depth clipping plane. This value is minus if the plane is to be behind the viewer.
+ * @param far The distances to the farther depth clipping plane. This value is minus if the plane is to be behind the viewer.
+ * @return this
+ */
+Matrix4.prototype.ortho = function(left, right, bottom, top, near, far) {
+  return this.concat(new Matrix4().setOrtho(left, right, bottom, top, near, far));
+};
+
+/**
+ * Set the perspective projection matrix.
+ * @param left The coordinate of the left of clipping plane.
+ * @param right The coordinate of the right of clipping plane.
+ * @param bottom The coordinate of the bottom of clipping plane.
+ * @param top The coordinate of the top top clipping plane.
+ * @param near The distances to the nearer depth clipping plane. This value must be plus value.
+ * @param far The distances to the farther depth clipping plane. This value must be plus value.
+ * @return this
+ */
+Matrix4.prototype.setFrustum = function(left, right, bottom, top, near, far) {
+  var e, rw, rh, rd;
+
+  if (left === right || top === bottom || near === far) {
+    throw 'null frustum';
+  }
+  if (near <= 0) {
+    throw 'near <= 0';
+  }
+  if (far <= 0) {
+    throw 'far <= 0';
+  }
+
+  rw = 1 / (right - left);
+  rh = 1 / (top - bottom);
+  rd = 1 / (far - near);
+
+  e = this.elements;
+
+  e[ 0] = 2 * near * rw;
+  e[ 1] = 0;
+  e[ 2] = 0;
+  e[ 3] = 0;
+
+  e[ 4] = 0;
+  e[ 5] = 2 * near * rh;
+  e[ 6] = 0;
+  e[ 7] = 0;
+
+  e[ 8] = (right + left) * rw;
+  e[ 9] = (top + bottom) * rh;
+  e[10] = -(far + near) * rd;
+  e[11] = -1;
+
+  e[12] = 0;
+  e[13] = 0;
+  e[14] = -2 * near * far * rd;
+  e[15] = 0;
+
+  return this;
+};
+
+/**
+ * Multiply the perspective projection matrix from the right.
+ * @param left The coordinate of the left of clipping plane.
+ * @param right The coordinate of the right of clipping plane.
+ * @param bottom The coordinate of the bottom of clipping plane.
+ * @param top The coordinate of the top top clipping plane.
+ * @param near The distances to the nearer depth clipping plane. This value must be plus value.
+ * @param far The distances to the farther depth clipping plane. This value must be plus value.
+ * @return this
+ */
+Matrix4.prototype.frustum = function(left, right, bottom, top, near, far) {
+  return this.concat(new Matrix4().setFrustum(left, right, bottom, top, near, far));
+};
+
+/**
+ * Set the perspective projection matrix by fovy and aspect.
+ * @param fovy The angle between the upper and lower sides of the frustum.
+ * @param aspect The aspect ratio of the frustum. (width/height)
+ * @param near The distances to the nearer depth clipping plane. This value must be plus value.
+ * @param far The distances to the farther depth clipping plane. This value must be plus value.
+ * @return this
+ */
+Matrix4.prototype.setPerspective = function(fovy, aspect, near, far) {
+  var e, rd, s, ct;
+
+  if (near === far || aspect === 0) {
+    throw 'null frustum';
+  }
+  if (near <= 0) {
+    throw 'near <= 0';
+  }
+  if (far <= 0) {
+    throw 'far <= 0';
+  }
+
+  fovy = Math.PI * fovy / 180 / 2;
+  s = Math.sin(fovy);
+  if (s === 0) {
+    throw 'null frustum';
+  }
+
+  rd = 1 / (far - near);
+  ct = Math.cos(fovy) / s;
+
+  e = this.elements;
+
+  e[0]  = ct / aspect;
+  e[1]  = 0;
+  e[2]  = 0;
+  e[3]  = 0;
+
+  e[4]  = 0;
+  e[5]  = ct;
+  e[6]  = 0;
+  e[7]  = 0;
+
+  e[8]  = 0;
+  e[9]  = 0;
+  e[10] = -(far + near) * rd;
+  e[11] = -1;
+
+  e[12] = 0;
+  e[13] = 0;
+  e[14] = -2 * near * far * rd;
+  e[15] = 0;
+
+  return this;
+};
+
+/**
+ * Multiply the perspective projection matrix from the right.
+ * @param fovy The angle between the upper and lower sides of the frustum.
+ * @param aspect The aspect ratio of the frustum. (width/height)
+ * @param near The distances to the nearer depth clipping plane. This value must be plus value.
+ * @param far The distances to the farther depth clipping plane. This value must be plus value.
+ * @return this
+ */
+Matrix4.prototype.perspective = function(fovy, aspect, near, far) {
+  return this.concat(new Matrix4().setPerspective(fovy, aspect, near, far));
+};
+
+/**
+ * Set the matrix for scaling.
+ * @param x The scale factor along the X axis
+ * @param y The scale factor along the Y axis
+ * @param z The scale factor along the Z axis
+ * @return this
+ */
+Matrix4.prototype.setScale = function(x, y, z) {
+  var e = this.elements;
+  e[0] = x;  e[4] = 0;  e[8]  = 0;  e[12] = 0;
+  e[1] = 0;  e[5] = y;  e[9]  = 0;  e[13] = 0;
+  e[2] = 0;  e[6] = 0;  e[10] = z;  e[14] = 0;
+  e[3] = 0;  e[7] = 0;  e[11] = 0;  e[15] = 1;
+  return this;
+};
+
+/**
+ * Multiply the matrix for scaling from the right.
+ * @param x The scale factor along the X axis
+ * @param y The scale factor along the Y axis
+ * @param z The scale factor along the Z axis
+ * @return this
+ */
+Matrix4.prototype.scale = function(x, y, z) {
+  var e = this.elements;
+  e[0] *= x;  e[4] *= y;  e[8]  *= z;
+  e[1] *= x;  e[5] *= y;  e[9]  *= z;
+  e[2] *= x;  e[6] *= y;  e[10] *= z;
+  e[3] *= x;  e[7] *= y;  e[11] *= z;
+  return this;
+};
+
+/**
+ * Set the matrix for translation.
+ * @param x The X value of a translation.
+ * @param y The Y value of a translation.
+ * @param z The Z value of a translation.
+ * @return this
+ */
+Matrix4.prototype.setTranslate = function(x, y, z) {
+  var e = this.elements;
+  e[0] = 1;  e[4] = 0;  e[8]  = 0;  e[12] = x;
+  e[1] = 0;  e[5] = 1;  e[9]  = 0;  e[13] = y;
+  e[2] = 0;  e[6] = 0;  e[10] = 1;  e[14] = z;
+  e[3] = 0;  e[7] = 0;  e[11] = 0;  e[15] = 1;
+  return this;
+};
+
+/**
+ * Multiply the matrix for translation from the right.
+ * @param x The X value of a translation.
+ * @param y The Y value of a translation.
+ * @param z The Z value of a translation.
+ * @return this
+ */
+Matrix4.prototype.translate = function(x, y, z) {
+  var e = this.elements;
+  e[12] += e[0] * x + e[4] * y + e[8]  * z;
+  e[13] += e[1] * x + e[5] * y + e[9]  * z;
+  e[14] += e[2] * x + e[6] * y + e[10] * z;
+  e[15] += e[3] * x + e[7] * y + e[11] * z;
+  return this;
+};
+
+/**
+ * Set the matrix for rotation.
+ * The vector of rotation axis may not be normalized.
+ * @param angle The angle of rotation (degrees)
+ * @param x The X coordinate of vector of rotation axis.
+ * @param y The Y coordinate of vector of rotation axis.
+ * @param z The Z coordinate of vector of rotation axis.
+ * @return this
+ */
+Matrix4.prototype.setRotate = function(angle, x, y, z) {
+  var e, s, c, len, rlen, nc, xy, yz, zx, xs, ys, zs;
+
+  angle = Math.PI * angle / 180;
+  e = this.elements;
+
+  s = Math.sin(angle);
+  c = Math.cos(angle);
+
+  if (0 !== x && 0 === y && 0 === z) {
+    // Rotation around X axis
+    if (x < 0) {
+      s = -s;
+    }
+    e[0] = 1;  e[4] = 0;  e[ 8] = 0;  e[12] = 0;
+    e[1] = 0;  e[5] = c;  e[ 9] =-s;  e[13] = 0;
+    e[2] = 0;  e[6] = s;  e[10] = c;  e[14] = 0;
+    e[3] = 0;  e[7] = 0;  e[11] = 0;  e[15] = 1;
+  } else if (0 === x && 0 !== y && 0 === z) {
+    // Rotation around Y axis
+    if (y < 0) {
+      s = -s;
+    }
+    e[0] = c;  e[4] = 0;  e[ 8] = s;  e[12] = 0;
+    e[1] = 0;  e[5] = 1;  e[ 9] = 0;  e[13] = 0;
+    e[2] =-s;  e[6] = 0;  e[10] = c;  e[14] = 0;
+    e[3] = 0;  e[7] = 0;  e[11] = 0;  e[15] = 1;
+  } else if (0 === x && 0 === y && 0 !== z) {
+    // Rotation around Z axis
+    if (z < 0) {
+      s = -s;
+    }
+    e[0] = c;  e[4] =-s;  e[ 8] = 0;  e[12] = 0;
+    e[1] = s;  e[5] = c;  e[ 9] = 0;  e[13] = 0;
+    e[2] = 0;  e[6] = 0;  e[10] = 1;  e[14] = 0;
+    e[3] = 0;  e[7] = 0;  e[11] = 0;  e[15] = 1;
+  } else {
+    // Rotation around another axis
+    len = Math.sqrt(x*x + y*y + z*z);
+    if (len !== 1) {
+      rlen = 1 / len;
+      x *= rlen;
+      y *= rlen;
+      z *= rlen;
+    }
+    nc = 1 - c;
+    xy = x * y;
+    yz = y * z;
+    zx = z * x;
+    xs = x * s;
+    ys = y * s;
+    zs = z * s;
+
+    e[ 0] = x*x*nc +  c;
+    e[ 1] = xy *nc + zs;
+    e[ 2] = zx *nc - ys;
+    e[ 3] = 0;
+
+    e[ 4] = xy *nc - zs;
+    e[ 5] = y*y*nc +  c;
+    e[ 6] = yz *nc + xs;
+    e[ 7] = 0;
+
+    e[ 8] = zx *nc + ys;
+    e[ 9] = yz *nc - xs;
+    e[10] = z*z*nc +  c;
+    e[11] = 0;
+
+    e[12] = 0;
+    e[13] = 0;
+    e[14] = 0;
+    e[15] = 1;
+  }
+
+  return this;
+};
+
+/**
+ * Multiply the matrix for rotation from the right.
+ * The vector of rotation axis may not be normalized.
+ * @param angle The angle of rotation (degrees)
+ * @param x The X coordinate of vector of rotation axis.
+ * @param y The Y coordinate of vector of rotation axis.
+ * @param z The Z coordinate of vector of rotation axis.
+ * @return this
+ */
+Matrix4.prototype.rotate = function(angle, x, y, z) {
+  return this.concat(new Matrix4().setRotate(angle, x, y, z));
+};
+
+/**
+ * Set the viewing matrix.
+ * @param eyeX, eyeY, eyeZ The position of the eye point.
+ * @param centerX, centerY, centerZ The position of the reference point.
+ * @param upX, upY, upZ The direction of the up vector.
+ * @return this
+ */
+Matrix4.prototype.setLookAt = function(eyeX, eyeY, eyeZ, centerX, centerY, centerZ, upX, upY, upZ) {
+  var e, fx, fy, fz, rlf, sx, sy, sz, rls, ux, uy, uz;
+
+  fx = centerX - eyeX;
+  fy = centerY - eyeY;
+  fz = centerZ - eyeZ;
+
+  // Normalize f.
+  rlf = 1 / Math.sqrt(fx*fx + fy*fy + fz*fz);
+  fx *= rlf;
+  fy *= rlf;
+  fz *= rlf;
+
+  // Calculate cross product of f and up.
+  sx = fy * upZ - fz * upY;
+  sy = fz * upX - fx * upZ;
+  sz = fx * upY - fy * upX;
+
+  // Normalize s.
+  rls = 1 / Math.sqrt(sx*sx + sy*sy + sz*sz);
+  sx *= rls;
+  sy *= rls;
+  sz *= rls;
+
+  // Calculate cross product of s and f.
+  ux = sy * fz - sz * fy;
+  uy = sz * fx - sx * fz;
+  uz = sx * fy - sy * fx;
+
+  // Set to this.
+  e = this.elements;
+  e[0] = sx;
+  e[1] = ux;
+  e[2] = -fx;
+  e[3] = 0;
+
+  e[4] = sy;
+  e[5] = uy;
+  e[6] = -fy;
+  e[7] = 0;
+
+  e[8] = sz;
+  e[9] = uz;
+  e[10] = -fz;
+  e[11] = 0;
+
+  e[12] = 0;
+  e[13] = 0;
+  e[14] = 0;
+  e[15] = 1;
+
+  // Translate.
+  return this.translate(-eyeX, -eyeY, -eyeZ);
+};
+
+/**
+ * Multiply the viewing matrix from the right.
+ * @param eyeX, eyeY, eyeZ The position of the eye point.
+ * @param centerX, centerY, centerZ The position of the reference point.
+ * @param upX, upY, upZ The direction of the up vector.
+ * @return this
+ */
+Matrix4.prototype.lookAt = function(eyeX, eyeY, eyeZ, centerX, centerY, centerZ, upX, upY, upZ) {
+  return this.concat(new Matrix4().setLookAt(eyeX, eyeY, eyeZ, centerX, centerY, centerZ, upX, upY, upZ));
+};
+
+/**
+ * Multiply the matrix for project vertex to plane from the right.
+ * @param plane The array[A, B, C, D] of the equation of plane "Ax + By + Cz + D = 0".
+ * @param light The array which stored coordinates of the light. if light[3]=0, treated as parallel light.
+ * @return this
+ */
+Matrix4.prototype.dropShadow = function(plane, light) {
+  var mat = new Matrix4();
+  var e = mat.elements;
+
+  var dot = plane[0] * light[0] + plane[1] * light[1] + plane[2] * light[2] + plane[3] * light[3];
+
+  e[ 0] = dot - light[0] * plane[0];
+  e[ 1] =     - light[1] * plane[0];
+  e[ 2] =     - light[2] * plane[0];
+  e[ 3] =     - light[3] * plane[0];
+
+  e[ 4] =     - light[0] * plane[1];
+  e[ 5] = dot - light[1] * plane[1];
+  e[ 6] =     - light[2] * plane[1];
+  e[ 7] =     - light[3] * plane[1];
+
+  e[ 8] =     - light[0] * plane[2];
+  e[ 9] =     - light[1] * plane[2];
+  e[10] = dot - light[2] * plane[2];
+  e[11] =     - light[3] * plane[2];
+
+  e[12] =     - light[0] * plane[3];
+  e[13] =     - light[1] * plane[3];
+  e[14] =     - light[2] * plane[3];
+  e[15] = dot - light[3] * plane[3];
+
+  return this.concat(mat);
+}
+
+/**
+ * Multiply the matrix for project vertex to plane from the right.(Projected by parallel light.)
+ * @param normX, normY, normZ The normal vector of the plane.(Not necessary to be normalized.)
+ * @param planeX, planeY, planeZ The coordinate of arbitrary points on a plane.
+ * @param lightX, lightY, lightZ The vector of the direction of light.(Not necessary to be normalized.)
+ * @return this
+ */
+Matrix4.prototype.dropShadowDirectionally = function(normX, normY, normZ, planeX, planeY, planeZ, lightX, lightY, lightZ) {
+  var a = planeX * normX + planeY * normY + planeZ * normZ;
+  return this.dropShadow([normX, normY, normZ, -a], [lightX, lightY, lightZ, 0]);
+};
+
+/**
+ * Constructor of Vector3
+ * If opt_src is specified, new vector is initialized by opt_src.
+ * @param opt_src source vector(option)
+ */
+var Vector3 = function(opt_src) {
+  var v = new Float32Array(3);
+  if (opt_src && typeof opt_src === 'object') {
+    v[0] = opt_src[0]; v[1] = opt_src[1]; v[2] = opt_src[2];
+  } 
+  this.elements = v;
+}
+
+/**
+  * Normalize.
+  * @return this
+  */
+Vector3.prototype.normalize = function() {
+  var v = this.elements;
+  var c = v[0], d = v[1], e = v[2], g = Math.sqrt(c*c+d*d+e*e);
+  if(g){
+    if(g == 1)
+        return this;
+   } else {
+     v[0] = 0; v[1] = 0; v[2] = 0;
+     return this;
+   }
+   g = 1/g;
+   v[0] = c*g; v[1] = d*g; v[2] = e*g;
+   return this;
+};
+
+/**
+ * Constructor of Vector4
+ * If opt_src is specified, new vector is initialized by opt_src.
+ * @param opt_src source vector(option)
+ */
+var Vector4 = function(opt_src) {
+  var v = new Float32Array(4);
+  if (opt_src && typeof opt_src === 'object') {
+    v[0] = opt_src[0]; v[1] = opt_src[1]; v[2] = opt_src[2]; v[3] = opt_src[3];
+  } 
+  this.elements = v;
+}
+
+// 阴影实验
+// ========
+
+// 阴影顶点着色器 (GLSL ES 3.0)
+var SHADOW_VSHADER_SOURCE_300ES =
+  '#version 300 es\n' +
+  'in vec4 pos;\n' + // W库的顶点通常叫 'pos'，这里用 'a_Position' 为了通用性，后面会映射
+  'uniform mat4 u_MvpMatrix;\n' +
+  'void main() {\n' +  
+  '  gl_Position = u_MvpMatrix * pos;\n' +
+  '}\n';                         
+
+// 阴影片元着色器 (GLSL ES 3.0)
+var SHADOW_FSHADER_SOURCE_300ES =
+  '#version 300 es\n' +
+  'precision mediump float;\n' +
+  'out vec4 FragColor;\n' + // GLSL ES 3.0 使用 out 声明输出变量
+  'void main() {\n' +
+  '  const vec4 bitShift = vec4(1.0, 256.0, 256.0 * 256.0, 256.0 * 256.0 * 256.0);\n' +
+  '  const vec4 bitMask = vec4(1.0/256.0, 1.0/256.0, 1.0/256.0, 0.0);\n' +
+  '  vec4 rgbaDepth = fract(gl_FragCoord.z * bitShift);\n' + 
+  '  rgbaDepth -= rgbaDepth.gbaa * bitMask;\n' + 
+  '  FragColor = rgbaDepth;\n' + // 将深度值编码为RGBA颜色输出
+  '}\n';
+
+
+// --- 新增: WebGL 工具函数（在 W.reset 和 main 之间找个合适的位置，或者也放末尾） ---
+// 这是你原 Shadowmod.js 里 createProgram 和 loadShader 的简化版
+function createProgram(gl, vshaderSource, fshaderSource) {
+  const vShader = gl.createShader(gl.VERTEX_SHADER);
+  gl.shaderSource(vShader, vshaderSource);
+  gl.compileShader(vShader);
+  // 检查编译错误，这里省略，实际项目中应加上
+
+  const fShader = gl.createShader(gl.FRAGMENT_SHADER);
+  gl.shaderSource(fShader, fshaderSource);
+  gl.compileShader(fShader);
+  // 检查编译错误，这里省略，实际项目中应加上
+
+  const program = gl.createProgram();
+  gl.attachShader(program, vShader);
+  gl.attachShader(program, fShader);
+  gl.linkProgram(program);
+  // 检查链接错误，这里省略，实际项目中应加上
+  return program;
+}
+
+// 搭建秘密暗房的程序 (也放到文件末尾)
+function initFramebufferObject(gl, width, height) { 
+  var framebuffer, texture, depthRenderbuffer; 
+  framebuffer = gl.createFramebuffer();
+
+  // 纹理作为颜色附件
+  texture = gl.createTexture(); 
+  gl.bindTexture(gl.TEXTURE_2D, texture); 
+  // 注意：WebGL2 可以使用 R32F 等格式存储深度，但 WebGL1 的 RGBA/UNSIGNED_BYTE 编码深度在这里更通用
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null); 
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); 
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); // 边界处理
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE); // 边界处理
+
+  // 渲染缓冲作为深度附件
+  depthRenderbuffer = gl.createRenderbuffer(); 
+  gl.bindRenderbuffer(gl.RENDERBUFFER, depthRenderbuffer); 
+  gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, width, height); 
+
+  gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer); 
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0); 
+  gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, depthRenderbuffer); 
+
+  // 检查FBO状态
+  var status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
+  if (status !== gl.FRAMEBUFFER_COMPLETE) {
+      console.error('Framebuffer not complete:', status);
+      return null;
+  }
+
+  framebuffer.texture = texture; 
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  gl.bindTexture(gl.TEXTURE_2D, null);
+  gl.bindRenderbuffer(gl.RENDERBUFFER, null);
+  return framebuffer; 
+}
+
+// --- 常量定义（在 W.reset 函数体外，或者文件末尾） ---
+var OFFSCREEN_WIDTH = 1024; // 深度图分辨率
+var OFFSCREEN_HEIGHT = 1024;
+var SHADOW_MAP_TEXTURE_UNIT = 0; // 阴影贴图使用的纹理单元
+var shadowProgram;  // 深度图渲染程序
+var shadowFBO;  // 秘密暗房
+var lightViewProjMatrix = new Matrix4(); // 光源的视口投影矩阵
+var lightProjectionMatrix = new Matrix4(); // 光源的投影矩阵
+var lightViewMatrix = new Matrix4(); // 光源的视图矩阵
+
+// 初始化深度图渲染程序
+W.shadowFunc001 = (gl) => {
+  shadowProgram = createProgram(gl, SHADOW_VSHADER_SOURCE_300ES, SHADOW_FSHADER_SOURCE_300ES);  // 深度图着色器
+  shadowProgram.a_Position = gl.getAttribLocation(shadowProgram, 'pos');
+  shadowProgram.u_MvpMatrix = gl.getUniformLocation(shadowProgram, 'u_MvpMatrix');
+  shadowFBO = initFramebufferObject(gl, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);  // 深度图的秘密暗房
+}
+
+// 绘制深度图
+W.shadowFunc002 = (gl) => {
+  var lightPos = {x:10, y:8, z:0,};
+  gl.bindFramebuffer(gl.FRAMEBUFFER, shadowFBO);  // 绑定到秘密暗房
+  gl.viewport(0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT); // 设置分辨率
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  gl.useProgram(shadowProgram);  // 改着色器
+  lightProjectionMatrix.setPerspective(70.0,  // 光的投影
+                                      OFFSCREEN_WIDTH / OFFSCREEN_HEIGHT, 1, 1000);
+  lightViewMatrix.setLookAt(lightPos.x, lightPos.y, lightPos.z,
+                            0.0, 0.0, 0.0,   // 投射位置
+                            0.0, 1.0, 0.0);  // 上的方向
+  lightViewProjMatrix = lightProjectionMatrix.multiply(lightViewMatrix);  // 光的投影 m
+  const posAttribLoc = gl.getAttribLocation(shadowProgram, 'pos');  //+ 找到 pos 并顶点属性
+  gl.enableVertexAttribArray(posAttribLoc);
+
+  /* 绘制 */
+  for (k in W.next) {
+    let object = W.next[k];
+    
+    if (object.n !== 'lighttest-cube' && object.n !== 'lighttest-plane') { continue;}
+    if (object.type === 'camera' || object.type === 'light' || object.type === 'group' || !W.models[object.type]?.vertices) {
+        continue;
+    }
+    let modelMatrix = W.animation(object.n);  // 当前模型的矩阵
+    /* 有问题 */
+
+
+    // 创建一个临时的 Matrix4 对象，并将 DOMMatrix 的数据“翻译”给它
+    let modelMatrix4 = new Matrix4();
+    const domMatrixElements = modelMatrix.toFloat32Array(); // 获取 DOMMatrix 的元素数组
+    // 将元素逐个复制到 Matrix4 的内部元素数组中
+    for (let i = 0; i < 16; i++) {
+        modelMatrix4.elements[i] = domMatrixElements[i];
+    }
+
+
+    const mvpMatrixForObject = lightViewProjMatrix.multiply(modelMatrix4);  //+ 计算MVP并传递给深度图着色器
+    gl.uniformMatrix4fv(
+      shadowProgram.u_MvpMatrix,
+      false,
+      new DOMMatrix(mvpMatrixForObject.elements).toFloat32Array()
+  );
+    //gl.uniformMatrix4fv(shadowProgram.u_MvpMatrix, false, mvpMatrixForObject.toFloat32Array());
+    gl.bindBuffer(gl.ARRAY_BUFFER, W.models[object.type].verticesBuffer);  //+ 顶点数据
+    
+    gl.vertexAttribPointer(posAttribLoc, 3, gl.FLOAT, false, 0, 0);
+    
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, W.models[object.type].indicesBuffer);  //+ 索引数据和绘制
+    console.log(W.models[object.type]);
+    gl.drawElements(gl.TRIANGLES, W.models[object.type].indices.length, gl.UNSIGNED_SHORT, 0);
+    
+    gl.disableVertexAttribArray(posAttribLoc); // 已绘制完，关闭
+  }
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null); //+ 解绑，回默认画布
+  gl.viewport(0, 0, W.canvas.width, W.canvas.height);
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 export default W;

@@ -61,32 +61,32 @@ const cubeInstances = [];
 
 
 // 创建 n 个可以绘制许多立方体的实例立方体对象
-for (let index = 0; index < 100; index++) {
+for (let index = 0; index < 10; index++) {
   k.W.cube({
     n: 'manyCubes' + index,
     instances: cubeInstances, // 实例属性的数组
     t: marble,
     mix: 0.5,
-    y:50 * index,
+    y:50 * index * 10,
   });
 }
 
 
 
 
-k.addBox({  // 创建一个 旋转测试 细长物理体
-    DPZ : 2,
-    colliGroup: 1,
-    name: 'longThin', X: 20, Y: 10, Z: -30,
-    mass: 1, width: 40, depth: 2, height: 2, texture: marble
-});
+// k.addBox({  // 创建一个 旋转测试 细长物理体
+//     DPZ : 2,
+//     colliGroup: 1,
+//     name: 'longThin', X: 20, Y: 10, Z: -30,
+//     mass: 1, width: 40, depth: 2, height: 2, texture: marble
+// });
 
-k.addBox({  // 创建一个 旋转测试 细长物理体
-    DPZ : 1,
-    colliGroup: 2,
-    name: 'longThin02', X: 20, Y: 10, Z: -50,
-    mass: 1, width: 40, depth: 2, height: 2, texture: marble
-});
+// k.addBox({  // 创建一个 旋转测试 细长物理体
+//     DPZ : 1,
+//     colliGroup: 2,
+//     name: 'longThin02', X: 20, Y: 10, Z: -50,
+//     mass: 1, width: 40, depth: 2, height: 2, texture: marble
+// });
 
 k.addBox({  // 创建地面
     DPZ : 1,
@@ -147,12 +147,12 @@ const drawList = [
 ];
 
 k.loadTexture(drawList).then(res => {
-    k.addBox({  // 创建一个立方体，测试我的纹理系统
-        DPZ : 1,
-        tiling : 3,
-        name: 'testTexture', X: 60, Y: 200, Z: -60, XNumber: 5,
-        mass: 100, size:90, texture: xjapangood, mixValue: 0.1
-    });
+    // k.addBox({  // 创建一个立方体，测试我的纹理系统
+    //     DPZ : 1,
+    //     tiling : 6,
+    //     name: 'testTexture', X: 60, Y: 200, Z: -60,
+    //     mass: 100, size:90, texture: xjapangood, mixValue: 0.1
+    // });
 
     k.mainVPlayer = k.addBox({  // 创建一个立方体，并设置为主角
         name: 'mainPlayer', DPZ : 1,
@@ -160,9 +160,35 @@ k.loadTexture(drawList).then(res => {
         X:4.25, Y:1.00, Z:12.09,
         rX: 0, rY: 0, rZ: 0, size:1, mixValue:0.7,
         mass: 50, texture: marble
-});
-    
+    });
+
+    // 绘制模拟灯的位置
+    k.addBox({
+        DPZ : 1,
+        tiling : 1,
+        name: 'lighttest', X: 10, Y: 8, Z: 0,
+        mass: 0, size:1, texture: jpflag
+    });
+
+    // 一个平面，测试投下的阴影
+    k.addBox({
+        DPZ : 1,
+        tiling : 1,
+        name: 'lighttest-plane', X: 10, Y: 2, Z: 0,
+        mass: 0, width:10, height:0.3, depth:10,
+
+    });
+
+    // 一个立方体，照射它投阴影
+    k.addBox({
+        DPZ : 1,
+        tiling : 1,
+        name: 'lighttest-cube', X: 8, Y: 5, Z: 0,
+        mass: 0, size:1, 
+    });
 })
+
+
 
 
 // 日本国旗
