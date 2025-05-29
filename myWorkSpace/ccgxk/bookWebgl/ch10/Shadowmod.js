@@ -56,7 +56,7 @@ var LIGHT_X = 0, LIGHT_Y = 40, LIGHT_Z = 2;
 // 主函数
 function main() { 
   var canvas = document.getElementById('webgl');
-  var gl = getWebGLContext(canvas);
+  var gl = canvas.getContext('webgl');
 
   var shadowProgram = createProgram(  // 初始化深度图着色器
                         gl,
@@ -254,6 +254,48 @@ function animate(angle) {
   var newAngle = angle + (ANGLE_STEP * elapsed) / 1000.0; 
   return newAngle % 360; 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /*******************/
 

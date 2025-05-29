@@ -117,6 +117,15 @@ k.addBox({  // 创建一个静止的墙
     texture: marble, background: '#287A17', mixValue: 0.71,
 });
 
+k.addBox({  // 创建一个静止的墙
+    DPZ : 1,
+    colliGroup: 2,
+    tiling : 1,
+    name: 'testWall0002', X: 1000, Y: 3, Z: 0,
+    mass: 0, width: 10, depth: 9, height: 100,
+    texture: marble, background: '#287A17', mixValue: 0.71,
+});
+
 // 随机生成 n 个模型
 var yVlaue = 10;
 for(var i = 0; i < 100; i++){
