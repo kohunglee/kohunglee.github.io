@@ -250,7 +250,7 @@ const W = {
         if(W.debugShadow === true){ return }
 
 
-        
+
         W.gl.activeTexture(W.gl.TEXTURE0 + SHADOW_MAP_TEXTURE_UNIT); // 激活“货架”
         W.gl.bindTexture(W.gl.TEXTURE_2D, shadowFBO.texture); // 把“深度照片”放到“货架”上
         W.gl.uniform1i(  // 传值 u_ShadowMap
@@ -653,13 +653,17 @@ W.add("pyramid", {
 const SHADOW_VSHADER_SOURCE_300ES = `#version 300 es
   precision highp float;
   in vec4 pos;
+  in vec4 col;
   uniform mat4 u_MvpMatrix;
+  out vec4 v_col_debug;
   void main() {
     gl_Position = u_MvpMatrix * pos;
+    v_col_debug = col;  // 调试全彩
   }`;
 
 const SHADOW_FSHADER_SOURCE_300ES = `#version 300 es
   precision highp float;
+  in vec4 v_col_debug;  // 调试
   out vec4 FragColor;
   vec4 encodeFloat(float v) { // 函数：将深度值编码到RGBA纹理
     vec4 enc = vec4(1.0, 255.0, 65025.0, 16581375.0) * v;
@@ -668,8 +672,9 @@ const SHADOW_FSHADER_SOURCE_300ES = `#version 300 es
     return enc;
   }
   void main() {
-    // FragColor = encodeFloat(gl_FragCoord.z); // gl_FragCoord.z 是深度值 [0,1]
-    FragColor = vec4(gl_FragCoord.z, gl_FragCoord.z, gl_FragCoord.z, 1.0);
+    FragColor = encodeFloat(gl_FragCoord.z); // gl_FragCoord.z 是深度值 [0,1]
+    // FragColor = vec4(gl_FragCoord.z, gl_FragCoord.z, gl_FragCoord.z, 1.0);
+    // FragColor = v_col_debug;  // 调试
   }`;
 
 
@@ -711,8 +716,9 @@ function createProgram(gl, vshaderSource, fshaderSource) {
 }
 
 // --- 常量定义（在 W.reset 函数体外，或者文件末尾） ---
-var OFFSCREEN_WIDTH = 1024; // 深度图分辨率
-var OFFSCREEN_HEIGHT = 1024;
+var OFFSCREEN_WIDTH; // 深度图分辨率
+var OFFSCREEN_HEIGHT;
+OFFSCREEN_WIDTH = OFFSCREEN_HEIGHT = 2**12;
 var SHADOW_MAP_TEXTURE_UNIT = 0; // 阴影贴图使用的纹理单元
 var shadowProgram;  // 深度图渲染程序
 var shadowFBO;  // 秘密暗房
@@ -724,6 +730,7 @@ W.shadowFunc001 = (gl) => {
   shadowProgram = createProgram(gl, SHADOW_VSHADER_SOURCE_300ES, SHADOW_FSHADER_SOURCE_300ES);  //+3 深度图着色器初始化
   shadowProgram.a_Position = gl.getAttribLocation(shadowProgram, 'pos');
   shadowProgram.u_MvpMatrix = gl.getUniformLocation(shadowProgram, 'u_MvpMatrix');
+  shadowProgram.a_Color = gl.getAttribLocation(shadowProgram, 'col');
   shadowFBO = initFramebufferObject(gl, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);  // 深度图的秘密暗房 FBO
 }
 
@@ -737,14 +744,56 @@ W.shadowFunc002 = () => {
   }
   W.gl.useProgram(shadowProgram);  // 使用阴影着色器
   W.gl.clear(W.gl.COLOR_BUFFER_BIT | W.gl.DEPTH_BUFFER_BIT);  //+2 初始化画布
-  // W.gl.viewport(0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
-  W.gl.viewport(0, 0, W.gl.canvas.width, W.gl.canvas.height);  // 视角要改回去
+  W.gl.viewport(0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
+  // W.gl.viewport(0, 0, W.gl.canvas.width, W.gl.canvas.height);  // 视角要改回去
 
+  
   var vLight = new DOMMatrix()  
-              .translateSelf(-130, 10, 130)  // 灯光的位置
+              .translateSelf(-130, 30, 130)  // 灯光的位置
               .rotateSelf(0, 90, 45);  // 灯光的旋转
   vLight.invertSelf();
-  vLight.preMultiplySelf(W.projection);  // 灯光的 fov 设置
+
+
+
+  // var fov = 15;
+  // var viewLimit = W.viewLimit;
+  // vLight.preMultiplySelf(  // 灯光的 视角 设置
+  //   new DOMMatrix([
+  //     (1 / Math.tan(fov * Math.PI / 180)) / (W.canvas.width / W.canvas.height), 0, 0, 0, 
+  //     0, (1 / Math.tan(fov * Math.PI / 180)), 0, 0, 
+  //     0, 0, -(viewLimit + 1) / (viewLimit - 1), -1,
+  //     0, 0, -(2 * viewLimit + 2) / (viewLimit - 1), 0
+  //   ])
+  // );
+
+
+  // const lightNear = 1.0;  // 设定光源的近裁剪面：能看到最近的物体
+  // const lightFar = 3000.0; // 设定光源的远裁剪面：能看到最远的物体
+  // const lightFov = 95;    // 光源的视野角度
+  // const lightAspectRatio = OFFSCREEN_WIDTH / OFFSCREEN_HEIGHT; 
+  // const lightProjectionMatrix = new DOMMatrix([
+  //   (1 / Math.tan(lightFov * Math.PI / 180 / 2)) / lightAspectRatio, 0, 0, 0, // <<< fov / 2 且使用 lightAspectRatio
+  //   0, (1 / Math.tan(lightFov * Math.PI / 180 / 2)), 0, 0, 
+  //   0, 0, -(lightFar + lightNear) / (lightFar - lightNear), -1, // <<< 使用 lightNear 和 lightFar
+  //   0, 0, -(2 * lightFar * lightNear) / (lightFar - lightNear), 0  // <<< 使用 lightNear 和 lightFar
+  // ]);
+  // vLight.preMultiplySelf(lightProjectionMatrix);
+
+
+  const lightNear = 1;  // 近裁剪面
+  const lightFar = 100.0; // 远裁剪面
+  const lightWidth = 100.0; // 正交投影的宽度范围
+  const lightHeight = 100.0; // 正交投影的高度范围
+  const lightProjectionMatrix = new DOMMatrix([
+      2 / lightWidth, 0, 0, 0,
+      0, 2 / lightHeight, 0, 0,
+      0, 0, -2 / (lightFar - lightNear), 0,
+      0, 0, -(lightFar + lightNear) / (lightFar - lightNear), 1
+  ]);
+  vLight.preMultiplySelf(lightProjectionMatrix);
+
+
+
   W.lightViewProjMatrix = vLight; // 👈 存的就是这个！
 
   for (const i in W.next) {
