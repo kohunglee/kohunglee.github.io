@@ -39,7 +39,7 @@ export default {
         c.height = window.innerHeight;
         W.reset(c);
         W.ambient(0.7);
-        W.light({ x: 0.5, y: -0.3, z: -0.5});
+        W.light({ x: 0.5, y: -0.3, z: 0.5});
         W.clearColor("#7A4141");
         W.camera({n:'camera', fov: this.fov});
         W.group({n:'posZero',x:0,y:1,z:0});  // 下面这几行，绘制原点坐标轴

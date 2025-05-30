@@ -74,41 +74,41 @@ var list = k.bodylist;
 
 
 
-// k.addBox({  // 创建一个 旋转测试 细长物理体
-//     DPZ : 2,
-//     colliGroup: 1,
-//     name: 'longThin', X: 20, Y: 10, Z: -30,
-//     mass: 1, width: 40, depth: 2, height: 2, texture: marble
-// });
+k.addBox({  // 创建一个 旋转测试 细长物理体
+    DPZ : 2,
+    colliGroup: 1,
+    name: 'longThin', X: 20, Y: 10, Z: -30,
+    mass: 1, width: 40, depth: 2, height: 2, texture: marble
+});
 
-// k.addBox({  // 创建一个 旋转测试 细长物理体
-//     DPZ : 1,
-//     colliGroup: 2,
-//     name: 'longThin02', X: 20, Y: 10, Z: -50,
-//     mass: 1, width: 40, depth: 2, height: 2, texture: marble
-// });
+k.addBox({  // 创建一个 旋转测试 细长物理体
+    DPZ : 1,
+    colliGroup: 2,
+    name: 'longThin02', X: 20, Y: 10, Z: -50,
+    mass: 1, width: 40, depth: 2, height: 2, texture: marble
+});
 
 k.addBox({  // 创建地面
     DPZ : 1,
     colliGroup: 1,
     tiling : 10,
-    isShadow: 1,
+    // isShadow: 1,
     name: 'groundPlane', X: 0, Y: -0.5, Z: 0,
     mass: 0, width: 10000, depth: 10000, height: 2,
-    // texture: marble, background: '#287A17', mixValue: 0.71,
+    texture: marble, background: '#287A17', mixValue: 0.5,
 });
 
-// k.addBox({  // 创建一个参考1米的使用的辅助图片。它会拉低渲染，所以要记得删去
-//     DPZ : 1,
-//     colliGroup: 1,
-//     tiling : 10000,
-//     isShadow: 1,
-//     shape: 'plane',
-//     isPhysical: false,
-//     name: 'groundPlaneAux', X: 0, Y: 0.6, Z: 0, rX: -90,
-//     mass: 0, width: 10000, depth: 0, height: 10000,
-//     texture: marble, background: '#171f7a14', mixValue: 0.71,
-// });
+k.addBox({  // 创建一个参考1米的使用的辅助图片。它会拉低渲染，所以要记得删去
+    DPZ : 1,
+    colliGroup: 1,
+    tiling : 10000,
+    isShadow: 1,
+    shape: 'plane',
+    isPhysical: false,
+    name: 'groundPlaneAux', X: 0, Y: 0.6, Z: 0, rX: -90,
+    mass: 0, width: 10000, depth: 0, height: 10000,
+    texture: marble, background: '#171f7a14', mixValue: 0.71,
+});
 
 // k.addBox({  // 创建一个静止的墙
 //     DPZ : 1,
@@ -145,8 +145,8 @@ k.mainVPlayer = k.addBox({  // 创建一个立方体，并设置为主角
         name: 'mainPlayer', DPZ : 1,
         colliGroup: 1,
         isShadow: 1,
-        // X:4.25, Y:1.00, Z:12.09,
-        X:-140.56, Y:1.00, Z:147.01,
+        X:4.25, Y:1.00, Z:12.09,
+        // X:-134.56, Y:10.00, Z:128.01,
         rX: 0, rY: 0, rZ: 0, size:1, mixValue:0.7,
         mass: 50, texture: marble
     });
@@ -159,31 +159,31 @@ const drawList = [
 ];
 
 k.loadTexture(drawList).then(res => {
-    // k.addBox({  // 创建一个立方体，测试我的纹理系统
-    //     DPZ : 1,
-    //     tiling : 6,
-    //     name: 'testTexture', X: 60, Y: 200, Z: -60,
-    //     mass: 100, size:90, texture: xjapangood, mixValue: 0.1
-    // });
+    k.addBox({  // 创建一个立方体，测试我的纹理系统
+        DPZ : 1,
+        tiling : 6,
+        name: 'testTexture', X: 60, Y: 200, Z: -60,
+        mass: 100, size:90, texture: xjapangood, mixValue: 0.1
+    });
 
    
 
-    // // 绘制模拟灯的位置
-    // k.addBox({
-    //     DPZ : 1,
-    //     tiling : 1,
-    //     name: 'lighttest', X: 10, Y: 0, Z: 0,
-    //     mass: 0, size:1, texture: jpflag
-    // });
+    // 绘制模拟灯的位置
+    k.addBox({
+        DPZ : 1,
+        tiling : 1,
+        name: 'lighttest', X: 10, Y: 0, Z: 0,
+        mass: 0, size:1, texture: jpflag
+    });
 
     // 一个平面，测试投下的阴影
-    // k.addBox({
-    //     DPZ : 1,
-    //     tiling : 1,
-    //     isShadow: 1,
-    //     name: 'lighttest-plane', X: -130, Y: 1, Z: 130,
-    //     mass: 0, width:30, height:0.3, depth:30,
-    // });
+    k.addBox({
+        DPZ : 1,
+        tiling : 1,
+        isShadow: 1,
+        name: 'lighttest-plane', X: -130, Y: 1, Z: 130,
+        mass: 0, width:30, height:0.3, depth:30,
+    });
 
     // 一个立方体，照射它投阴影
     k.addBox({
@@ -200,7 +200,7 @@ k.loadTexture(drawList).then(res => {
         DPZ : 1,
         tiling : 1,
         isShadow: 1,
-        name: 'lighttest-cube002', X: -138, Y: 3, Z: 130,
+        name: 'lighttest-cube002', X: -13, Y: 3, Z: 13,
         mass: 0, size:1, background: '#333'
     });
 })
@@ -260,6 +260,18 @@ function drawRedDot(t){var l=t.getContext("2d"),e=t.width/2,i=t.height/2,a=k.mai
 window.k = k;
 window.list = list;
 
+lightpos = {
+  rx: 0, ry: -125, rz:-55,
+}
+
+// console.log("每秒执行一次");
+function executePerSecond() {
+    var plr = k.W.current['mainPlayer']
+    lightpos.x = plr.x - 5;
+    lightpos.y = plr.y + 20;
+    lightpos.z = plr.z + 10;
+}
+const intervalId = setInterval(executePerSecond, 1000);
 
 
 </script>
