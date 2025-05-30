@@ -19,6 +19,7 @@ export default {
                 name = 'k'+ this.bodyObjName++,  // 如果没指认，则使用随机数生成 ID
                 X = 5, Y = 5, Z = 5,
                 quat = null,
+                isShadow = 0,
                 tiling = [1, 1],  // 纹理平铺
                 shape = 'cube',  // 默认形状
                 mass = 0, width = 1, depth = 1, height = 1, size = 1,
@@ -63,7 +64,8 @@ export default {
                 x: X, y:Y, z:Z,
                 t: texture, s: smooth, tile: tiling,
                 rx: rX, ry: rY, rz: rZ, b: background, mix: mixValue,
-                xNumber: XNumber,  // 测试一下
+                shadow: isShadow,  // 测试一下
+
             });
         }
         var result = { name, body, X, Y, Z, rX, rY, rZ, isVisualMode, myargs, posID, DPZ, quat};

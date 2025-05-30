@@ -1,4 +1,4 @@
-import wjs from '../wjs/w_ins.js';  // W 引擎(webgl)，兼容性好一点
+import wjs from '../wjs/w_ins_lab.js';  // W 引擎(webgl)，兼容性好一点
 // import webgpu from '../wjs/w_wgpu.js';  // 后续会更新成一个 webgpu 版本
 // import babylon from '../babylon/babylon.js';  // 也会引入传说中的 babylon.js 以增强画质
 

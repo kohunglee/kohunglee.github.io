@@ -38,18 +38,14 @@ const W = {
           uniform vec4 bb;                              // 广告牌：bb = [w, h, 1.0, 0.0]
           out vec4 v_pos, v_col, v_uv, v_normal;
           uniform bool isInstanced;              // 是不是实例化绘制
-
-          uniform mat4 u_MvpMatrixFromLight;       // 光源的 MVP 矩阵
-          out vec4 v_PositionFromLight;            // 输出，顶点在光源眼中的位置
-
           void main() {
-            mat4 currentModelMatrix;  // 当前的模型矩阵
+            mat4 currentModelMatrix;             // 当前的模型矩阵
             if (isInstanced) {
               currentModelMatrix = instanceModelMatrix;
             } else {
               currentModelMatrix = m;
             }
-            gl_Position = pv * (    // 设置顶点位置：p * v * v_pos
+            gl_Position = pv * (                        // 设置顶点位置：p * v * v_pos
               v_pos = bb.z > 0.                         
               ? currentModelMatrix[3] + eye * (pos * bb) // 广告牌
               : currentModelMatrix * pos               
@@ -57,8 +53,6 @@ const W = {
             v_col = col;
             v_uv = uv;
             v_normal = transpose(isInstanced ? inverse(currentModelMatrix) : im) * normal;  // 必要时使用实例矩阵
-            v_PositionFromLight = u_MvpMatrixFromLight *  // 计算顶点在光源眼中的位置
-                                 (isInstanced ? instanceModelMatrix * pos : m * pos);
           }`
         );
 
@@ -77,22 +71,7 @@ const W = {
           uniform sampler2D sampler;
           out vec4 c;
 
-          in vec4 v_PositionFromLight;   // 接收灯光视角的位置
-          uniform sampler2D u_ShadowMap;  // 接收阴影深度图
-
           void main() {
-            /* 阴影处理逻辑 */
-            vec3 shadowCoord = (v_PositionFromLight.xyz    // 创建阴影映射
-                                / v_PositionFromLight.w)
-                                / 2.0 + 0.5;
-            float shadowVisibility = 1.0;  // 非阴影部分亮度
-            vec4 rgbaDepth = texture(u_ShadowMap, shadowCoord.xy);  // 解析深度
-            const vec4 bitShift = vec4(1.0, 1.0/256.0, 1.0/(256.0*256.0), 1.0/(256.0*256.0*256.0));
-            float depth = dot(rgbaDepth, bitShift);  // 当前顶点的深度
-            if (shadowCoord.z > depth + 0.005) {  // 计算有没有被遮挡
-                shadowVisibility = 0.5;
-            }
-
             c = mix(texture(sampler, v_uv.xy * tiling), v_col, o[3]);
             if(o[1] > 0.){
               c = vec4(
@@ -101,11 +80,9 @@ const W = {
                   ? vec3(v_normal.xyz)
                   : cross(dFdx(v_pos.xyz), dFdy(v_pos.xyz))
                 )))
-                + o[2]) * shadowVisibility,
+                + o[2]),
                 c.a
               );
-            } else {
-              c.rgb *= shadowVisibility;
             }
           }`
         );
@@ -116,11 +93,10 @@ const W = {
         W.gl.useProgram(W.program);
         W.clearColor = c => W.gl.clearColor(...W.col(c));
         W.clearColor("fff");
-        W.gl.enable(2929);
+        W.gl.enable(2929 );
         W.light({y: -1});  
         W.camera({fov: 30});
         setTimeout(W.draw, 16);  // 开始绘制
-        W.shadowFunc001(W.gl);  // 初始化阴影
   },
 
   // 设置对象的状态
@@ -220,15 +196,7 @@ const W = {
         v.invertSelf();
         v.preMultiplySelf(W.projection);
         W.gl.uniformMatrix4fv( W.gl.getUniformLocation(W.program, 'pv'), false, v.toFloat32Array());  // 处理好 pv ，传给着色器
-        // 调试模式：让主摄像机暂时借用光源的投影视图矩阵
-      //   W.gl.uniformMatrix4fv(
-      //     W.gl.getUniformLocation(W.program, 'pv'),
-      //     false,
-      //     new DOMMatrix(lightViewProjMatrix.elements).toFloat32Array() // 直接把 Matrix4 的元素传给 DOMMatrix 构造函数！
-      // );
-        W.shadowFunc002(W.gl);  // 阴影的秘密摄影
-        W.gl.useProgram(W.program);   // 阴影绘制完，激活主绘制器
-        W.gl.clear(16640);
+        W.gl.clear(16640 );
         for(i in W.next){  // 遍历渲染模型
           if(!W.next[i].t && W.col(W.next[i].b)[3] == 1){
             W.render(W.next[i], dt);
@@ -569,254 +537,5 @@ W.add("pyramid", {
   }
   W.add("sphere", {vertices, uv, indices});
 })();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// 阴影实验
-// ========
-
-// 阴影顶点着色器 (GLSL ES 3.0)
-// --- 深度图着色器源码（需要添加到文件末尾） ---
-const SHADOW_VSHADER_SOURCE_300ES = `#version 300 es
-  precision highp float;
-  in vec4 pos;
-  uniform mat4 u_MvpMatrix;
-  void main() {
-    gl_Position = u_MvpMatrix * pos;
-  }`;
-
-const SHADOW_FSHADER_SOURCE_300ES = `#version 300 es
-  precision highp float;
-  out vec4 FragColor;
-  vec4 encodeFloat(float v) { // 将深度值编码到RGBA纹理
-    vec4 enc = vec4(1.0, 255.0, 65025.0, 16581375.0) * v;
-    enc = fract(enc);
-    enc -= enc.yzww * (1.0/255.0);
-    return enc;
-  }
-  void main() {
-    FragColor = encodeFloat(gl_FragCoord.z); // gl_FragCoord.z 是深度值 [0,1]
-  }`;
-
-
-// --- 新增: WebGL 工具函数（在 W.reset 和 main 之间找个合适的位置，或者也放末尾） ---
-// 这是你原 Shadowmod.js 里 createProgram 和 loadShader 的简化版
-function createProgram(gl, vshaderSource, fshaderSource) {
-  const vShader = gl.createShader(gl.VERTEX_SHADER);
-  gl.shaderSource(vShader, vshaderSource);
-  gl.compileShader(vShader);
-  // 检查编译错误，这里省略，实际项目中应加上
-
-  const fShader = gl.createShader(gl.FRAGMENT_SHADER);
-  gl.shaderSource(fShader, fshaderSource);
-  gl.compileShader(fShader);
-  // 检查编译错误，这里省略，实际项目中应加上
-
-  const program = gl.createProgram();
-  gl.attachShader(program, vShader);
-  gl.attachShader(program, fShader);
-  gl.linkProgram(program);
-  // 检查链接错误，这里省略，实际项目中应加上
-  return program;
-}
-
-// 搭建秘密暗房的程序 (也放到文件末尾)
-function initFramebufferObject(gl, width, height) { 
-  var framebuffer, texture, depthRenderbuffer; 
-  framebuffer = gl.createFramebuffer();
-
-  // 纹理作为颜色附件
-  texture = gl.createTexture(); 
-  gl.bindTexture(gl.TEXTURE_2D, texture); 
-  // 注意：WebGL2 可以使用 R32F 等格式存储深度，但 WebGL1 的 RGBA/UNSIGNED_BYTE 编码深度在这里更通用
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null); 
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); 
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); // 边界处理
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE); // 边界处理
-
-  // 渲染缓冲作为深度附件
-  depthRenderbuffer = gl.createRenderbuffer(); 
-  gl.bindRenderbuffer(gl.RENDERBUFFER, depthRenderbuffer); 
-  gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, width, height); 
-
-  gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer); 
-  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0); 
-  gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, depthRenderbuffer); 
-
-  // 检查FBO状态
-  var status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
-  if (status !== gl.FRAMEBUFFER_COMPLETE) {
-      console.error('Framebuffer not complete:', status);
-      return null;
-  }
-
-  framebuffer.texture = texture; 
-  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-  gl.bindTexture(gl.TEXTURE_2D, null);
-  gl.bindRenderbuffer(gl.RENDERBUFFER, null);
-  return framebuffer; 
-}
-
-// --- 新增: DOMMatrix 的 lookAt 辅助函数（模仿 Matrix4 的 setLookAt） ---
-// 这是为 DOMMatrix 量身定制的“导演”功能，让它能学会“眼神定位”
-function lookAt(eyeX, eyeY, eyeZ, targetX, targetY, targetZ, upX, upY, upZ) {
-  const eye = [eyeX, eyeY, eyeZ];
-  const target = [targetX, targetY, targetZ];
-  const up = [upX, upY, upZ];
-
-  const z = [(eye[0] - target[0]), (eye[1] - target[1]), (eye[2] - target[2])]; // 前向向量 (z轴)
-  const z_len = Math.sqrt(z[0]*z[0] + z[1]*z[1] + z[2]*z[2]);
-  z[0] /= z_len; z[1] /= z_len; z[2] /= z_len;
-
-  const x = [ (up[1] * z[2] - up[2] * z[1]), (up[2] * z[0] - up[0] * z[2]), (up[0] * z[1] - up[1] * z[0]) ]; // 右向向量 (x轴)
-  const x_len = Math.sqrt(x[0]*x[0] + x[1]*x[1] + x[2]*x[2]);
-  x[0] /= x_len; x[1] /= x_len; x[2] /= x_len;
-
-  const y = [ (z[1] * x[2] - z[2] * x[1]), (z[2] * x[0] - z[0] * x[2]), (z[0] * x[1] - z[1] * x[0]) ]; // 上向向量 (y轴)
-
-  // 构建视图矩阵（逆转换）
-  return new DOMMatrix([
-    x[0], y[0], z[0], 0,
-    x[1], y[1], z[1], 0,
-    x[2], y[2], z[2], 0,
-    -(x[0]*eye[0] + x[1]*eye[1] + x[2]*eye[2]),
-    -(y[0]*eye[0] + y[1]*eye[1] + y[2]*eye[2]),
-    -(z[0]*eye[0] + z[1]*eye[1] + z[2]*eye[2]),
-    1
-  ]);
-}
-
-// --- 常量定义（在 W.reset 函数体外，或者文件末尾） ---
-var OFFSCREEN_WIDTH = 1024; // 深度图分辨率
-var OFFSCREEN_HEIGHT = 1024;
-var SHADOW_MAP_TEXTURE_UNIT = 0; // 阴影贴图使用的纹理单元
-var shadowProgram;  // 深度图渲染程序
-var shadowFBO;  // 秘密暗房
-var lightViewProjMatrix; // 光源的视口投影矩阵
-var lightProjectionMatrix; // 光源的投影矩阵
-var lightViewMatrix; // 光源的视图矩阵
-
-// 初始化深度图渲染程序
-W.shadowFunc001 = (gl) => {
-  shadowProgram = createProgram(gl, SHADOW_VSHADER_SOURCE_300ES, SHADOW_FSHADER_SOURCE_300ES);  // 深度图着色器
-  shadowProgram.a_Position = gl.getAttribLocation(shadowProgram, 'pos');
-  shadowProgram.u_MvpMatrix = gl.getUniformLocation(shadowProgram, 'u_MvpMatrix');
-  shadowFBO = initFramebufferObject(gl, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);  // 深度图的秘密暗房
-  
-  lightProjectionMatrix = new DOMMatrix();  //+ 初始化全局的 DOMMatrix 变量
-  lightViewMatrix = new DOMMatrix();
-  lightViewProjMatrix = new DOMMatrix();
-}
-
-window.lightPos = {x: 50, y: 50, z: 0};
-window.lightfov = 35;
-// 绘制深度图
-W.shadowFunc002 = (gl) => {
-  
-  gl.bindFramebuffer(gl.FRAMEBUFFER, shadowFBO);  // 绑定到秘密暗房
-  gl.viewport(0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT); // 设置分辨率
-  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-  gl.useProgram(shadowProgram);  // 改着色器
-  // lightProjectionMatrix.setPerspective(lightfov,  // 光的投影
-  //                                     OFFSCREEN_WIDTH / OFFSCREEN_HEIGHT, 0.1, 1000);
-  lightProjectionMatrix = new DOMMatrix(); // 重置为单位矩阵
-  lightProjectionMatrix.perspectiveSelf(window.lightfov,
-                                     OFFSCREEN_WIDTH / OFFSCREEN_HEIGHT, 0.1, 1000);
-
-  lightViewMatrix = lookAt(lightPos.x, lightPos.y, lightPos.z,
-                            0.0, 0.0, 0.0,   // 投射位置
-                            0.0, 1.0, 0.0);  // 上的方向
-
-  // lightViewProjMatrix = lightProjectionMatrix.multiply(lightViewMatrix);  // 光的投影 m
-  lightViewProjMatrix = new DOMMatrix(lightProjectionMatrix).multiplySelf(lightViewMatrix);
-
-  const posAttribLoc = gl.getAttribLocation(shadowProgram, 'pos');  //+ 找到 pos 并顶点属性
-  gl.enableVertexAttribArray(posAttribLoc);
-
-  /* 绘制 */
-  for (k in W.next) {
-    let object = W.next[k];
-    
-    if (object.n !== 'lighttest-cube' && object.n !== 'lighttest-plane') { continue;}
-    if (object.type === 'camera' || object.type === 'light' || object.type === 'group' || !W.models[object.type]?.vertices) {
-        continue;
-    }
-    let modelMatrix = W.animation(object.n);  // 当前模型的矩阵
-    /* 有问题 */
-    console.log(object.n);
-
-    // 计算当前对象的 MVP 矩阵 (投影 * 视图 * 模型)
-    // 同样使用 DOMMatrix 的 multiplySelf
-    let mvpMatrixForObject = new DOMMatrix(lightViewProjMatrix).multiplySelf(modelMatrix); 
-
-    // 将 MVP 矩阵传递给深度图着色器
-    gl.uniformMatrix4fv(
-      shadowProgram.u_MvpMatrix,
-      false,
-      mvpMatrixForObject.toFloat32Array() // DOMMatrix 的 toFloat32Array() 格式正确
-    );
-
-    // 绑定顶点数据
-    gl.bindBuffer(gl.ARRAY_BUFFER, W.models[object.type].verticesBuffer);  
-    gl.vertexAttribPointer(posAttribLoc, 3, gl.FLOAT, false, 0, 0);
-    
-    // 绘制对象
-    if (W.models[object.type].indicesBuffer) {
-      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, W.models[object.type].indicesBuffer);
-      gl.drawElements(gl.TRIANGLES, W.models[object.type].indices.length, gl.UNSIGNED_SHORT, 0);
-    } else {
-      gl.drawArrays(gl.TRIANGLES, 0, W.models[object.type].vertices.length / 3);
-    }
-    gl.disableVertexAttribArray(posAttribLoc); 
-  }
-
-  gl.bindFramebuffer(gl.FRAMEBUFFER, null); // 解绑，回默认画布
-  gl.viewport(0, 0, W.canvas.width, W.canvas.height); // 恢复主画布视口
-
-}
-
 
 export default W;
