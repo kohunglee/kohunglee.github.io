@@ -92,6 +92,7 @@ k.addBox({  // 创建地面
     DPZ : 1,
     colliGroup: 1,
     tiling : 10,
+    isShadow: 1,
     name: 'groundPlane', X: 0, Y: -0.5, Z: 0,
     mass: 0, width: 10000, depth: 10000, height: 2,
     texture: marble, background: '#287A17', mixValue: 0.71,
@@ -142,7 +143,9 @@ for(var i = 0; i < 100; i++){
 k.mainVPlayer = k.addBox({  // 创建一个立方体，并设置为主角
         name: 'mainPlayer', DPZ : 1,
         colliGroup: 1,
-        X:4.25, Y:1.00, Z:12.09,
+        isShadow: 1,
+        // X:4.25, Y:1.00, Z:12.09,
+        X:-140.56, Y:1.00, Z:190.01,
         rX: 0, rY: 0, rZ: 0, size:1, mixValue:0.7,
         mass: 50, texture: marble
     });
@@ -177,8 +180,8 @@ k.loadTexture(drawList).then(res => {
         DPZ : 1,
         tiling : 1,
         isShadow: 1,
-        name: 'lighttest-plane', X: 10, Y: 1, Z: 0,
-        mass: 0, width:30, height:0.3, depth:10,
+        name: 'lighttest-plane', X: -130, Y: 1, Z: 130,
+        mass: 0, width:100, height:0.3, depth:100,
     });
 
     // 一个立方体，照射它投阴影
@@ -186,7 +189,7 @@ k.loadTexture(drawList).then(res => {
         DPZ : 1,
         tiling : 1,
         isShadow: 1,
-        name: 'lighttest-cube', X: 10, Y: 5, Z: 0,
+        name: 'lighttest-cube', X: -134, Y: 5, Z: 130,
         mass: 0, size:1, background: '#333'
     });
 
@@ -195,7 +198,7 @@ k.loadTexture(drawList).then(res => {
         DPZ : 1,
         tiling : 1,
         isShadow: 1,
-        name: 'lighttest-cube002', X: 8, Y: 3, Z: 0,
+        name: 'lighttest-cube002', X: -138, Y: 3, Z: 130,
         mass: 0, size:1, background: '#333'
     });
 })

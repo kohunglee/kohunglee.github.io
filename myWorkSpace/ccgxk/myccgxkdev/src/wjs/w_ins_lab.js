@@ -232,86 +232,34 @@ const W = {
         dt = now - W.lastFrame;
         W.lastFrame = now;
         requestAnimationFrame(W.draw);
-
-// return
-        if (true) {  // 着色器视角
-          // ==== 秘密摄影师调试模式 (新代码开始) ====
-          W.gl.useProgram(shadowProgram);  // 使用阴影着色器
-          W.gl.clear(W.gl.COLOR_BUFFER_BIT | W.gl.DEPTH_BUFFER_BIT);  //+2 初始化画布
-          W.gl.viewport(0, 0, W.gl.canvas.width, W.gl.canvas.height);
-
-          var vLight = new DOMMatrix()  // 灯光的位置
-            .translateSelf(13, 10, 0)
-            .rotateSelf(0, 90, 45);
-          vLight.invertSelf();  // 灯光应用 fov 等
-          vLight.preMultiplySelf(W.projection);
-
-          for (const i in W.next) {
-            const object = W.next[i];
-            
-            if (!W.models[object.type] || ['camera', 'light', 'group'].includes(object.type)) {continue};  //+2 只留下我的模型
-            if (object.shadow !== 1 ) {continue};
-            // console.log(object.n);
-            let modelMatrix = W.animation(object.n);  // 物体模型
-
-            const lightMvpMatrix = vLight.multiply(modelMatrix);
-            W.gl.uniformMatrix4fv(shadowProgram.u_MvpMatrix, false, lightMvpMatrix.toFloat32Array());  // 物体矩阵化
-
-            W.gl.bindBuffer(W.gl.ARRAY_BUFFER, W.models[object.type].verticesBuffer);  // 顶点快递
-            W.gl.vertexAttribPointer(shadowProgram.a_Position, 3, W.gl.FLOAT, false, 0, 0);
-            W.gl.enableVertexAttribArray(shadowProgram.a_Position);
-
-            W.gl.drawArrays(W.gl.TRIANGLES, 0, W.models[object.type].vertices.length / 3);  // 绘制（非索引）
-
-            W.gl.disableVertexAttribArray(shadowProgram.a_Position);  // 关闭顶点属性
-          }
-          W.gl.useProgram(W.program);  // 切换回原来的着色器
-          return;
-          // ==== 秘密摄影师调试模式 (新代码结束) ====
-        }
-        
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
         if(W.next.camera.g){  W.render(W.next[W.next.camera.g], dt, 1); }
-
-/*** */        
         v = W.animation('camera');  //  获取相机的矩阵
         if(W.next?.camera?.g){
           v.preMultiplySelf(W.next[W.next.camera.g].M || W.next[W.next.camera.g].m);
         }
-
-        // v = new DOMMatrix()  // 新视角的位置
-        //   .translateSelf(13, 10, 0)
-        //   .rotateSelf(0, 90, 45);
-
         W.gl.uniformMatrix4fv(W.uniformLocations.eye, false, v.toFloat32Array());  // 相机矩阵发往着 eye 着色器
         v.invertSelf();
         v.preMultiplySelf(W.projection);
         W.gl.uniformMatrix4fv( W.uniformLocations.pv,
                                   false,
-                                  v.toFloat32Array());  // 处理好 pv ，传给着色器
-
-/*** */
+                                  v.toFloat32Array());  // 处理好 pv ，传给着色器      
                                   
-        // W.shadowFunc002(W.gl);  // 阴影的秘密摄影
-        // W.gl.useProgram(W.program);   // 阴影绘制完，激活主绘制器
+                                  
+
+        W.shadowFunc002(W.gl);  // 阴影的秘密摄影
+        if(W.debugShadow === true){ return }
+
+
+        
+        W.gl.activeTexture(W.gl.TEXTURE0 + SHADOW_MAP_TEXTURE_UNIT); // 激活“货架”
+        W.gl.bindTexture(W.gl.TEXTURE_2D, shadowFBO.texture); // 把“深度照片”放到“货架”上
+        W.gl.uniform1i(  // 传值 u_ShadowMap
+          W.uniformLocations.u_ShadowMap,
+          SHADOW_MAP_TEXTURE_UNIT);
+        W.gl.uniformMatrix4fv(  // 传值 u_MvpMatrixFromLight
+          W.uniformLocations.u_MvpMatrixFromLight,
+          false,
+          W.lightViewProjMatrix.toFloat32Array()); // 告诉主画家，魔镜是怎么拍的
         W.gl.clear(16640);
         for(i in W.next){  // 遍历渲染模型
           if(!W.next[i].t && W.col(W.next[i].b)[3] == 1){
@@ -414,7 +362,6 @@ const W = {
             0
           );
           const colorAttribLoc = W.attribLocations.col;
-          
           if (object.isInstanced) {  // （实例化和普通）颜色->着色器（col）
             W.gl.enableVertexAttribArray(colorAttribLoc);
             W.gl.bindBuffer(W.gl.ARRAY_BUFFER, W.instanceColorBuffers[object.n]);
@@ -726,58 +673,36 @@ const SHADOW_FSHADER_SOURCE_300ES = `#version 300 es
   }`;
 
 
-// --- 新增: WebGL 工具函数（在 W.reset 和 main 之间找个合适的位置，或者也放末尾） ---
-// 这是你原 Shadowmod.js 里 createProgram 和 loadShader 的简化版
+// 一些工具函数
 function createProgram(gl, vshaderSource, fshaderSource) {
   const vShader = gl.createShader(gl.VERTEX_SHADER);
   gl.shaderSource(vShader, vshaderSource);
   gl.compileShader(vShader);
-  // 检查编译错误，这里省略，实际项目中应加上
-
   const fShader = gl.createShader(gl.FRAGMENT_SHADER);
   gl.shaderSource(fShader, fshaderSource);
   gl.compileShader(fShader);
-  // 检查编译错误，这里省略，实际项目中应加上
-
   const program = gl.createProgram();
   gl.attachShader(program, vShader);
   gl.attachShader(program, fShader);
   gl.linkProgram(program);
-  // 检查链接错误，这里省略，实际项目中应加上
   return program;
-}
-
-// 搭建秘密暗房的程序 (也放到文件末尾)
-function initFramebufferObject(gl, width, height) { 
+}function initFramebufferObject(gl, width, height) { 
   var framebuffer, texture, depthRenderbuffer; 
   framebuffer = gl.createFramebuffer();
-
-  // 纹理作为颜色附件
   texture = gl.createTexture(); 
-  gl.bindTexture(gl.TEXTURE_2D, texture); 
-  // 注意：WebGL2 可以使用 R32F 等格式存储深度，但 WebGL1 的 RGBA/UNSIGNED_BYTE 编码深度在这里更通用
+  gl.bindTexture(gl.TEXTURE_2D, texture);
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null); 
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); 
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); // 边界处理
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE); // 边界处理
-
-  // 渲染缓冲作为深度附件
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
   depthRenderbuffer = gl.createRenderbuffer(); 
   gl.bindRenderbuffer(gl.RENDERBUFFER, depthRenderbuffer); 
   gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, width, height); 
-
   gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer); 
   gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0); 
   gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, depthRenderbuffer); 
-
-  // 检查FBO状态
   var status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
-  if (status !== gl.FRAMEBUFFER_COMPLETE) {
-      console.error('Framebuffer not complete:', status);
-      return null;
-  }
-
   framebuffer.texture = texture; 
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   gl.bindTexture(gl.TEXTURE_2D, null);
@@ -791,53 +716,53 @@ var OFFSCREEN_HEIGHT = 1024;
 var SHADOW_MAP_TEXTURE_UNIT = 0; // 阴影贴图使用的纹理单元
 var shadowProgram;  // 深度图渲染程序
 var shadowFBO;  // 秘密暗房
-var lightViewProjMatrix; // 光源的视口投影矩阵
-var lightProjectionMatrix; // 光源的投影矩阵
-var lightViewMatrix; // 光源的视图矩阵
+
+
 
 // 初始化深度图渲染程序
 W.shadowFunc001 = (gl) => {
   shadowProgram = createProgram(gl, SHADOW_VSHADER_SOURCE_300ES, SHADOW_FSHADER_SOURCE_300ES);  //+3 深度图着色器初始化
   shadowProgram.a_Position = gl.getAttribLocation(shadowProgram, 'pos');
   shadowProgram.u_MvpMatrix = gl.getUniformLocation(shadowProgram, 'u_MvpMatrix');
-  // shadowFBO = initFramebufferObject(gl, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);  // 深度图的秘密暗房
-  
-  // lightProjectionMatrix = new DOMMatrix();  //+ 初始化全局的 DOMMatrix 变量
-  // lightViewMatrix = new DOMMatrix();
-  // lightViewProjMatrix = new DOMMatrix();
+  shadowFBO = initFramebufferObject(gl, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);  // 深度图的秘密暗房 FBO
 }
 
-window.lightPos = {x: 50, y: 50, z: 0};
-window.lightfov = 35;
+
+W.debugShadow = false;  // 是否切换为阴影深度图视角
+
 // 绘制深度图
-W.shadowFunc002 = (gl) => {
-  
-
-
-
-
-  // 绑定到秘密暗房
-  // 设置分辨率
-  
-  // 改着色器
-  // 重置为单位矩阵
-  // 投射位置
-  // 上的方向
-
-  // 光的投影 m
-  //+ 找到 pos 并顶点属性
-  /* 绘制 */
-  for (k in W.next) {
-     // 当前模型的矩阵
-    // 计算当前对象的 MVP 矩阵 (投影 * 视图 * 模型)
-    // 同样使用 DOMMatrix 的 multiplySelf
-    // 将 MVP 矩阵传递给深度图着色器
-    // 绑定顶点数据
-    // 绘制对象
+W.shadowFunc002 = () => {
+  if(W.debugShadow === false){
+    W.gl.bindFramebuffer(W.gl.FRAMEBUFFER, shadowFBO);  // 进入暗房
   }
-  // 解绑，回默认画布
-  // 恢复主画布视口
+  W.gl.useProgram(shadowProgram);  // 使用阴影着色器
+  W.gl.clear(W.gl.COLOR_BUFFER_BIT | W.gl.DEPTH_BUFFER_BIT);  //+2 初始化画布
+  // W.gl.viewport(0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
+  W.gl.viewport(0, 0, W.gl.canvas.width, W.gl.canvas.height);  // 视角要改回去
 
+  var vLight = new DOMMatrix()  
+              .translateSelf(-130, 10, 130)  // 灯光的位置
+              .rotateSelf(0, 90, 45);  // 灯光的旋转
+  vLight.invertSelf();
+  vLight.preMultiplySelf(W.projection);  // 灯光的 fov 设置
+  W.lightViewProjMatrix = vLight; // 👈 存的就是这个！
+
+  for (const i in W.next) {
+    const object = W.next[i];
+    if (!W.models[object.type] || ['camera', 'light', 'group'].includes(object.type)) {continue};  //+2 只留下我的模型
+    if (object.shadow !== 1 ) {continue};
+    let modelMatrix = W.animation(object.n);
+    const lightMvpMatrix = vLight.multiply(modelMatrix);
+    W.gl.uniformMatrix4fv(shadowProgram.u_MvpMatrix, false, lightMvpMatrix.toFloat32Array());  // 物体矩阵化
+    W.gl.bindBuffer(W.gl.ARRAY_BUFFER, W.models[object.type].verticesBuffer);  // 顶点快递
+    W.gl.vertexAttribPointer(shadowProgram.a_Position, 3, W.gl.FLOAT, false, 0, 0);
+    W.gl.enableVertexAttribArray(shadowProgram.a_Position);
+    W.gl.drawArrays(W.gl.TRIANGLES, 0, W.models[object.type].vertices.length / 3);  // 绘制（非索引）
+    W.gl.disableVertexAttribArray(shadowProgram.a_Position);  // 关闭顶点属性
+  }
+  W.gl.useProgram(W.program);  // 切换回原来的着色器
+  W.gl.viewport(0, 0, W.gl.canvas.width, W.gl.canvas.height);  // 视角要改回去
+  W.gl.bindFramebuffer(W.gl.FRAMEBUFFER, null);  // 走出暗房
 }
 
 
