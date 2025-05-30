@@ -80,17 +80,32 @@ const W = {
           in vec4 v_PositionFromLight;   // 接收灯光视角的位置
           uniform sampler2D u_ShadowMap;  // 接收阴影深度图
 
+          uniform vec2 u_ShadowMapTexelSize;  // 阴影图竖纹大小
+
+          // 解码深度值（与encodeFloat对应）
+          float decodeFloat(vec4 rgbaDepth) {
+              const vec4 bitShift = vec4(1.0, 1.0/255.0, 1.0/(255.0*255.0), 1.0/(255.0*255.0*255.0));
+              return dot(rgbaDepth, bitShift);
+          }
+
           void main() {
             /* 阴影处理逻辑 */
             vec3 shadowCoord = (v_PositionFromLight.xyz    // 创建阴影映射
                                 / v_PositionFromLight.w)
                                 / 2.0 + 0.5;
+            
             float shadowVisibility = 1.0;  // 非阴影部分亮度
             vec4 rgbaDepth = texture(u_ShadowMap, shadowCoord.xy);  // 解析深度
-            const vec4 bitShift = vec4(1.0, 1.0/256.0, 1.0/(256.0*256.0), 1.0/(256.0*256.0*256.0));
-            float depth = dot(rgbaDepth, bitShift);  // 当前顶点的深度
-            if (shadowCoord.z > depth + 0.001) {  // 计算有没有被遮挡
-                shadowVisibility = 0.1;
+            
+
+            if(shadowCoord.z > 1.0 || shadowCoord.x < 0.0 || shadowCoord.x > 1.0 || shadowCoord.y < 0.0 || shadowCoord.y > 1.0) {
+              shadowVisibility = 1.0;  // 阴影在区域外，则不显示阴影
+            } else {  // 计算有没有被遮挡
+              const vec4 bitShift = vec4(1.0, 1.0/256.0, 1.0/(256.0*256.0), 1.0/(256.0*256.0*256.0));
+              float depth = dot(rgbaDepth, bitShift);
+              if (shadowCoord.z > depth + 0.00015) {
+                  shadowVisibility = 0.8;
+              }
             }
 
             c = mix(texture(sampler, v_uv.xy * tiling), v_col, o[3]);
@@ -245,7 +260,7 @@ const W = {
                                   v.toFloat32Array());  // 处理好 pv ，传给着色器      
                                   
                                   
-        if(isOpenShadow){
+        if(true){
           W.shadowFunc002(W.gl);  // 阴影的秘密摄影
           if(W.debugShadow === true){ return }
         }
@@ -713,7 +728,7 @@ function createProgram(gl, vshaderSource, fshaderSource) {
 // --- 常量定义（在 W.reset 函数体外，或者文件末尾） ---
 var OFFSCREEN_WIDTH; // 深度图分辨率
 var OFFSCREEN_HEIGHT;
-OFFSCREEN_WIDTH = OFFSCREEN_HEIGHT = 2**10;
+OFFSCREEN_WIDTH = OFFSCREEN_HEIGHT = 2**12;
 var SHADOW_MAP_TEXTURE_UNIT = 3; // 阴影贴图使用的纹理单元
 var shadowProgram;  // 深度图渲染程序
 var shadowFBO;  // 秘密暗房
@@ -751,9 +766,9 @@ W.shadowFunc002 = () => {
               .rotateSelf(lightpos.rx, lightpos.ry, lightpos.rz);  // 灯光的旋转
   vLight.invertSelf();
 
-  const lightNear = 1;  // 近裁剪面
-  const lightFar = 100.0; // 远裁剪面
-  const lightWidth = 200.0; // 正交投影的宽度范围
+  const lightNear = 0;  // 近裁剪面
+  const lightFar = 400.0; // 远裁剪面
+  const lightWidth = 100.0; // 正交投影的宽度范围
   const lightHeight = 200.0; // 正交投影的高度范围
   const lightProjectionMatrix = new DOMMatrix([
       2 / lightWidth, 0, 0, 0,
@@ -768,10 +783,14 @@ W.shadowFunc002 = () => {
   W.lightViewProjMatrix = vLight; // 👈 存的就是这个！
 
   for (const i in W.next) {
-    
+    if(isOpenShadow === false){
+      continue;
+    }
     const object = W.next[i];
     if (!W.models[object.type] || ['camera', 'light', 'group'].includes(object.type)) {continue};  //+2 只留下我的模型
-    // if (object.shadow !== 1 ) {continue};
+    
+    
+    
     let modelMatrix = W.animation(object.n);
     const lightMvpMatrix = vLight.multiply(modelMatrix);
     
@@ -788,43 +807,19 @@ W.shadowFunc002 = () => {
   W.gl.viewport(0, 0, W.gl.canvas.width, W.gl.canvas.height);  // 视角要改回去
   W.gl.bindFramebuffer(W.gl.FRAMEBUFFER, null);  // 走出暗房
 
-  W.gl.activeTexture(W.gl.TEXTURE0 + SHADOW_MAP_TEXTURE_UNIT); // 激活“货架”
-  W.gl.bindTexture(W.gl.TEXTURE_2D, shadowFBO.texture); // 把“深度照片”放到“货架”上
-  W.gl.uniform1i(  // 传值 u_ShadowMap
-    W.uniformLocations.u_ShadowMap,
-    SHADOW_MAP_TEXTURE_UNIT);
-  W.gl.uniformMatrix4fv(  // 传值 u_MvpMatrixFromLight
-    W.uniformLocations.u_MvpMatrixFromLight,
-    false,
-    W.lightViewProjMatrix.toFloat32Array()); // 告诉主画家，魔镜是怎么拍的
+  if(isOpenShadow === true){
+    W.gl.activeTexture(W.gl.TEXTURE0 + SHADOW_MAP_TEXTURE_UNIT); // 激活“货架”
+    W.gl.bindTexture(W.gl.TEXTURE_2D, shadowFBO.texture); // 把“深度照片”放到“货架”上
+    W.gl.uniform1i(  // 传值 u_ShadowMap
+      W.uniformLocations.u_ShadowMap,
+      SHADOW_MAP_TEXTURE_UNIT);
+    W.gl.uniformMatrix4fv(  // 传值 u_MvpMatrixFromLight
+      W.uniformLocations.u_MvpMatrixFromLight,
+      false,
+      W.lightViewProjMatrix.toFloat32Array()); // 告诉主画家，魔镜是怎么拍的
+  }
+  
 }
 
 
 export default W;
-
-
-
-
-  // var fov = 15;
-  // var viewLimit = W.viewLimit;
-  // vLight.preMultiplySelf(  // 灯光的 视角 设置
-  //   new DOMMatrix([
-  //     (1 / Math.tan(fov * Math.PI / 180)) / (W.canvas.width / W.canvas.height), 0, 0, 0, 
-  //     0, (1 / Math.tan(fov * Math.PI / 180)), 0, 0, 
-  //     0, 0, -(viewLimit + 1) / (viewLimit - 1), -1,
-  //     0, 0, -(2 * viewLimit + 2) / (viewLimit - 1), 0
-  //   ])
-  // );
-
-
-  // const lightNear = 1.0;  // 设定光源的近裁剪面：能看到最近的物体
-  // const lightFar = 3000.0; // 设定光源的远裁剪面：能看到最远的物体
-  // const lightFov = 95;    // 光源的视野角度
-  // const lightAspectRatio = OFFSCREEN_WIDTH / OFFSCREEN_HEIGHT; 
-  // const lightProjectionMatrix = new DOMMatrix([
-  //   (1 / Math.tan(lightFov * Math.PI / 180 / 2)) / lightAspectRatio, 0, 0, 0, // <<< fov / 2 且使用 lightAspectRatio
-  //   0, (1 / Math.tan(lightFov * Math.PI / 180 / 2)), 0, 0, 
-  //   0, 0, -(lightFar + lightNear) / (lightFar - lightNear), -1, // <<< 使用 lightNear 和 lightFar
-  //   0, 0, -(2 * lightFar * lightNear) / (lightFar - lightNear), 0  // <<< 使用 lightNear 和 lightFar
-  // ]);
-  // vLight.preMultiplySelf(lightProjectionMatrix);
