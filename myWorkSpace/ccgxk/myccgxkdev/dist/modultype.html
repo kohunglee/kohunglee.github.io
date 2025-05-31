@@ -40,10 +40,10 @@
     <canvas id="posMap" width="100" height="100"></canvas>
 </div>
 <div id="someCtrl">
-    <button id="xforward">前</button>
-    <button id="xbackward">后</button>
-    <button id="xleft">左</button>
-    <button id="xright">右</button>
+    <button id="xforward"></button>
+    <button id="xbackward"></button>
+    <button id="xleft"></button>
+    <button id="xright"></button>
     <button id="xjump">蹦</button>
     <button id="xShadow">影</button>
 </div>
@@ -300,10 +300,11 @@ executePerSecond();
 
 // 前进
 xforward.addEventListener('mousedown', function(event) {
-    k.keys.viewForward = 1;
-});
-xforward.addEventListener('mouseup', function(event) {
-    k.keys.viewForward = 0;
+    if(k.keys.viewForward === 1){
+        k.keys.viewForward = 0;
+    } else {
+        k.keys.viewForward = 1;
+    }
 });
 
 // 后退
