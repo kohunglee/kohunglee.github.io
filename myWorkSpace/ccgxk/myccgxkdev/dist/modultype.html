@@ -40,10 +40,10 @@
     <canvas id="posMap" width="100" height="100"></canvas>
 </div>
 <div id="someCtrl">
-    <button id="xforward"></button>
-    <button id="xbackward"></button>
-    <button id="xleft"></button>
-    <button id="xright"></button>
+    <button id="xforward">前</button>
+    <button id="xbackward">后</button>
+    <button id="xleft">左</button>
+    <button id="xright">右</button>
     <button id="xjump">蹦</button>
     <button id="xShadow">影</button>
 </div>
@@ -309,27 +309,33 @@ xforward.addEventListener('mousedown', function(event) {
 
 // 后退
 xbackward.addEventListener('mousedown', function(event) {
-    k.keys.viewBackward = 1;
+    if(k.keys.viewBackward === 1){
+        k.keys.viewBackward = 0;
+    } else {
+        k.keys.viewBackward = 1;
+    }
 });
-xbackward.addEventListener('mouseup', function(event) {
-    k.keys.viewBackward = 0;
-});
+
 
 // 左转
 xleft.addEventListener('mousedown', function(event) {
-    k.keys.turnLeft = 1;
+    if(k.keys.turnLeft === 1){
+        k.keys.turnLeft = 0;
+    } else {
+        k.keys.turnLeft = 1;
+    }
 });
-xleft.addEventListener('mouseup', function(event) {
-    k.keys.turnLeft = 0;
-});
+
 
 // 右转
 xright.addEventListener('mousedown', function(event) {
-    k.keys.turnRight = 1;
+    if(k.keys.turnRight === 1){
+        k.keys.turnRight = 0;
+    } else {
+        k.keys.turnRight = 1;
+    }
 });
-xright.addEventListener('mouseup', function(event) {
-    k.keys.turnRight = 0;
-});
+
 
 // 蹦
 xjump.addEventListener('mousedown', function(event) {
