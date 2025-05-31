@@ -16,6 +16,14 @@
         padding: 1em;
         color: #ffffff;
     }
+    #someCtrl {
+        position: fixed;
+        top: 0;
+    }
+    #someCtrl button {
+    width: 70px;
+    height: 70px;
+}
 </style>
 <script src="cannon.js"></script>
 <img src='./img/texture.jpeg' id=marble hidden>
@@ -29,6 +37,14 @@
     <span id="modListCount"></span>
     <span id="posIDMVP"></span>
     <canvas id="posMap" width="100" height="100"></canvas>
+</div>
+<div id="someCtrl">
+    <button id="xforward">前</button>
+    <button id="xbackward">后</button>
+    <button id="xleft">左</button>
+    <button id="xright">右</button>
+    <button id="xjump">蹦</button>
+    <button id="xShadow">影</button>
 </div>
 <script type="module">
 import ccgxkApp from '../src/ccgxk.js';
@@ -280,6 +296,48 @@ function executePerSecond() {
 }
 const intervalId = setInterval(executePerSecond, 5000);
 executePerSecond();
+
+// 前进
+xforward.addEventListener('mousedown', function(event) {
+    k.keys.viewForward = 1;
+});
+xforward.addEventListener('mouseup', function(event) {
+    k.keys.viewForward = 0;
+});
+
+// 后退
+xbackward.addEventListener('mousedown', function(event) {
+    k.keys.viewBackward = 1;
+});
+xbackward.addEventListener('mouseup', function(event) {
+    k.keys.viewBackward = 0;
+});
+
+// 左转
+xleft.addEventListener('mousedown', function(event) {
+    k.keys.turnLeft = 1;
+});
+xleft.addEventListener('mouseup', function(event) {
+    k.keys.turnLeft = 0;
+});
+
+// 右转
+xright.addEventListener('mousedown', function(event) {
+    k.keys.turnRight = 1;
+});
+xright.addEventListener('mouseup', function(event) {
+    k.keys.turnRight = 0;
+});
+
+// 蹦
+xjump.addEventListener('mousedown', function(event) {
+    k.mainVPlayer.body.velocity.y = 10;
+});
+
+// 开关阴影
+xShadow.addEventListener('mousedown', function(event) {
+    isOpenShadow = !isOpenShadow;
+});
 
 </script>
 
