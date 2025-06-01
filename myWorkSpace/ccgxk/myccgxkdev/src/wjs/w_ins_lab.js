@@ -661,7 +661,7 @@ W.add("pyramid", {
 // 阴影顶点着色器 (GLSL ES 3.0)
 // --- 深度图着色器源码（需要添加到文件末尾） ---
 const SHADOW_VSHADER_SOURCE_300ES = `#version 300 es
-  precision highp float;
+  precision lowp float;
   in vec4 pos;
   in vec4 col;
   uniform mat4 u_MvpMatrix;
@@ -672,7 +672,7 @@ const SHADOW_VSHADER_SOURCE_300ES = `#version 300 es
   }`;
 
 const SHADOW_FSHADER_SOURCE_300ES = `#version 300 es
-  precision highp float;
+  precision lowp float;
   in vec4 v_col_debug;  // 调试
   out vec4 FragColor;
   vec4 encodeFloat(float v) { // 函数：将深度值编码到RGBA纹理
@@ -760,7 +760,6 @@ W.shadowFunc002 = () => {
   W.gl.clear(W.gl.COLOR_BUFFER_BIT | W.gl.DEPTH_BUFFER_BIT);  //+2 初始化画布
   W.gl.viewport(0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
   // W.gl.viewport(0, 0, W.gl.canvas.width, W.gl.canvas.height);  // 视角要改回去
-
   var vLight = new DOMMatrix()  
               .translateSelf(lightpos.x, lightpos.y, lightpos.z)  // 灯光的位置
               .rotateSelf(lightpos.rx, lightpos.ry, lightpos.rz);  // 灯光的旋转
@@ -777,9 +776,6 @@ W.shadowFunc002 = () => {
       0, 0, -(lightFar + lightNear) / (lightFar - lightNear), 1
   ]);
   vLight.preMultiplySelf(lightProjectionMatrix);
-
-
-
   W.lightViewProjMatrix = vLight; // 👈 存的就是这个！
 
   for (const i in W.next) {
@@ -788,9 +784,7 @@ W.shadowFunc002 = () => {
     }
     const object = W.next[i];
     if (!W.models[object.type] || ['camera', 'light', 'group'].includes(object.type)) {continue};  //+2 只留下我的模型
-    
-    
-    
+
     let modelMatrix = W.animation(object.n);
     const lightMvpMatrix = vLight.multiply(modelMatrix);
     
@@ -801,7 +795,7 @@ W.shadowFunc002 = () => {
     
     W.gl.drawArrays(W.gl.TRIANGLES, 0, W.models[object.type].vertices.length / 3);  // 绘制（非索引）
     W.gl.disableVertexAttribArray(shadowProgram.a_Position);  // 关闭顶点属性
-   
+
   }
   W.gl.useProgram(W.program);  // 切换回原来的着色器
   W.gl.viewport(0, 0, W.gl.canvas.width, W.gl.canvas.height);  // 视角要改回去
