@@ -2,10 +2,13 @@ import wjs from '../wjs/w_ins_lab.js';  // W 引擎(webgl)，兼容性好一点
 // import webgpu from '../wjs/w_wgpu.js';  // 后续会更新成一个 webgpu 版本
 // import babylon from '../babylon/babylon.js';  // 也会引入传说中的 babylon.js 以增强画质
 
+
+
+
 export default {
 
     // 配置
-    speedH: 0.3,       // 最高速度的反数
+    speedH: 3,       // 最高速度的反数
     speedL: 8,       // 最低速度的反数
     speedAdd: 0.1,   // 速度的增加率
     jumpYVel: 5,    // 跳跃时向上的加速度
@@ -35,8 +38,8 @@ export default {
     // 初始化 W 引擎
     initW : function(c){
         const W = wjs;
-        c.width = window.innerWidth;
-        c.height = window.innerHeight;
+        c.width = window.innerWidth / 1;
+        c.height = window.innerHeight / 1;
         W.reset(c);
         W.ambient(0.7);
         W.light({ x: 0.5, y: -0.3, z: 0.5});

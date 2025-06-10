@@ -42,6 +42,7 @@ export default {
                 mass : mass,
                 shape: new CANNON.Box(new CANNON.Vec3(width/2, height/2, depth/2)),
                 position: new CANNON.Vec3(X, Y, Z),
+                // 注意，这边没有将旋转考虑进去。。要旋转。
                 material: this.cannonDefaultCantactMaterial,
             });
             body.collisionFilterGroup = colliGroup;  // 这 6 行，为物理体分配碰撞组。只有玩家和地面与石头碰撞，石头间不会（小物件除外）

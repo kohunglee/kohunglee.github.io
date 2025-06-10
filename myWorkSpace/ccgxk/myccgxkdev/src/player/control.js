@@ -25,7 +25,7 @@ export default {
         's': 'viewBackward',
         'a': 'viewLeft',
         'd': 'viewRight',
-        'r': 'viewUp',
+        // 'r': 'viewUp',
         'v': 'viewDown',
         'o': 'turnUp',
         'p': 'turnDown',
