@@ -32,7 +32,7 @@ export default {
     cannonDefaultCantactMaterial : new CANNON.ContactMaterial( // 默认材质关联材质
         new CANNON.Material(),
         new CANNON.Material(), {
-            friction: 100, // 摩擦力
-            restitution: 0, // 弹性系数
+            friction: 0.7, // 摩擦力
+            restitution: 0.3, // 弹性系数
     }),
 };

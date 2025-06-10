@@ -150,7 +150,7 @@ k.addBox({  // 创建一个静止的墙
 });
 
 // 随机生成 n 个模型
-var yVlaue = 1;
+var yVlaue = 5;
 var modeValue = 8000;
 const random002 = k.genPR(221, modeValue * 5);  // 伪随机数
 for(var i = 0; i < modeValue; i++){
@@ -161,6 +161,7 @@ for(var i = 0; i < modeValue; i++){
         mass: 10, width: Math.floor( random002[i+2] * 30 + 1), depth: 5, height: Math.floor( random002[i+3] * 5 + 1),
         background: `#${Math.floor(random002[i+4] * 16777216).toString(16).padStart(6, '0')}`, mixValue: 0.71,
         texture: marble,
+        
     });
 }
 
