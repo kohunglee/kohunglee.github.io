@@ -438,53 +438,53 @@
      * @param  {Number} j
      * @return {Number}
      */
-    ArrayCollisionMatrix.prototype.get = function(i, j) {
-        i = i.index;
-        j = j.index;
-        if (j > i) {
-            var temp = j;
-            j = i;
-            i = temp;
-        }
-        return this.matrix[(i*(i + 1)>>1) + j-1];
-    };
+    // ArrayCollisionMatrix.prototype.get = function(i, j) {
+    //     i = i.index;
+    //     j = j.index;
+    //     if (j > i) {
+    //         var temp = j;
+    //         j = i;
+    //         i = temp;
+    //     }
+    //     return this.matrix[(i*(i + 1)>>1) + j-1];
+    // };
     
-    /**
-     * 设置一个元素
-     * @method set
-     * @param {Number} i
-     * @param {Number} j
-     * @param {Number} value
-     */
-    ArrayCollisionMatrix.prototype.set = function(i, j, value) {
-        i = i.index;
-        j = j.index;
-        if (j > i) {
-            var temp = j;
-            j = i;
-            i = temp;
-        }
-        this.matrix[(i*(i + 1)>>1) + j-1] = value ? 1 : 0;
-    };
+    // /**
+    //  * 设置一个元素
+    //  * @method set
+    //  * @param {Number} i
+    //  * @param {Number} j
+    //  * @param {Number} value
+    //  */
+    // ArrayCollisionMatrix.prototype.set = function(i, j, value) {
+    //     i = i.index;
+    //     j = j.index;
+    //     if (j > i) {
+    //         var temp = j;
+    //         j = i;
+    //         i = temp;
+    //     }
+    //     this.matrix[(i*(i + 1)>>1) + j-1] = value ? 1 : 0;
+    // };
     
-    /**
-     * 将所有元素设置为零
-     * @method reset
-     */
-    ArrayCollisionMatrix.prototype.reset = function() {
-        for (var i=0, l=this.matrix.length; i!==l; i++) {
-            this.matrix[i]=0;
-        }
-    };
+    // /**
+    //  * 将所有元素设置为零
+    //  * @method reset
+    //  */
+    // ArrayCollisionMatrix.prototype.reset = function() {
+    //     for (var i=0, l=this.matrix.length; i!==l; i++) {
+    //         this.matrix[i]=0;
+    //     }
+    // };
     
-    /**
-     * 设置最大对象数
-     * @method setNumObjects
-     * @param {Number} n
-     */
-    ArrayCollisionMatrix.prototype.setNumObjects = function(n) {
-        this.matrix.length = n*(n-1)>>1;
-    };
+    // /**
+    //  * 设置最大对象数
+    //  * @method setNumObjects
+    //  * @param {Number} n
+    //  */
+    // ArrayCollisionMatrix.prototype.setNumObjects = function(n) {
+    //     this.matrix.length = n*(n-1)>>1;
+    // };
     
     },{}],5:[function(_dereq_,module,exports){
     var Body = _dereq_('../objects/Body');
@@ -630,34 +630,34 @@
         Broadphase_makePairsUnique_p1 = [],
         Broadphase_makePairsUnique_p2 = [];
     Broadphase.prototype.makePairsUnique = function(pairs1,pairs2){
-        var t = Broadphase_makePairsUnique_temp,
-            p1 = Broadphase_makePairsUnique_p1,
-            p2 = Broadphase_makePairsUnique_p2,
-            N = pairs1.length;
+        // var t = Broadphase_makePairsUnique_temp,
+        //     p1 = Broadphase_makePairsUnique_p1,
+        //     p2 = Broadphase_makePairsUnique_p2,
+        //     N = pairs1.length;
     
-        for(var i=0; i!==N; i++){
-            p1[i] = pairs1[i];
-            p2[i] = pairs2[i];
-        }
+        // for(var i=0; i!==N; i++){
+        //     p1[i] = pairs1[i];
+        //     p2[i] = pairs2[i];
+        // }
     
-        pairs1.length = 0;
-        pairs2.length = 0;
+        // pairs1.length = 0;
+        // pairs2.length = 0;
     
-        for(var i=0; i!==N; i++){
-            var id1 = p1[i].id,
-                id2 = p2[i].id;
-            var key = id1 < id2 ? id1+","+id2 :  id2+","+id1;
-            t[key] = i;
-            t.keys.push(key);
-        }
+        // for(var i=0; i!==N; i++){
+        //     var id1 = p1[i].id,
+        //         id2 = p2[i].id;
+        //     var key = id1 < id2 ? id1+","+id2 :  id2+","+id1;
+        //     t[key] = i;
+        //     t.keys.push(key);
+        // }
     
-        for(var i=0; i!==t.keys.length; i++){
-            var key = t.keys.pop(),
-                pairIndex = t[key];
-            pairs1.push(p1[pairIndex]);
-            pairs2.push(p2[pairIndex]);
-            delete t[key];
-        }
+        // for(var i=0; i!==t.keys.length; i++){
+        //     var key = t.keys.pop(),
+        //         pairIndex = t[key];
+        //     pairs1.push(p1[pairIndex]);
+        //     pairs2.push(p2[pairIndex]);
+        //     delete t[key];
+        // }
     };
     
     /**
@@ -691,8 +691,8 @@
      * @return {array}
      */
     Broadphase.prototype.aabbQuery = function(world, aabb, result){
-        console.warn('.aabbQuery is not implemented in this Broadphase subclass.');
-        return [];
+        // console.warn('.aabbQuery is not implemented in this Broadphase subclass.');
+        // return [];
     };
     },{"../math/Quaternion":18,"../math/Vec3":20,"../objects/Body":21,"../shapes/Plane":24,"../shapes/Shape":25}],6:[function(_dereq_,module,exports){
     module.exports = NaiveBroadphase;
@@ -752,22 +752,22 @@
      * @return {array}
      */
     NaiveBroadphase.prototype.aabbQuery = function(world, aabb, result){
-        result = result || [];
+        // result = result || [];
     
-        for(var i = 0; i < world.bodies.length; i++){
-            var b = world.bodies[i];
+        // for(var i = 0; i < world.bodies.length; i++){
+        //     var b = world.bodies[i];
     
-            if(b.aabbNeedsUpdate){
-                b.computeAABB();
-            }
+        //     if(b.aabbNeedsUpdate){
+        //         b.computeAABB();
+        //     }
     
-            // 丑陋的黑客直到身体得到AABB
-            if(b.aabb.overlaps(aabb)){
-                result.push(b);
-            }
-        }
+        //     // 丑陋的黑客直到身体得到AABB
+        //     if(b.aabb.overlaps(aabb)){
+        //         result.push(b);
+        //     }
+        // }
     
-        return result;
+        // return result;
     };
     },{"./AABB":3,"./Broadphase":5}],7:[function(_dereq_,module,exports){
     module.exports = OverlapKeeper;
@@ -781,14 +781,14 @@
         this.previous = [];
     }
     
-    OverlapKeeper.prototype.getKey = function(i, j) {
-        if (j < i) {
-            var temp = j;
-            j = i;
-            i = temp;
-        }
-        return (i << 16) | j;
-    };
+    // OverlapKeeper.prototype.getKey = function(i, j) {
+    //     if (j < i) {
+    //         var temp = j;
+    //         j = i;
+    //         i = temp;
+    //     }
+    //     return (i << 16) | j;
+    // };
     
     
     /**
@@ -797,30 +797,30 @@
      * @param {Number} j
      */
     OverlapKeeper.prototype.set = function(i, j) {
-        // 插入排序。这样，差异将具有线性复杂性。
-        var key = this.getKey(i, j);
-        var current = this.current;
-        var index = 0;
-        while(key > current[index]){
-            index++;
-        }
-        if(key === current[index]){
-            return; // 一对已经添加
-        }
-        for(var j=current.length-1; j>=index; j--){
-            current[j + 1] = current[j];
-        }
-        current[index] = key;
+        // // 插入排序。这样，差异将具有线性复杂性。
+        // var key = this.getKey(i, j);
+        // var current = this.current;
+        // var index = 0;
+        // while(key > current[index]){
+        //     index++;
+        // }
+        // if(key === current[index]){
+        //     return; // 一对已经添加
+        // }
+        // for(var j=current.length-1; j>=index; j--){
+        //     current[j + 1] = current[j];
+        // }
+        // current[index] = key;
     };
     
     /**
      * @method tick
      */
     OverlapKeeper.prototype.tick = function() {
-        var tmp = this.current;
-        this.current = this.previous;
-        this.previous = tmp;
-        this.current.length = 0;
+        // var tmp = this.current;
+        // this.current = this.previous;
+        // this.previous = tmp;
+        // this.current.length = 0;
     };
     
     function unpackAndPush(array, key){
@@ -833,37 +833,37 @@
      * @param  {array} removals
      */
     OverlapKeeper.prototype.getDiff = function(additions, removals) {
-        var a = this.current;
-        var b = this.previous;
-        var al = a.length;
-        var bl = b.length;
+        // var a = this.current;
+        // var b = this.previous;
+        // var al = a.length;
+        // var bl = b.length;
     
-        var j=0;
-        for (var i = 0; i < al; i++) {
-            var found = false;
-            var keyA = a[i];
-            while(keyA > b[j]){
-                j++;
-            }
-            found = keyA === b[j];
+        // var j=0;
+        // for (var i = 0; i < al; i++) {
+        //     var found = false;
+        //     var keyA = a[i];
+        //     while(keyA > b[j]){
+        //         j++;
+        //     }
+        //     found = keyA === b[j];
     
-            if(!found){
-                unpackAndPush(additions, keyA);
-            }
-        }
-        j = 0;
-        for (var i = 0; i < bl; i++) {
-            var found = false;
-            var keyB = b[i];
-            while(keyB > a[j]){
-                j++;
-            }
-            found = a[j] === keyB;
+        //     if(!found){
+        //         unpackAndPush(additions, keyA);
+        //     }
+        // }
+        // j = 0;
+        // for (var i = 0; i < bl; i++) {
+        //     var found = false;
+        //     var keyB = b[i];
+        //     while(keyB > a[j]){
+        //         j++;
+        //     }
+        //     found = a[j] === keyB;
     
-            if(!found){
-                unpackAndPush(removals, keyB);
-            }
-        }
+        //     if(!found){
+        //         unpackAndPush(removals, keyB);
+        //     }
+        // }
     };
     },{}],8:[function(_dereq_,module,exports){
     module.exports = Ray;
@@ -2114,33 +2114,33 @@
      * @return {array}
      */
     SAPBroadphase.prototype.aabbQuery = function(world, aabb, result){
-        result = result || [];
+        // result = result || [];
     
-        if(this.dirty){
-            this.sortList();
-            this.dirty = false;
-        }
+        // if(this.dirty){
+        //     this.sortList();
+        //     this.dirty = false;
+        // }
     
-        var axisIndex = this.axisIndex, axis = 'x';
-        if(axisIndex === 1){ axis = 'y'; }
-        if(axisIndex === 2){ axis = 'z'; }
+        // var axisIndex = this.axisIndex, axis = 'x';
+        // if(axisIndex === 1){ axis = 'y'; }
+        // if(axisIndex === 2){ axis = 'z'; }
     
-        var axisList = this.axisList;
-        var lower = aabb.lowerBound[axis];
-        var upper = aabb.upperBound[axis];
-        for(var i = 0; i < axisList.length; i++){
-            var b = axisList[i];
+        // var axisList = this.axisList;
+        // var lower = aabb.lowerBound[axis];
+        // var upper = aabb.upperBound[axis];
+        // for(var i = 0; i < axisList.length; i++){
+        //     var b = axisList[i];
     
-            if(b.aabbNeedsUpdate){
-                b.computeAABB();
-            }
+        //     if(b.aabbNeedsUpdate){
+        //         b.computeAABB();
+        //     }
     
-            if(b.aabb.overlaps(aabb)){
-                result.push(b);
-            }
-        }
+        //     if(b.aabb.overlaps(aabb)){
+        //         result.push(b);
+        //     }
+        // }
     
-        return result;
+        // return result;
     };
     },{"../collision/Broadphase":5,"../shapes/Shape":25}],11:[function(_dereq_,module,exports){
     module.exports = ContactEquation;
@@ -3748,9 +3748,9 @@
      * @param  {Vec3} result
      * @return {Vec3} “结果”向量对象
      */
-    Transform.prototype.pointToLocal = function(worldPoint, result){
-        return Transform.pointToLocalFrame(this.position, this.quaternion, worldPoint, result);
-    };
+    // Transform.prototype.pointToLocal = function(worldPoint, result){
+    //     return Transform.pointToLocalFrame(this.position, this.quaternion, worldPoint, result);
+    // };
     
     /**
      * @static
@@ -3774,16 +3774,16 @@
      * @param  {Vec3} result
      * @return {Vec3} “结果”向量对象
      */
-    Transform.prototype.pointToWorld = function(localPoint, result){
-        return Transform.pointToWorldFrame(this.position, this.quaternion, localPoint, result);
-    };
+    // Transform.prototype.pointToWorld = function(localPoint, result){
+    //     return Transform.pointToWorldFrame(this.position, this.quaternion, localPoint, result);
+    // };
     
     
-    Transform.prototype.vectorToWorldFrame = function(localVector, result){
-        var result = result || new Vec3();
-        this.quaternion.vmult(localVector, result);
-        return result;
-    };
+    // Transform.prototype.vectorToWorldFrame = function(localVector, result){
+    //     var result = result || new Vec3();
+    //     this.quaternion.vmult(localVector, result);
+    //     return result;
+    // };
     
     Transform.vectorToWorldFrame = function(quaternion, localVector, result){
         quaternion.vmult(localVector, result);
@@ -7279,43 +7279,43 @@
     
     // 以飞机上的平均N最新联系点。
     Narrowphase.prototype.createFrictionFromAverage = function(numContacts){
-        // 最后一个联系方程
-        var c = this.result[this.result.length - 1];
+        // // 最后一个联系方程
+        // var c = this.result[this.result.length - 1];
     
-        // 创建结果：两个“平均”摩擦方程
-        if (!this.createFrictionEquationsFromContact(c, this.frictionResult) || numContacts === 1) {
-            return;
-        }
+        // // 创建结果：两个“平均”摩擦方程
+        // if (!this.createFrictionEquationsFromContact(c, this.frictionResult) || numContacts === 1) {
+        //     return;
+        // }
     
-        var f1 = this.frictionResult[this.frictionResult.length - 2];
-        var f2 = this.frictionResult[this.frictionResult.length - 1];
+        // var f1 = this.frictionResult[this.frictionResult.length - 2];
+        // var f2 = this.frictionResult[this.frictionResult.length - 1];
     
-        averageNormal.setZero();
-        averageContactPointA.setZero();
-        averageContactPointB.setZero();
+        // averageNormal.setZero();
+        // averageContactPointA.setZero();
+        // averageContactPointB.setZero();
     
-        var bodyA = c.bi;
-        var bodyB = c.bj;
-        for(var i=0; i!==numContacts; i++){
-            c = this.result[this.result.length - 1 - i];
-            if(c.bodyA !== bodyA){
-                averageNormal.vadd(c.ni, averageNormal);
-                averageContactPointA.vadd(c.ri, averageContactPointA);
-                averageContactPointB.vadd(c.rj, averageContactPointB);
-            } else {
-                averageNormal.vsub(c.ni, averageNormal);
-                averageContactPointA.vadd(c.rj, averageContactPointA);
-                averageContactPointB.vadd(c.ri, averageContactPointB);
-            }
-        }
+        // var bodyA = c.bi;
+        // var bodyB = c.bj;
+        // for(var i=0; i!==numContacts; i++){
+        //     c = this.result[this.result.length - 1 - i];
+        //     if(c.bodyA !== bodyA){
+        //         averageNormal.vadd(c.ni, averageNormal);
+        //         averageContactPointA.vadd(c.ri, averageContactPointA);
+        //         averageContactPointB.vadd(c.rj, averageContactPointB);
+        //     } else {
+        //         averageNormal.vsub(c.ni, averageNormal);
+        //         averageContactPointA.vadd(c.rj, averageContactPointA);
+        //         averageContactPointB.vadd(c.ri, averageContactPointB);
+        //     }
+        // }
     
-        var invNumContacts = 1 / numContacts;
-        averageContactPointA.scale(invNumContacts, f1.ri);
-        averageContactPointB.scale(invNumContacts, f1.rj);
-        f2.ri.copy(f1.ri); // 应该一样
-        f2.rj.copy(f1.rj);
-        averageNormal.normalize();
-        averageNormal.tangents(f1.t, f2.t);
+        // var invNumContacts = 1 / numContacts;
+        // averageContactPointA.scale(invNumContacts, f1.ri);
+        // averageContactPointB.scale(invNumContacts, f1.rj);
+        // f2.ri.copy(f1.ri); // 应该一样
+        // f2.rj.copy(f1.rj);
+        // averageNormal.normalize();
+        // averageNormal.tangents(f1.t, f2.t);
         // 返回等式;
     };
     
@@ -9256,13 +9256,13 @@
      * @method collisionMatrixTick
      */
     World.prototype.collisionMatrixTick = function(){
-        var temp = this.collisionMatrixPrevious;
-        this.collisionMatrixPrevious = this.collisionMatrix;
-        this.collisionMatrix = temp;
-        this.collisionMatrix.reset();
+        // var temp = this.collisionMatrixPrevious;
+        // this.collisionMatrixPrevious = this.collisionMatrix;
+        // this.collisionMatrix = temp;
+        // // this.collisionMatrix.reset();
     
-        this.bodyOverlapKeeper.tick();
-        this.shapeOverlapKeeper.tick();
+        // this.bodyOverlapKeeper.tick();
+        // this.shapeOverlapKeeper.tick();
     };
     
     /**
@@ -9287,7 +9287,7 @@
             body.initAngularVelocity.copy(body.angularVelocity);
             body.initQuaternion.copy(body.quaternion);
         }
-        this.collisionMatrix.setNumObjects(this.bodies.length);
+        // this.collisionMatrix.setNumObjects(this.bodies.length);
         this.addBodyEvent.body = body;
         this.idToBodyMap[body.id] = body;
         this.dispatchEvent(this.addBodyEvent);
@@ -9418,7 +9418,7 @@
                 bodies[i].index = i;
             }
     
-            this.collisionMatrix.setNumObjects(n);
+            // this.collisionMatrix.setNumObjects(n);
             this.removeBodyEvent.body = body;
             delete this.idToBodyMap[body.id];
             this.dispatchEvent(this.removeBodyEvent);
@@ -9438,16 +9438,16 @@
     
     // 托多（Todo）制作更快的地图
     World.prototype.getShapeById = function(id){
-        var bodies = this.bodies;
-        for(var i=0, bl = bodies.length; i<bl; i++){
-            var shapes = bodies[i].shapes;
-            for (var j = 0, sl = shapes.length; j < sl; j++) {
-                var shape = shapes[j];
-                if(shape.id === id){
-                    return shape;
-                }
-            }
-        }
+        // var bodies = this.bodies;
+        // for(var i=0, bl = bodies.length; i<bl; i++){
+        //     var shapes = bodies[i].shapes;
+        //     for (var j = 0, sl = shapes.length; j < sl; j++) {
+        //         var shape = shapes[j];
+        //         if(shape.id === id){
+        //             return shape;
+        //         }
+        //     }
+        // }
     };
     
     /**
@@ -9787,24 +9787,24 @@
             }
     
             // 现在我们知道我和J正在联系。设置碰撞矩阵状态
-            this.collisionMatrix.set(bi, bj, true);
+            // this.collisionMatrix.set(bi, bj, true);
     
-            if (!this.collisionMatrixPrevious.get(bi, bj)) {
-                // 第一次联系！
-                // 我们重复使用CollideEvent对象，否则我们最终将为每个新联系人创建新对象，即使没有事件侦听器。
-                World_step_collideEvent.body = bj;
-                World_step_collideEvent.contact = c;
-                bi.dispatchEvent(World_step_collideEvent);
+            // if (!this.collisionMatrixPrevious.get(bi, bj)) {
+            //     // 第一次联系！
+            //     // 我们重复使用CollideEvent对象，否则我们最终将为每个新联系人创建新对象，即使没有事件侦听器。
+            //     World_step_collideEvent.body = bj;
+            //     World_step_collideEvent.contact = c;
+            //     bi.dispatchEvent(World_step_collideEvent);
     
-                World_step_collideEvent.body = bi;
-                bj.dispatchEvent(World_step_collideEvent);
-            }
+            //     World_step_collideEvent.body = bi;
+            //     bj.dispatchEvent(World_step_collideEvent);
+            // }
     
             this.bodyOverlapKeeper.set(bi.id, bj.id);
             this.shapeOverlapKeeper.set(si.id, sj.id);
         }
     
-        this.emitContactEvents();
+        // this.emitContactEvents();
     
         // if(doProfiling){
         //     profile.makeContactConstraints = performance.now() - profilingStart;
@@ -9912,94 +9912,94 @@
     };
     
     World.prototype.emitContactEvents = (function(){
-        var additions = [];
-        var removals = [];
-        var beginContactEvent = {
-            type: 'beginContact',
-            bodyA: null,
-            bodyB: null
-        };
-        var endContactEvent = {
-            type: 'endContact',
-            bodyA: null,
-            bodyB: null
-        };
-        var beginShapeContactEvent = {
-            type: 'beginShapeContact',
-            bodyA: null,
-            bodyB: null,
-            shapeA: null,
-            shapeB: null
-        };
-        var endShapeContactEvent = {
-            type: 'endShapeContact',
-            bodyA: null,
-            bodyB: null,
-            shapeA: null,
-            shapeB: null
-        };
-        return function(){
-            var hasBeginContact = this.hasAnyEventListener('beginContact');
-            var hasEndContact = this.hasAnyEventListener('endContact');
+        // var additions = [];
+        // var removals = [];
+        // var beginContactEvent = {
+        //     type: 'beginContact',
+        //     bodyA: null,
+        //     bodyB: null
+        // };
+        // var endContactEvent = {
+        //     type: 'endContact',
+        //     bodyA: null,
+        //     bodyB: null
+        // };
+        // var beginShapeContactEvent = {
+        //     type: 'beginShapeContact',
+        //     bodyA: null,
+        //     bodyB: null,
+        //     shapeA: null,
+        //     shapeB: null
+        // };
+        // var endShapeContactEvent = {
+        //     type: 'endShapeContact',
+        //     bodyA: null,
+        //     bodyB: null,
+        //     shapeA: null,
+        //     shapeB: null
+        // };
+        // return function(){
+        //     var hasBeginContact = this.hasAnyEventListener('beginContact');
+        //     var hasEndContact = this.hasAnyEventListener('endContact');
     
-            if(hasBeginContact || hasEndContact){
-                this.bodyOverlapKeeper.getDiff(additions, removals);
-            }
+        //     if(hasBeginContact || hasEndContact){
+        //         this.bodyOverlapKeeper.getDiff(additions, removals);
+        //     }
     
-            if(hasBeginContact){
-                for (var i = 0, l = additions.length; i < l; i += 2) {
-                    beginContactEvent.bodyA = this.getBodyById(additions[i]);
-                    beginContactEvent.bodyB = this.getBodyById(additions[i+1]);
-                    this.dispatchEvent(beginContactEvent);
-                }
-                beginContactEvent.bodyA = beginContactEvent.bodyB = null;
-            }
+        //     if(hasBeginContact){
+        //         for (var i = 0, l = additions.length; i < l; i += 2) {
+        //             beginContactEvent.bodyA = this.getBodyById(additions[i]);
+        //             beginContactEvent.bodyB = this.getBodyById(additions[i+1]);
+        //             this.dispatchEvent(beginContactEvent);
+        //         }
+        //         beginContactEvent.bodyA = beginContactEvent.bodyB = null;
+        //     }
     
-            if(hasEndContact){
-                for (var i = 0, l = removals.length; i < l; i += 2) {
-                    endContactEvent.bodyA = this.getBodyById(removals[i]);
-                    endContactEvent.bodyB = this.getBodyById(removals[i+1]);
-                    this.dispatchEvent(endContactEvent);
-                }
-                endContactEvent.bodyA = endContactEvent.bodyB = null;
-            }
+        //     if(hasEndContact){
+        //         for (var i = 0, l = removals.length; i < l; i += 2) {
+        //             endContactEvent.bodyA = this.getBodyById(removals[i]);
+        //             endContactEvent.bodyB = this.getBodyById(removals[i+1]);
+        //             this.dispatchEvent(endContactEvent);
+        //         }
+        //         endContactEvent.bodyA = endContactEvent.bodyB = null;
+        //     }
     
-            additions.length = removals.length = 0;
+        //     additions.length = removals.length = 0;
     
-            var hasBeginShapeContact = this.hasAnyEventListener('beginShapeContact');
-            var hasEndShapeContact = this.hasAnyEventListener('endShapeContact');
+        //     var hasBeginShapeContact = this.hasAnyEventListener('beginShapeContact');
+        //     var hasEndShapeContact = this.hasAnyEventListener('endShapeContact');
     
-            if(hasBeginShapeContact || hasEndShapeContact){
-                this.shapeOverlapKeeper.getDiff(additions, removals);
-            }
+        //     if(hasBeginShapeContact || hasEndShapeContact){
+        //         this.shapeOverlapKeeper.getDiff(additions, removals);
+        //     }
     
-            if(hasBeginShapeContact){
-                for (var i = 0, l = additions.length; i < l; i += 2) {
-                    var shapeA = this.getShapeById(additions[i]);
-                    var shapeB = this.getShapeById(additions[i+1]);
-                    beginShapeContactEvent.shapeA = shapeA;
-                    beginShapeContactEvent.shapeB = shapeB;
-                    beginShapeContactEvent.bodyA = shapeA.body;
-                    beginShapeContactEvent.bodyB = shapeB.body;
-                    this.dispatchEvent(beginShapeContactEvent);
-                }
-                beginShapeContactEvent.bodyA = beginShapeContactEvent.bodyB = beginShapeContactEvent.shapeA = beginShapeContactEvent.shapeB = null;
-            }
+        //     if(hasBeginShapeContact){
+        //         for (var i = 0, l = additions.length; i < l; i += 2) {
+        //             var shapeA = this.getShapeById(additions[i]);
+        //             var shapeB = this.getShapeById(additions[i+1]);
+        //             beginShapeContactEvent.shapeA = shapeA;
+        //             beginShapeContactEvent.shapeB = shapeB;
+        //             beginShapeContactEvent.bodyA = shapeA.body;
+        //             beginShapeContactEvent.bodyB = shapeB.body;
+        //             this.dispatchEvent(beginShapeContactEvent);
+        //         }
+        //         beginShapeContactEvent.bodyA = beginShapeContactEvent.bodyB = beginShapeContactEvent.shapeA = beginShapeContactEvent.shapeB = null;
+        //     }
     
-            if(hasEndShapeContact){
-                for (var i = 0, l = removals.length; i < l; i += 2) {
-                    var shapeA = this.getShapeById(removals[i]);
-                    var shapeB = this.getShapeById(removals[i+1]);
-                    endShapeContactEvent.shapeA = shapeA;
-                    endShapeContactEvent.shapeB = shapeB;
-                    endShapeContactEvent.bodyA = shapeA.body;
-                    endShapeContactEvent.bodyB = shapeB.body;
-                    this.dispatchEvent(endShapeContactEvent);
-                }
-                endShapeContactEvent.bodyA = endShapeContactEvent.bodyB = endShapeContactEvent.shapeA = endShapeContactEvent.shapeB = null;
-            }
+        //     if(hasEndShapeContact){
+        //         for (var i = 0, l = removals.length; i < l; i += 2) {
+        //             var shapeA = this.getShapeById(removals[i]);
+        //             var shapeB = this.getShapeById(removals[i+1]);
+        //             endShapeContactEvent.shapeA = shapeA;
+        //             endShapeContactEvent.shapeB = shapeB;
+        //             endShapeContactEvent.bodyA = shapeA.body;
+        //             endShapeContactEvent.bodyB = shapeB.body;
+        //             this.dispatchEvent(endShapeContactEvent);
+        //         }
+        //         endShapeContactEvent.bodyA = endShapeContactEvent.bodyB = endShapeContactEvent.shapeA = endShapeContactEvent.shapeB = null;
+        //     }
     
-        };
+        // };
     })();
     
     /**
