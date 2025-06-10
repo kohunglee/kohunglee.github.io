@@ -1707,64 +1707,64 @@
      */
     function RaycastResult(){
     
-        /**
-         * @property {Vec3} rayFromWorld
-         */
-        this.rayFromWorld = new Vec3();
+        // /**
+        //  * @property {Vec3} rayFromWorld
+        //  */
+        // this.rayFromWorld = new Vec3();
     
-        /**
-         * @property {Vec3} rayToWorld
-         */
-        this.rayToWorld = new Vec3();
+        // /**
+        //  * @property {Vec3} rayToWorld
+        //  */
+        // this.rayToWorld = new Vec3();
     
-        /**
-         * @property {Vec3} hitNormalWorld
-         */
-        this.hitNormalWorld = new Vec3();
+        // /**
+        //  * @property {Vec3} hitNormalWorld
+        //  */
+        // this.hitNormalWorld = new Vec3();
     
-        /**
-         * @property {Vec3} hitPointWorld
-         */
-        this.hitPointWorld = new Vec3();
+        // /**
+        //  * @property {Vec3} hitPointWorld
+        //  */
+        // this.hitPointWorld = new Vec3();
     
-        /**
-         * @property {boolean} hasHit
-         */
-        this.hasHit = false;
+        // /**
+        //  * @property {boolean} hasHit
+        //  */
+        // this.hasHit = false;
     
-        /**
-         * 命中形状或无效。
-         * @property {Shape} shape
-         */
-        this.shape = null;
+        // /**
+        //  * 命中形状或无效。
+        //  * @property {Shape} shape
+        //  */
+        // this.shape = null;
     
-        /**
-         * 命中的身体或无效。
-         * @property {Body} body
-         */
-        this.body = null;
+        // /**
+        //  * 命中的身体或无效。
+        //  * @property {Body} body
+        //  */
+        // this.body = null;
     
-        /**
-         * 如果命中形状是Trimeh，则热门三角形的索引。
-         * @property {number} hitFaceIndex
-         * @default -1
-         */
-        this.hitFaceIndex = -1;
+        // /**
+        //  * 如果命中形状是Trimeh，则热门三角形的索引。
+        //  * @property {number} hitFaceIndex
+        //  * @default -1
+        //  */
+        // this.hitFaceIndex = -1;
     
-        /**
-         * 距离击球的距离。如果没有命中，将设置为-1。
-         * @property {number} distance
-         * @default -1
-         */
-        this.distance = -1;
+        // /**
+        //  * 距离击球的距离。如果没有命中，将设置为-1。
+        //  * @property {number} distance
+        //  * @default -1
+        //  */
+        // this.distance = -1;
     
-        /**
-         * 如果射线应该停止穿越身体。
-         * @private
-         * @property {Boolean} _shouldStop
-         * @default false
-         */
-        this._shouldStop = false;
+        // /**
+        //  * 如果射线应该停止穿越身体。
+        //  * @private
+        //  * @property {Boolean} _shouldStop
+        //  * @default false
+        //  */
+        // this._shouldStop = false;
     }
     
     /**
@@ -1772,16 +1772,16 @@
      * @method reset
      */
     RaycastResult.prototype.reset = function () {
-        this.rayFromWorld.setZero();
-        this.rayToWorld.setZero();
-        this.hitNormalWorld.setZero();
-        this.hitPointWorld.setZero();
-        this.hasHit = false;
-        this.shape = null;
-        this.body = null;
-        this.hitFaceIndex = -1;
-        this.distance = -1;
-        this._shouldStop = false;
+        // this.rayFromWorld.setZero();
+        // this.rayToWorld.setZero();
+        // this.hitNormalWorld.setZero();
+        // this.hitPointWorld.setZero();
+        // this.hasHit = false;
+        // this.shape = null;
+        // this.body = null;
+        // this.hitFaceIndex = -1;
+        // this.distance = -1;
+        // this._shouldStop = false;
     };
     
     /**
@@ -5912,6 +5912,7 @@
         cfah_localPlaneNormal = new Vec3(),
         cfah_planeNormalWS = new Vec3();
     ConvexPolyhedron.prototype.clipFaceAgainstHull = function(separatingNormal, posA, quatA, worldVertsB1, minDist, maxDist,result){
+        
         var faceANormalWS = cfah_faceANormalWS,
             edge0 = cfah_edge0,
             WorldEdge0 = cfah_WorldEdge0,
@@ -5999,7 +6000,7 @@
                 pVtxIn.push(pVtxOut.shift());
             }
         }
-    
+
         //console.log（“剪辑后的结果点：”，pvtxin）;
     
         // 仅保留在证人脸后面的联系点
@@ -6046,6 +6047,7 @@
      * @param {Number} planeConstant 数学平面方程中的常数
      */
     ConvexPolyhedron.prototype.clipFaceAgainstPlane = function(inVertices,outVertices, planeNormal, planeConstant){
+     
         var n_dot_first, n_dot_last;
         var numVerts = inVertices.length;
     
