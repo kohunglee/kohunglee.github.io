@@ -24,7 +24,6 @@ export default {
                 shape = 'cube',  // 默认形状
                 mass = 0, width = 1, depth = 1, height = 1, size = 1,
                 texture = null, smooth = 0,
-                XNumber = 1,  // 重复平铺纵横数
                 background = '#888', mixValue = 0.71, rX = 0, rY = 0, rZ = 0
             } = {}){
         var myargs = Array.from(arguments);  // 备份参数
@@ -38,9 +37,11 @@ export default {
         }
         var body = null;
         if(isPhysical){  // 是否创建物理计算体
+            const boxSize = new CANNON.Vec3(width/2, height/2, depth/2);
+            var boxShape = (shape === 'sphere') ? new CANNON.Sphere(width/2) : new CANNON.Box(boxSize);  // 圆的直径以 width 参数值为准
             body = new CANNON.Body({
                 mass : mass,
-                shape: new CANNON.Box(new CANNON.Vec3(width/2, height/2, depth/2)),
+                shape: boxShape,
                 position: new CANNON.Vec3(X, Y, Z),
                 // 注意，这边没有将旋转考虑进去。。要旋转。
                 material: this.cannonDefaultCantactMaterial,
@@ -78,7 +79,7 @@ export default {
                 this.bodylistMass0.push(result);  // 无质量
                 break;
             default:
-                this.bodylist.push(result);
+                this.bodylist.push(result);  // 默认数组
         }
         return result;
     },
