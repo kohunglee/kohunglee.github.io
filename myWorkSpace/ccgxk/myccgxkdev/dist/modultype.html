@@ -27,7 +27,8 @@
 </style>
 <!-- <script src="cannon.js"></script> -->
 <!-- <script src="../src/cannon/cannon-x-dev.js"></script> -->
- <script src="../src/cannon/cannon29kb.js"></script>
+<script src="../src/cannon/cannon29kb.js"></script>
+<script src="./testPlugins/wjsShadow.js"></script>
 <img src='./img/texture.jpeg' id=marble hidden>
 <canvas id=c style="width:100vw;height:100vh"></canvas>
 <div id="myHUD" class="myHUD">
@@ -54,9 +55,11 @@
 import ccgxkApp from '../src/ccgxk.js';
 // 初始化沙盒
 var k = ccgxkApp;
+
+addShadow(k);  // （测试中）激活阴影插件
+
 k.initWorld(c);
 var list = k.bodylist;
-
 
 
 // 定义单个立方体对象的多个实例
@@ -150,8 +153,9 @@ k.addBox({  // 创建一个静止的墙
 });
 
 // 随机生成 n 个模型
-var yVlaue = 5;
-var modeValue = 8000;
+isOpenShadow = !isOpenShadow;
+var yVlaue = 15;
+var modeValue = 1000;
 const random002 = k.genPR(221, modeValue * 5);  // 伪随机数
 for(var i = 0; i < modeValue; i++){
     k.addBox({

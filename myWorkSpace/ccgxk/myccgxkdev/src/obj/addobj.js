@@ -37,8 +37,17 @@ export default {
         }
         var body = null;
         if(isPhysical){  // 是否创建物理计算体
-            const boxSize = new CANNON.Vec3(width/2, height/2, depth/2);
-            var boxShape = (shape === 'sphere') ? new CANNON.Sphere(width/2) : new CANNON.Box(boxSize);  // 圆的直径以 width 参数值为准
+            
+            var boxShape;
+            switch (shape) {
+                case 'sphere':
+                    boxShape =  new CANNON.Sphere(width/2); // 圆的直径以 width 参数值为准
+                    break;
+                default:
+                    const boxSize = new CANNON.Vec3(width/2, height/2, depth/2);
+                    boxShape = new CANNON.Box(boxSize);
+                    break;
+            }
             body = new CANNON.Body({
                 mass : mass,
                 shape: boxShape,
@@ -81,6 +90,7 @@ export default {
             default:
                 this.bodylist.push(result);  // 默认数组
         }
+        // this.ccgxkhooks.emitSync('addObj_ok');  // 钩子使用示例
         return result;
     },
 }
