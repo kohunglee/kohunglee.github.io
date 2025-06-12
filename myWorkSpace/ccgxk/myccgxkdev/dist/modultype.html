@@ -64,19 +64,19 @@ var list = k.bodylist;
 
 // 定义单个立方体对象的多个实例
 const cubeInstances = [];
-  const numCubes = 1;
+  const numCubes = 100;
   const spacing = 2.5;
   const random = k.genPR(123, numCubes * numCubes * 5);  // 伪随机数
   for (let i = 0; i < numCubes; i++) {
     for (let j = 0; j < numCubes; j++) {
       var index = i * numCubes + j;
       cubeInstances.push({
-        x: Math.floor(random[index] * 9900 + 1 - 5000),
+        x: Math.floor(random[index] * 990 + 1 - 500),
         y: Math.floor(random[index + 1] * 50),
-        z: Math.floor(random[index + 2] * 9900 + 1 - 5000),
-        w: 1,
-        d: 1,
-        h: Math.floor(random[index + 3] * 5 + 1),
+        z: Math.floor(random[index + 2] * 990 + 1 - 500),
+        w: 0.1,
+        d: 0.1,
+        h: Math.floor(random[index + 3] * 200 + 0.1),
         b:`#${Math.floor(random[index + 4] * 16777216).toString(16).padStart(6, '0')}`,
       });
     }
@@ -118,7 +118,7 @@ k.addBox({  // 创建地面
     tiling : 10,
     // isShadow: 1,
     name: 'groundPlane', X: 0, Y: -0.5, Z: 0,
-    mass: 0, width: 10000, depth: 10000, height: 2,
+    mass: 0, width: 1000, depth: 1000, height: 2,
     texture: marble, background: '#287A17', mixValue: 0.5,
 });
 
@@ -153,7 +153,7 @@ k.addBox({  // 创建一个静止的墙
 });
 
 // 随机生成 n 个模型
-isOpenShadow = !isOpenShadow;
+// isOpenShadow = !isOpenShadow;
 var yVlaue = 15;
 var modeValue = 1000;
 const random002 = k.genPR(221, modeValue * 5);  // 伪随机数
@@ -291,7 +291,7 @@ function calculateNorthAngle(t,a,h){var t=-t*Math.PI/180,a=-a*Math.PI/180,h=h*Ma
 
 // 绘制小地图
 const mapUpdatax = setInterval(() => { drawRedDot(posMap); }, 100);
-function drawRedDot(t){var l=t.getContext("2d"),e=t.width/2,i=t.height/2,a=k.mainVPlayer.X/5e3*e,r=k.mainVPlayer.Z/5e3*i,
+function drawRedDot(t){var l=t.getContext("2d"),e=t.width/2,i=t.height/2,a=k.mainVPlayer.X/5e2*e,r=k.mainVPlayer.Z/5e2*i,
     h=(l.clearRect(0,0,t.width,t.height),t.width/10);l.fillStyle="#fff",l.fillRect(0,0,t.width,t.height),l.fillStyle="#F5F7FF";
     for(let e=0;e<10;e++)for(let t=0;t<10;t++)(e+t)%2==0&&l.fillRect(e*h,t*h,h,h);t=e+a,a=i+r,l.beginPath(),l.arc(e,i,2,0,2*Math.PI),
     l.arc(t,a,1,0,2*Math.PI),l.fillStyle="red",l.fill(),l.strokeStyle="#9AFF4D",l.lineWidth=1,l.beginPath(),l.moveTo(t,a),
