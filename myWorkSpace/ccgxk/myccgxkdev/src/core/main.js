@@ -1,9 +1,3 @@
-import wjs from '../wjs/w_ins_lab.js';  // W 引擎(webgl)，兼容性好一点
-// import webgpu from '../wjs/w_wgpu.js';  // 后续会更新成一个 webgpu 版本
-// import babylon from '../babylon/babylon.js';  // 也会引入传说中的 babylon.js 以增强画质
-
-
-
 
 export default {
 
@@ -11,7 +5,7 @@ export default {
     speedH: 3,       // 最高速度的反数
     speedL: 8,       // 最低速度的反数
     speedAdd: 0.1,   // 速度的增加率
-    jumpYVel: 5,    // 跳跃时向上的加速度
+    jumpYVel: 5,     // 跳跃时向上的加速度
     fov:35,          // 相机视野
 
     // ccgxk 的 cannon.js 物理世界
@@ -37,7 +31,7 @@ export default {
 
     // 初始化 W 引擎
     initW : function(c){
-        const W = wjs;
+        const W = this.W;
         c.width = window.innerWidth / 1;
         c.height = window.innerHeight / 1;
         W.reset(c);
@@ -54,6 +48,4 @@ export default {
         W.pyramid({g:'posZero', n:'test0001' ,size:1,z:10,rx:90,b:"44f"});
         W.sphere({n:'posZeroSphere',x:0, y:0, z:0, size:5, s:1, b:"#FF145B"});
     },
-
-    W : wjs,
 }

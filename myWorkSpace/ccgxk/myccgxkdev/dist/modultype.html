@@ -64,16 +64,16 @@ var list = k.bodylist;
 
 // 定义单个立方体对象的多个实例
 const cubeInstances = [];
-  const numCubes = 100;
+  const numCubes = 2;
   const spacing = 2.5;
   const random = k.genPR(123, numCubes * numCubes * 5);  // 伪随机数
   for (let i = 0; i < numCubes; i++) {
     for (let j = 0; j < numCubes; j++) {
       var index = i * numCubes + j;
       cubeInstances.push({
-        x: Math.floor(random[index] * 990 + 1 - 500),
+        x: Math.floor(random[index] * 99 + 1 - 50),
         y: Math.floor(random[index + 1] * 50),
-        z: Math.floor(random[index + 2] * 990 + 1 - 500),
+        z: Math.floor(random[index + 2] * 99 + 1 - 50),
         w: 0.1,
         d: 0.1,
         h: Math.floor(random[index + 3] * 200 + 0.1),
