@@ -39,7 +39,7 @@ export default {
         W.light({ x: 0.5, y: -0.3, z: 0.5});
         W.clearColor("#7A4141");
         W.camera({n:'camera', fov: this.fov});
-        W.group({n:'posZero',x:0,y:1,z:0});  // 下面这几行，绘制原点坐标轴
+        W.group({n:'posZero',x:0,y:1,z:0});  //+8 下面这几行，绘制原点坐标轴
         W.cube({g:'posZero',x:5,w:10,h:.5,d:.5,b:"f44"});
         W.cube({g:'posZero',y:5,h:10,w:.5,d:.5,b:"4f4"});
         W.cube({g:'posZero',z:5,d:10,w:.5,h:.5,b:"44f"});

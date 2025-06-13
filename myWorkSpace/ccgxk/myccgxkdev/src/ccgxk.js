@@ -12,11 +12,8 @@ import addcustobj from './obj/addcustobj.js';
 import animate from './core/animate.js';
 
 // 插件
+import wjsShadow from './plugins/wjsShadow.js';
 
-
-// 开发使用的临时代码
-// import webgpu from '../wjs/w_wgpu.js';  // 后续会更新成一个 webgpu 版本
-// import babylon from '../babylon/babylon.js';  // 也会引入传说中的 babylon.js 以增强画质
 
 // 主对象
 const ccgxk ={
@@ -30,9 +27,10 @@ const ccgxk ={
     ...addobj,       // 添加新物体
     ...addcustobj,   // 添加自定义的模型（实验中）
     ...animate,      // 动画进程相关
-
-    // 扩展
 }
+
+// 启用插件
+wjsShadow(ccgxk);  // 开启阴影
 
 // 兼容浏览器平台
 window.ccgxk = ccgxk;

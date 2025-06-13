@@ -30,7 +30,7 @@ const W = {
     W.lastFrame = 0;
     W.drawTime = 0;         // 初始化 绘制 时间
     W.lastReportTime = 0;   // 时间戳临时变量（用于确定一秒）
-    
+
     var t;
     W.gl.shaderSource(
           // 默认顶点着色器

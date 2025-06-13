@@ -119,6 +119,7 @@ const RENDER_FSHADER_SOURCE_300ES = `#version 300 es
           }`;
 
 // 一些工具函数
+// 创建并编译一对儿着色器
 function createProgram(gl, vshaderSource, fshaderSource) {
   const vShader = gl.createShader(gl.VERTEX_SHADER);
   gl.shaderSource(vShader, vshaderSource);
@@ -132,6 +133,7 @@ function createProgram(gl, vshaderSource, fshaderSource) {
   gl.linkProgram(program);
   return program;
 }
+// 秘密暗房（一个渲染容器，渲染结果可以不显示到大屏幕上）
 function initFramebufferObject(gl, width, height) { 
   var framebuffer, texture, depthRenderbuffer; 
   framebuffer = gl.createFramebuffer();
@@ -156,13 +158,13 @@ function initFramebufferObject(gl, width, height) {
   return framebuffer; 
 }
 
-// --- 常量定义（在 W.reset 函数体外，或者文件末尾） ---
-var OFFSCREEN_WIDTH; // 深度图分辨率
+// 
+var OFFSCREEN_WIDTH;
 var OFFSCREEN_HEIGHT;
-OFFSCREEN_WIDTH = OFFSCREEN_HEIGHT = 2**12;
+    OFFSCREEN_WIDTH = OFFSCREEN_HEIGHT = 2**12;  // 深度图分辨率
 var SHADOW_MAP_TEXTURE_UNIT = 3; // 阴影贴图使用的纹理单元
-var shadowProgram;  // 深度图渲染程序
-var shadowFBO;  // 秘密暗房
+var shadowProgram;  // 深度图着色器程序
+var shadowFBO;  // 深度图秘密暗房
 
 // 初始化深度图渲染程序
 const initDepthMapProgram = (W) => {
@@ -228,6 +230,7 @@ const drawShadow = (W) => {
     W.gl.disableVertexAttribArray(shadowProgram.a_Position);  // 关闭顶点属性
 
   }
+
   W.gl.useProgram(W.program);  // 切换回原来的着色器
   W.gl.viewport(0, 0, W.gl.canvas.width, W.gl.canvas.height);  // 视角要改回去
   W.gl.bindFramebuffer(W.gl.FRAMEBUFFER, null);  // 走出暗房
@@ -257,12 +260,11 @@ window.isOpenShadow = true;  // 是否开启阴影效果
 
 // 插件入口
 const addShadow = function(ccgxkObj) {
-    ccgxkObj.W.wjsHooks.on('reset_ok', function(W){  // 初始化
-        console.log('shadow plugin ok');
+    ccgxkObj.W.wjsHooks.on('reset_ok', function(W){  // 在'初始化'处装载
         initDepthMapProgram(W);
     });
 
-    ccgxkObj.W.wjsHooks.on('shadow_draw', function(W){  // 绘制阴影
+    ccgxkObj.W.wjsHooks.on('shadow_draw', function(W){  // 在'绘制阴影'处装载
         drawShadow(W);
     });
 }

@@ -12,7 +12,7 @@
     .myHUD {
         position: absolute;
         bottom: 0;
-        padding: 1em;
+        padding: 0.3em;
         color: #ffffff;
     }
     #someCtrl {
@@ -21,8 +21,8 @@
         opacity: 0.5;
     }
     #someCtrl button {
-    width: 70px;
-    height: 70px;
+    width: 30px;
+    height: 30px;
 }
 </style>
 <!-- <script src="cannon.js"></script> -->
@@ -56,33 +56,30 @@ import ccgxkApp from '../src/ccgxk.js';
 // 初始化沙盒
 var k = ccgxkApp;
 
-addShadow(k);  // （测试中）激活阴影插件
-
 k.initWorld(c);
 var list = k.bodylist;
 
 
 // 定义单个立方体对象的多个实例
 const cubeInstances = [];
-  const numCubes = 2;
-  const spacing = 2.5;
-  const random = k.genPR(123, numCubes * numCubes * 5);  // 伪随机数
-  for (let i = 0; i < numCubes; i++) {
-    for (let j = 0; j < numCubes; j++) {
-      var index = i * numCubes + j;
-      cubeInstances.push({
-        x: Math.floor(random[index] * 99 + 1 - 50),
-        y: Math.floor(random[index + 1] * 50),
-        z: Math.floor(random[index + 2] * 99 + 1 - 50),
-        w: 0.1,
-        d: 0.1,
-        h: Math.floor(random[index + 3] * 200 + 0.1),
-        b:`#${Math.floor(random[index + 4] * 16777216).toString(16).padStart(6, '0')}`,
-      });
-    }
-  }
-
-
+const numCubes = 50;
+const spacing = 2.5;
+const areaSpace = 10**1;
+const random = k.genPR(123, numCubes * numCubes * 5);  // 伪随机数
+for (let i = 0; i < numCubes; i++) {
+for (let j = 0; j < numCubes; j++) {
+    var index = i * numCubes + j;
+    cubeInstances.push({
+    x: Math.floor(random[index] * 99 * areaSpace + 1 - 50 * areaSpace),
+    y: Math.floor(random[index + 1] * 50),
+    z: Math.floor(random[index + 2] * 99 * areaSpace + 1 - 50 * areaSpace),
+    w: 0.1,
+    d: 0.1,
+    h: Math.floor(random[index + 3] * 2 + 0.1),
+    b:`#${Math.floor(random[index + 4] * 16777216).toString(16).padStart(6, '0')}`,
+    });
+}
+}
 
 // 创建 n 个可以绘制许多立方体的实例立方体对象
 for (let index = 0; index < 1; index++) {
@@ -94,9 +91,6 @@ for (let index = 0; index < 1; index++) {
     y:50 * index * 10,
   });
 }
-
-
-
 
 k.addBox({  // 创建一个 旋转测试 细长物理体
     DPZ : 2,
@@ -118,7 +112,7 @@ k.addBox({  // 创建地面
     tiling : 10,
     // isShadow: 1,
     name: 'groundPlane', X: 0, Y: -0.5, Z: 0,
-    mass: 0, width: 1000, depth: 1000, height: 2,
+    mass: 0, width: 10000, depth: 10000, height: 2,
     texture: marble, background: '#287A17', mixValue: 0.5,
 });
 
@@ -155,17 +149,16 @@ k.addBox({  // 创建一个静止的墙
 // 随机生成 n 个模型
 // isOpenShadow = !isOpenShadow;
 var yVlaue = 15;
-var modeValue = 1000;
+var modeValue = 10;
 const random002 = k.genPR(221, modeValue * 5);  // 伪随机数
 for(var i = 0; i < modeValue; i++){
     k.addBox({
-        DPZ : 4,
+        DPZ : 2,
         isPhysical: true,
-        X: Math.floor( random002[i] * 990 + 1 - 50), Y: yVlaue, Z: Math.floor( random002[i+1] * 990 + 1 - 50),
-        mass: 10, width: Math.floor( random002[i+2] * 30 + 1), depth: 5, height: Math.floor( random002[i+3] * 5 + 1),
+        X: Math.floor( random002[i] * 199 + 1 - 50), Y: yVlaue, Z: Math.floor( random002[i+1] * 199 + 1 - 50),
+        mass: 0, width: Math.floor( random002[i+2] * 2 + 1), depth: 1, height: Math.floor( random002[i+3] * 1 + 1),
         background: `#${Math.floor(random002[i+4] * 16777216).toString(16).padStart(6, '0')}`, mixValue: 0.71,
         texture: marble,
-        
     });
 }
 
@@ -174,7 +167,6 @@ k.mainVPlayer = k.addBox({  // 创建一个立方体，并设置为主角
         colliGroup: 1,
         isShadow: 1,
         X:4.25, Y:1.00, Z:12.09,
-        // X:-134.56, Y:10.00, Z:128.01,
         rX: 0, rY: 0, rZ: 0, size:1, mixValue:0.7,
         mass: 50, texture: marble
     });
@@ -187,6 +179,18 @@ k.addBox({
         isPhysical: true,
         X: 14.4, Y: 5, Z: 3.4,
         mass: 10, width: 2, depth: 2, height: 2,
+        background: `#ccc`, mixValue: 0.71,
+        shape : 'sphere',
+});
+
+// 尝试创建一个球
+k.addBox({
+        DPZ : 1,
+        colliGroup: 1,
+        smooth:1,
+        isPhysical: true,
+        X: 27.4, Y: 5, Z: -3.4,
+        mass: 0, size:9,
         background: `#ccc`, mixValue: 0.71,
         shape : 'sphere',
 });
@@ -291,7 +295,7 @@ function calculateNorthAngle(t,a,h){var t=-t*Math.PI/180,a=-a*Math.PI/180,h=h*Ma
 
 // 绘制小地图
 const mapUpdatax = setInterval(() => { drawRedDot(posMap); }, 100);
-function drawRedDot(t){var l=t.getContext("2d"),e=t.width/2,i=t.height/2,a=k.mainVPlayer.X/5e2*e,r=k.mainVPlayer.Z/5e2*i,
+function drawRedDot(t){var l=t.getContext("2d"),e=t.width/2,i=t.height/2,a=k.mainVPlayer.X/5e3*e,r=k.mainVPlayer.Z/5e3*i,
     h=(l.clearRect(0,0,t.width,t.height),t.width/10);l.fillStyle="#fff",l.fillRect(0,0,t.width,t.height),l.fillStyle="#F5F7FF";
     for(let e=0;e<10;e++)for(let t=0;t<10;t++)(e+t)%2==0&&l.fillRect(e*h,t*h,h,h);t=e+a,a=i+r,l.beginPath(),l.arc(e,i,2,0,2*Math.PI),
     l.arc(t,a,1,0,2*Math.PI),l.fillStyle="red",l.fill(),l.strokeStyle="#9AFF4D",l.lineWidth=1,l.beginPath(),l.moveTo(t,a),
@@ -305,21 +309,15 @@ lightpos = {
   rx: 0, ry: -125, rz:-45,
 }
 
-// console.log("每秒执行一次");
-function executePerSecond() {
-    var plr = k.W.current['mainPlayer']
-    lightpos.x = plr.x;
-    lightpos.y = plr.y + 50;
-    lightpos.z = plr.z - 50;
-
-    // if(plr.y > 20) {
-    //     isOpenShadow = false
-    // } else {
-    //     isOpenShadow = true
-    // }
-}
-const intervalId = setInterval(executePerSecond, 5000);
-executePerSecond();
+// // console.log("每秒执行一次");
+// function executePerSecond() {
+//     var plr = k.W.current['mainPlayer']
+//     lightpos.x = plr.x;
+//     lightpos.y = plr.y + 50;
+//     lightpos.z = plr.z - 50;
+// }
+// const intervalId = setInterval(executePerSecond, 5000);
+// executePerSecond();
 
 // 前进
 xforward.addEventListener('mousedown', function(event) {
@@ -367,7 +365,7 @@ xjump.addEventListener('mousedown', function(event) {
 
 // 开关阴影
 xShadow.addEventListener('mousedown', function(event) {
-    isOpenShadow = !isOpenShadow;
+    k.W.isOpenShadow = !k.W.isOpenShadow
 });
 
 // 第一视角

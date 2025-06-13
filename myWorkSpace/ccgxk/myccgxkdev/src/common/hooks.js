@@ -1,5 +1,6 @@
-// 这是通用的 JS 钩子，在 WJS CANNON CCGXK 里都有引入
-
+/**
+ * 这是通用的 JS 钩子，在 WJS CANNON CCGXK 里都有引入
+ */
 export default {
     _hookQueues: new Map(), // 任务队列
 
