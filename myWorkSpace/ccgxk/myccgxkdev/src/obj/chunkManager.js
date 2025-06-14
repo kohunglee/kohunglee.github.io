@@ -18,6 +18,7 @@ export default {
             if(indexItem.name === name){
                 if(isPhysical){
                     this.world.removeBody(indexItem.body);  // 删除物理计算体
+                    this.releaseBody(indexItem.body);  // 对象池，回收该对象
                 }
                 this.W.delete(name);  // 删除可视化物体
                 this.hiddenBodylist.push({  // 将删除的物体放入隐藏列表
@@ -27,6 +28,7 @@ export default {
                     Y : indexItem.Y,
                     Z : indexItem.Z,
                     myargs : indexItem.myargs,
+                    // body : indexItem.body,
                 });
                 bodyArrlist.splice(index, 1);  // 删除物体列表中的物体
                 break;
@@ -49,69 +51,71 @@ export default {
         return zindex + dirctionA + numberA + dirctionB + numberB;
     },
 
-    // 根据主角的位置简码，动态增删物体
-    dynaLock : false,  // 动态增删锁
-    dynaNodes : function(){
-        if(this.mainVPlayer !== null) {
-            var mVP = this.mainVPlayer;
-            var mainVPPosID = this.calPosID(mVP.X, mVP.Y, mVP.Z, 2);
-            if(this.dynaLock){  // 加锁，防止频繁增删导致 BUG
-                return mainVPPosID;
-            } else {
-                this.dynaLock = true;
-            }
-            this.legalPosID.length = 0;
-            const offsets = [  // 八个方向查找临近的区域编码
-                { x: 1, y: 0, z: 0 },
-                { x: -1, y: 0, z: 0 },
-                { x: 0, y: 0, z: 1 },
-                { x: 0, y: 0, z: -1 },
-                { x: 1, y: 0, z: 1 },
-                { x: -1, y: 0, z: -1 },
-                { x: -1, y: 0, z: 1 },
-                { x: 1, y: 0, z: -1 }
-            ];
-            offsets.forEach(offset => {  // 生成当前合法地址编码库
-                const limits = [
+    // 不同的 DPZ 优先级，它的探测距离
+    distanceDPZ: [
                     { level: 2, len: 450 },
                     { level: 3, len: 45 },
                     { level: 4, len: 15 }
-                ];
-                limits.forEach(({ level, len }) => {
-                    const posID = this.calPosID(mVP.X + offset.x * len, mVP.Y + offset.y * len, mVP.Z + offset.z * len, level);
-                    if (!this.legalPosID.includes(posID)) {
-                        this.legalPosID.push(posID);
-                    }
-                });
-            });
-            const removeIllegalBodies = (bodyArrList, isphysical = false) => {
-                for (let i = bodyArrList.length - 1; i >= 0; i--) {  // 从后向前遍历，避免splice影响索引
-                    let indexItem = bodyArrList[i];
-                    if (!this.legalPosID.includes(indexItem.posID) && indexItem.DPZ !== 1) {
-                        this.removeBody(indexItem.name, bodyArrList, isphysical);
-                    }
+                ],
+
+    // 根据主角的位置简码，动态增删物体
+    dynaLock : false,  // 动态增删锁
+    stopDynaNodes : false,  // 临时停止 dynaNodes 键
+    dynaNodes : function(){
+        if(this.mainVPlayer === null || this.stopDynaNodes) {return ''};
+        var mVP = this.mainVPlayer;
+        var mainVPPosID = this.calPosID(mVP.X, mVP.Y, mVP.Z, 2);
+        if(this.dynaLock){  // 加锁，防止频繁增删导致 BUG
+            return mainVPPosID;
+        } else {
+            this.dynaLock = true;
+        }
+        this.legalPosID.length = 0;
+        const offsets = [  // 八个方向查找临近的区域编码
+            { x: 1, y: 0, z: 0 },
+            { x: -1, y: 0, z: 0 },
+            { x: 0, y: 0, z: 1 },
+            { x: 0, y: 0, z: -1 },
+            { x: 1, y: 0, z: 1 },
+            { x: -1, y: 0, z: -1 },
+            { x: -1, y: 0, z: 1 },
+            { x: 1, y: 0, z: -1 }
+        ];
+        offsets.forEach(offset => {  // 生成当前合法地址编码库
+            this.distanceDPZ.forEach(({ level, len }) => {
+                const posID = this.calPosID(mVP.X + offset.x * len, mVP.Y + offset.y * len, mVP.Z + offset.z * len, level);
+                if (!this.legalPosID.includes(posID)) {
+                    this.legalPosID.push(posID);
                 }
-            };
-            removeIllegalBodies(this.bodylist, true);  // 检测增删 普通模型
-            removeIllegalBodies(this.bodylistNotPys);  // .. 纯模型
-            removeIllegalBodies(this.bodylistMass0); // .. 无质量物体
-            for (let i = 0; i < this.hiddenBodylist.length; i++) {  // 恢复已经合法的隐藏物体
-                let indexItem = this.hiddenBodylist[i];
-                if(this.legalPosID.includes(indexItem.posID)){
-                    var myargs = indexItem.myargs[0];
-                    if(indexItem.X){
-                        myargs.X = indexItem.X;
-                        myargs.Y = indexItem.Y;
-                        myargs.Z = indexItem.Z;
-                        myargs.quat = indexItem.quat;
-                    }
-                    this.addBox(myargs);
-                    this.hiddenBodylist.splice(i, 1);
+            });
+        });
+        const removeIllegalBodies = (bodyArrList, isphysical = false) => {
+            for (let i = bodyArrList.length - 1; i >= 0; i--) {  // 从后向前遍历，避免splice影响索引
+                let indexItem = bodyArrList[i];
+                if (!this.legalPosID.includes(indexItem.posID) && indexItem.DPZ !== 1) {
+                    this.removeBody(indexItem.name, bodyArrList, isphysical);
                 }
             }
-            this.dynaLock = false;
-            return mainVPPosID;
+        };
+        removeIllegalBodies(this.bodylist, true);  // 检测增删 普通模型
+        removeIllegalBodies(this.bodylistNotPys);  // .. 纯模型
+        removeIllegalBodies(this.bodylistMass0); // .. 无质量物体
+        for (let i = 0; i < this.hiddenBodylist.length; i++) {  // 恢复已经合法的隐藏物体
+            let indexItem = this.hiddenBodylist[i];
+            if(this.legalPosID.includes(indexItem.posID)){
+                var myargs = indexItem.myargs[0];
+                if(indexItem.X){
+                    myargs.X = indexItem.X;
+                    myargs.Y = indexItem.Y;
+                    myargs.Z = indexItem.Z;
+                    myargs.quat = indexItem.quat;
+                    myargs.cannonBody = indexItem.body;
+                }
+                this.addBox(myargs);
+                this.hiddenBodylist.splice(i, 1);
+            }
         }
-        return '';
+        this.dynaLock = false;
+        return mainVPPosID;
     },
 }

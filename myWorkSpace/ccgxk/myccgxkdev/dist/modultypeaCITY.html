@@ -1,0 +1,315 @@
+<meta http-equiv="cache-control" content="no-cache">
+<meta http-equiv="expires" content="0">
+<meta http-equiv="pragma" content="no-cache">
+<style>
+    body{margin: 0;}
+    #posMap {
+        position: fixed;
+        right: 50px;
+        margin-top: -100px;
+        opacity: 0.8;
+    }
+    .myHUD {
+        position: absolute;
+        bottom: 0;
+        padding: 0.3em;
+        color: #ffffff;
+    }
+    #someCtrl {
+        position: fixed;
+        top: 0;
+        opacity: 0.5;
+    }
+    #someCtrl button {
+    width: 45px;
+    height: 30px;
+}
+</style>
+<!-- <script src="cannon.js"></script> -->
+<!-- <script src="../src/cannon/cannon-x-dev.js"></script> -->
+<script src="../cannonjsproj/cannon.js-master/build/cannon.js"></script>
+<!-- <script src="../src/cannon/cannon29kb.js"></script> -->
+<img src='./img/texture.jpeg' id=marble hidden>
+<canvas id=c style="width:100vw;height:100vh"></canvas>
+<div id="myHUD" class="myHUD">
+    <div id="fpsInfo"></div>
+    <span id="shiftInfo"></span>
+    <span id="posInfo"></span>
+    <span id="metrics"></span>
+    <span id="cpuInfo"></span>
+    <span id="modListCount"></span>
+    <span id="posIDMVP"></span>
+    <canvas id="posMap" width="100" height="100"></canvas>
+</div>
+<div id="someCtrl">
+    <button id="xforward">前</button>
+    <button id="xbackward">后</button>
+    <button id="xleft">左</button>
+    <button id="xright">右</button>
+    <button id="xjump">蹦</button>
+    <button id="xShadow">影</button>
+    <button id="xVIEW1">视1</button>
+    <button id="xVIEW2">视3</button>
+    <button id="xStopDY">停动</button>
+</div>
+<script type="module">
+import ccgxkApp from '../src/ccgxk.js';
+// 初始化沙盒
+var k = ccgxkApp;
+
+k.initWorld(c);
+var list = k.bodylist;
+
+
+// 定义单个立方体对象的多个实例
+const cubeInstances = [];
+const numCubes = 100;
+const spacing = 2.5;
+const areaSpace = 10**1;
+const random = k.genPR(17, numCubes * numCubes * 5);  // 伪随机数
+for (let i = 0; i < numCubes; i++) {
+for (let j = 0; j < numCubes; j++) {
+    var index = i * numCubes + j;
+    cubeInstances.push({
+        x: Math.floor(random[index] * 99 * areaSpace + 1 - 50 * areaSpace),
+        y: Math.floor(random[index + 1] * 50),
+        z: Math.floor(random[index + 2] * 99 * areaSpace + 1 - 50 * areaSpace),
+        w: 20,
+        d: 30,
+        h: Math.floor(random[index + 3] * 20 + 0.1),
+        b:`#${Math.floor(random[index + 4] * 16777216).toString(16).padStart(6, '0')}`,
+    });
+}
+}
+
+// 创建 n 个可以绘制许多立方体的实例立方体对象
+for (let index = 0; index < 1; index++) {
+  k.W.cube({
+    n: 'manyCubes' + index,
+    instances: cubeInstances, // 实例属性的数组
+    t: marble,
+    mix: 0.5,
+    y:50 * index * 10,
+  });
+}
+
+
+// 尝试加上简单的物理引擎
+k.W.isOpenShadow = !k.W.isOpenShadow;  // 关闭阴影
+k.distanceDPZ[2].len = 35;  // 第四 DZP 级别的探测距离
+for (let i = 0; i < numCubes; i++) {
+    for (let j = 0; j < numCubes; j++) {
+        var index = i * numCubes + j;
+        k.addBox({
+            DPZ : 4,
+            isPhysical: true,
+            X: Math.floor(random[index] * 99 * areaSpace + 1 - 50 * areaSpace),
+            Y: Math.floor(random[index + 1] * 50),
+            Z: Math.floor(random[index + 2] * 99 * areaSpace + 1 - 50 * areaSpace),
+            mass: 0,
+            width: 20,
+            depth: 30,
+            height: Math.floor(random[index + 3] * 20 + 0.1),
+            background: `#${Math.floor(random[index + 4] * 16777216).toString(16).padStart(6, '0')}`,
+            mixValue: 1,
+            isShadow: false,
+            isVisualMode: false,
+            
+            texture: marble,
+     });
+    }
+}
+
+k.addBox({  // 创建地面
+    DPZ : 1,
+    colliGroup: 1,
+    tiling : 10,
+    // isShadow: 1,
+    name: 'groundPlane', X: 0, Y: -0.5, Z: 0,
+    mass: 0, width: 10000, depth: 10000, height: 2,
+    texture: marble, background: '#287A17', mixValue: 0.5,
+});
+
+k.addBox({  // 创建一个参考1米的使用的辅助图片。它会拉低渲染，所以要记得删去
+    DPZ : 1,
+    colliGroup: 1,
+    tiling : 10000,
+    isShadow: 1,
+    shape: 'plane',
+    isPhysical: false,
+    name: 'groundPlaneAux', X: 0, Y: 0.6, Z: 0, rX: -90,
+    mass: 0, width: 10000, depth: 0, height: 10000,
+    texture: marble, background: '#171f7a14', mixValue: 0.71,
+});
+
+
+
+k.mainVPlayer = k.addBox({  // 创建一个立方体，并设置为主角
+        name: 'mainPlayer', DPZ : 1,
+        colliGroup: 1,
+        isShadow: 1,
+        X:4.25, Y:1.00, Z:12.09,
+        rX: 0, rY: 0, rZ: 0, size:1, mixValue:0.7,
+        mass: 50, texture: marble
+    });
+
+// 绘制纹理
+const drawList = [
+    {func:drawRandomNoise, id:'xnoise'},
+    {func:drawjpflag, id:'jpflag'},
+    {func:drawText, id:'xjapangood'},
+];
+
+k.loadTexture(drawList).then(res => {
+    k.addBox({  // 创建一个立方体，测试我的纹理系统
+        DPZ : 1,
+        tiling : 6,
+        name: 'testTexture', X: 60, Y: 200, Z: -60,
+        mass: 100, size:20, texture: jpflag, mixValue: 0.1
+    });
+})
+
+// 日本国旗
+function drawjpflag(ctx, w, h) {
+    const radius = 150;
+    ctx.beginPath();
+    ctx.arc(w / 2, h / 2, radius, 0, Math.PI * 2);
+    ctx.fillStyle = 'red';
+    ctx.fill();
+    ctx.stroke();
+}
+
+
+// 随机噪音
+function drawRandomNoise(ctx, w, h) {
+    ctx.fillStyle = '#8B8B83'; ctx.fillRect(0, 0, w, h);
+    for(let i = 0; i < 50; i++) {
+        const x = Math.random()*w, y = Math.random()*h;
+        const s = Math.random()*30, c = `rgba(10,0,10,${Math.random()*0.3})`;
+        ctx.fillStyle = c; ctx.beginPath();
+        ctx.arc(x, y, s, 0, Math.PI*2); ctx.fill();
+    }
+}
+
+// 写字
+function drawText(ctx){
+    ctx.font = "30px Arial";          // 字体大小和类型
+    ctx.fillStyle = "red";            // 填充颜色
+    ctx.strokeStyle = "blue";         // 描边颜色
+    ctx.textAlign = "center";         // 水平对齐方式（left/center/right）
+    ctx.textBaseline = "middle";      // 垂直对齐方式（top/middle/bottom）
+    ctx.fillText("www.ccgxk.com", 150, 50);
+    ctx.fillText("不用扙姜", 150, 90);
+}
+
+// 一个能跑起来的计算角度的函数，凑合用吧
+function calculateNorthAngle(t,a,h){var t=-t*Math.PI/180,a=-a*Math.PI/180,h=h*Math.PI/180,M=Math.cos(t),
+    t=Math.sin(t),o=Math.cos(a),a=Math.sin(a),h=(Math.cos(h),Math.sin(h),a*M),a=-t,t=o*M,o=[0,0,1],M=t,
+    a=Math.sqrt(Math.pow(h,2)+Math.pow(a,2)+Math.pow(t,2));let n=Math.acos(Math.min(1,Math.max(-1,M/a)));
+    return n=(n=h*o[2]-t*o[0]<0?-n:n)>-Math.PI/2&&n<Math.PI/2?2*Math.PI-n:n}
+
+// 是否使用小范围地图 10 倍？？
+const isMapLittle = true;
+
+// 绘制小地图
+const mapUpdatax = setInterval(() => { drawRedDot(posMap); }, 100);
+function drawRedDot(t){var l=t.getContext("2d"),e=t.width/2,i=t.height/2,a=k.mainVPlayer.X/5e3*e,r=k.mainVPlayer.Z/5e3*i,
+    h=(l.clearRect(0,0,t.width,t.height),t.width/10);
+    
+    if(isMapLittle){
+        a=k.mainVPlayer.X/5e2*e,r=k.mainVPlayer.Z/5e2*i
+    }
+    
+    l.fillStyle="#fff",l.fillRect(0,0,t.width,t.height),l.fillStyle="#F5F7FF";
+    for(let e=0;e<10;e++)for(let t=0;t<10;t++)(e+t)%2==0&&l.fillRect(e*h,t*h,h,h);t=e+a,a=i+r,l.beginPath(),l.arc(e,i,2,0,2*Math.PI),
+    l.arc(t,a,1,0,2*Math.PI),l.fillStyle="red",l.fill(),l.strokeStyle="#9AFF4D",l.lineWidth=1,l.beginPath(),l.moveTo(t,a),
+    r=k.W.current.mainPlayer,e=calculateNorthAngle(r.rx,r.ry,r.rz);l.lineTo(t-100*Math.sin(e),a-100*Math.cos(e)),l.stroke()}
+
+
+window.k = k;
+window.list = list;
+
+
+// 前进
+xforward.addEventListener('mousedown', function(event) {
+    if(k.keys.viewForward === 1){
+        k.keys.viewForward = 0;
+    } else {
+        k.keys.viewForward = 1;
+    }
+});
+
+// 后退
+xbackward.addEventListener('mousedown', function(event) {
+    if(k.keys.viewBackward === 1){
+        k.keys.viewBackward = 0;
+    } else {
+        k.keys.viewBackward = 1;
+    }
+});
+
+
+// 左转
+xleft.addEventListener('mousedown', function(event) {
+    if(k.keys.turnLeft === 1){
+        k.keys.turnLeft = 0;
+    } else {
+        k.keys.turnLeft = 1;
+    }
+});
+
+
+// 右转
+xright.addEventListener('mousedown', function(event) {
+    if(k.keys.turnRight === 1){
+        k.keys.turnRight = 0;
+    } else {
+        k.keys.turnRight = 1;
+    }
+});
+
+
+// 蹦
+xjump.addEventListener('mousedown', function(event) {
+    k.mainVPlayer.body.velocity.y = 10;
+});
+
+// 开关阴影
+xShadow.addEventListener('mousedown', function(event) {
+    k.W.isOpenShadow = !k.W.isOpenShadow
+});
+
+k.viewType = 0;  // 0 是第三视角，1 是第一视角
+// 第一视角
+xVIEW1.addEventListener('mousedown', function(event) {
+    k.mainCamera.pos = {x:0, y:1, z:0}
+    k.viewType = 1;
+});
+
+// 第三视角
+xVIEW2.addEventListener('mousedown', function(event) {
+    k.mainCamera.pos = {x: 0, y: 2, z: 4}
+    k.viewType = 0;
+});
+
+// 切换 dynaNodes 状态
+xStopDY.addEventListener('mousedown', function(event) {
+    k.stopDynaNodes = !k.stopDynaNodes;
+});
+
+document.addEventListener('keydown', function(event) {
+    // 检查按下的是否是数字键1
+    if (event.key === '1' || event.key === '2' || event.key === '3' || event.key === '4') {
+        if(k.viewType){
+            k.mainCamera.pos = {x: 0, y: 2, z: 4}
+            k.viewType = 0;
+        } else {
+            k.mainCamera.pos = {x:0, y:1, z:0}
+            k.viewType = 1;
+        }
+    }
+});
+
+</script>
+
+

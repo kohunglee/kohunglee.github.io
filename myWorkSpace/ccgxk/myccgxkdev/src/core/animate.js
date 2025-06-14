@@ -60,6 +60,7 @@ export default {
             var fps = this.fpsFrameCount / (deltaTime / 1000);
             this.fpsFrameCount = 0;
             this.lastTime = currentTime;
+            console.log(this.cannonBodyPool.length);  // 一秒显示一下 cannon 对象池长度
             this._showMemory();  // 一秒显示一次内存
             this.displayPOS();  // 一秒显示一次显示主角坐标
             var dynaNodesCon = this.dynaNodes();  // 一秒显示一次主角位置编码

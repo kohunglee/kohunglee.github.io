@@ -24,7 +24,8 @@ export default {
                 shape = 'cube',  // 默认形状
                 mass = 0, width = 1, depth = 1, height = 1, size = 1,
                 texture = null, smooth = 0,
-                background = '#888', mixValue = 0.71, rX = 0, rY = 0, rZ = 0
+                background = '#888', mixValue = 0.71, rX = 0, rY = 0, rZ = 0,
+                cannonBody = null,  // cannon 的 body，避免频繁 new body() 造成卡顿【测试中】
             } = {}){
         var myargs = Array.from(arguments);  // 备份参数
         var posID = this.calPosID(X, Y, Z, DPZ);
@@ -37,7 +38,6 @@ export default {
         }
         var body = null;
         if(isPhysical){  // 是否创建物理计算体
-            
             var boxShape;
             switch (shape) {
                 case 'sphere':
@@ -48,19 +48,33 @@ export default {
                     boxShape = new CANNON.Box(boxSize);
                     break;
             }
-            body = new CANNON.Body({
-                mass : mass,
-                shape: boxShape,
-                position: new CANNON.Vec3(X, Y, Z),
-                // 注意，这边没有将旋转考虑进去。。要旋转。
-                material: this.cannonDefaultCantactMaterial,
-            });
+
+            body = this.acquireBody();  // 从对象池里取对象
+            body.mass = mass;
+            body.type = mass === 0 ? CANNON.Body.STATIC : CANNON.Body.DYNAMIC;
+            body.shapes = [];
+            body.addShape(boxShape);
+            body.position.set(X, Y, Z);
+            body.material = this.cannonDefaultContactMaterial;
+            body.updateMassProperties();
+            body.wakeUp();
+
+            
+
+            // body = new CANNON.Body({
+            //     mass : mass,
+            //     shape: boxShape,
+            //     position: new CANNON.Vec3(X, Y, Z),
+            //     material: this.cannonDefaultCantactMaterial,
+            // });
+
             body.collisionFilterGroup = colliGroup;  // 这 6 行，为物理体分配碰撞组。只有玩家和地面与石头碰撞，石头间不会（小物件除外）
             const collisionFilterMaskMap = {
                 1: this.stoneGroupNum | this.allGroupNum,
                 2: this.allGroupNum,
             };
-            body.collisionFilterMask = collisionFilterMaskMap[colliGroup];
+            body.collisionFilterMask = collisionFilterMaskMap[colliGroup];  // 碰撞组
+        
             this.world.addBody(body);
             if(quat){
                 body.quaternion.set(quat.x, quat.y, quat.z, quat.w);
@@ -93,4 +107,28 @@ export default {
         // this.ccgxkhooks.emitSync('addObj_ok');  // 钩子使用示例
         return result;
     },
+
+    // 初始化 cannon body 对象池
+    cannonBodyPool : [],  // cannon body 对象池
+    createCannonBodyPool : function(size){
+        for (let i = 0; i < size; i++) {
+            const body = new CANNON.Body({ mass: 0 });
+            this.cannonBodyPool.push(body);
+        }
+    },
+
+    // 从对象池里取一个 cannon body 对象
+    acquireBody : function() {
+        if(this.cannonBodyPool && this.cannonBodyPool.length > 0){
+            return this.cannonBodyPool.pop();
+        } else {
+            console.log('对象池已满，请扩容！');
+            return null;
+        }
+    },
+
+    // 回收 cannon body 对象
+    releaseBody : function(body) {
+        this.cannonBodyPool.push(body);
+    }
 }
