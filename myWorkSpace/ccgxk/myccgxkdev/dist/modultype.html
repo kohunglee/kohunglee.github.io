@@ -62,7 +62,7 @@ var list = k.bodylist;
 
 // 定义单个立方体对象的多个实例
 const cubeInstances = [];
-const numCubes = 50;
+const numCubes = 100;
 const spacing = 2.5;
 const areaSpace = 10**1;
 const random = k.genPR(123, numCubes * numCubes * 5);  // 伪随机数
@@ -162,6 +162,26 @@ for(var i = 0; i < modeValue; i++){
     });
 }
 
+
+// 随机生成 n 个球
+// isOpenShadow = !isOpenShadow;
+var yVlaue = 15;
+var modeValue = 100;
+const random003 = k.genPR(221, modeValue * 3);  // 伪随机数
+for(var i = 0; i < modeValue; i++){
+    k.addBox({
+        DPZ : 2,
+        colliGroup: 1,
+        isPhysical: true,
+        shape : 'sphere',
+        size:Math.floor( random003[i] * 5),
+        X: Math.floor( random003[i] * 90), Y: yVlaue, Z: Math.floor( random003[i+1] * 90),
+        mass: 10, 
+        background: `#${Math.floor(random003[i+4] * 16777216).toString(16).padStart(6, '0')}`, mixValue: 0.71,
+        texture: marble,
+    });
+}
+
 k.mainVPlayer = k.addBox({  // 创建一个立方体，并设置为主角
         name: 'mainPlayer', DPZ : 1,
         colliGroup: 1,
@@ -175,7 +195,7 @@ k.mainVPlayer = k.addBox({  // 创建一个立方体，并设置为主角
 k.addBox({
         DPZ : 1,
         colliGroup: 1,
-        smooth:1,
+        // smooth:1,
         isPhysical: true,
         X: 14.4, Y: 5, Z: 3.4,
         mass: 10, width: 2, depth: 2, height: 2,
@@ -187,7 +207,7 @@ k.addBox({
 k.addBox({
         DPZ : 1,
         colliGroup: 1,
-        smooth:1,
+        // smooth:1,
         isPhysical: true,
         X: 27.4, Y: 5, Z: -3.4,
         mass: 0, size:9,
@@ -283,7 +303,7 @@ function drawText(ctx){
     ctx.strokeStyle = "blue";         // 描边颜色
     ctx.textAlign = "center";         // 水平对齐方式（left/center/right）
     ctx.textBaseline = "middle";      // 垂直对齐方式（top/middle/bottom）
-    ctx.fillText("日本狗香", 150, 50);
+    ctx.fillText("www.ccgxk.com", 150, 50);
     ctx.fillText("不用扙姜", 150, 90);
 }
 

@@ -10,6 +10,7 @@ export default function(ccgxkObj) {
     W.lightpos = {  // 灯的初始位置
         rx: 0, ry: -125, rz:-45,
     }
+    W.isShodowOne = true;
     W.wjsHooks.on('reset_ok', function(W){  // 在'初始化'处装载
         initDepthMapProgram(W);
     });
@@ -80,6 +81,7 @@ const initDepthMapProgram = (W) => {
   W.shadowUniformLoc = {
     u_MvpMatrixFromLight: W.gl.getUniformLocation(W.program, 'u_MvpMatrixFromLight'), // 阴影相关
     u_ShadowMap: W.gl.getUniformLocation(W.program, 'u_ShadowMap'), // 阴影相关
+    u_ShadowMapTexelSize: W.gl.getUniformLocation(W.program, 'u_ShadowMapTexelSize'),  // 单个像素的尺寸
   }
   shadowFBO = initFramebufferObject(gl, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);  // 深度图的秘密暗房 FBO
 }
@@ -87,6 +89,11 @@ const initDepthMapProgram = (W) => {
 
 // 绘制深度图
 const drawShadow = (W) => {
+//   if(W.isShodowOne === false){
+//     return;
+//   } else{
+//     W.isShodowOne = false;
+//   }
   W.debugShadow = false;
   if(W.debugShadow === false){
     W.gl.bindFramebuffer(W.gl.FRAMEBUFFER, shadowFBO);  // 进入暗房
@@ -138,11 +145,18 @@ const drawShadow = (W) => {
     W.gl.bindTexture(W.gl.TEXTURE_2D, shadowFBO.texture); // 把“深度照片”放到“货架”上
     W.gl.uniform1i(  // 传值 u_ShadowMap
       W.shadowUniformLoc.u_ShadowMap,
-      SHADOW_MAP_TEXTURE_UNIT);
-    W.gl.uniformMatrix4fv(  // 传值 u_MvpMatrixFromLight
+      SHADOW_MAP_TEXTURE_UNIT
+    );
+    W.gl.uniformMatrix4fv(  // 传值 u_MvpMatrixFromLight，告诉主画家，魔镜是怎么拍的
       W.shadowUniformLoc.u_MvpMatrixFromLight,
       false,
-      W.lightViewProjMatrix.toFloat32Array()); // 告诉主画家，魔镜是怎么拍的
+      W.lightViewProjMatrix.toFloat32Array()
+    );
+    W.gl.uniform2f( // 传递 texel size
+      W.shadowUniformLoc.u_ShadowMapTexelSize,
+      1.0 / OFFSCREEN_WIDTH,
+      1.0 / OFFSCREEN_HEIGHT
+    );
   }
 }
 
@@ -240,17 +254,41 @@ const RENDER_FSHADER_SOURCE_300ES = `#version 300 es
             vec3 shadowCoord = (v_PositionFromLight.xyz    // 创建阴影映射
                                 / v_PositionFromLight.w)
                                 / 2.0 + 0.5;
-            
+
+            float shadowFactor = 0.0; // 累计阴影贡献值
+            const float bias = 0.00015; // 相同的偏移值
+
             float shadowVisibility = 1.0;  // 非阴影部分亮度
+
+            // for (int x = -4; x <= 4; x++) {
+            //     for (int y = -4; y <= 4; y++) {
+            //         vec2 offset = vec2(float(x), float(y)) * u_ShadowMapTexelSize;
+            //         vec4 rgbaDepth = texture(u_ShadowMap, shadowCoord.xy + offset);
+            //         float depth = decodeFloat(rgbaDepth);
+            //         if (shadowCoord.z > depth + bias) {
+            //             shadowFactor += 0.8; // 如果被遮挡，则降低亮度（0.8表示80%亮度，即20%阴影）
+            //         } else {
+            //             shadowFactor += 1.0; // 未被遮挡，完全亮度
+            //         }
+            //     }
+            // }
+
+            // // 取平均值
+            // shadowFactor /= 81.0; // 3x3 采样一共9个点
+            // shadowVisibility = shadowFactor;
+            
+            
             vec4 rgbaDepth = texture(u_ShadowMap, shadowCoord.xy);  // 解析深度
             
 
             if(shadowCoord.z > 1.0 || shadowCoord.x < 0.0 || shadowCoord.x > 1.0 || shadowCoord.y < 0.0 || shadowCoord.y > 1.0) {
               shadowVisibility = 1.0;  // 阴影在区域外，则不显示阴影
-            } else {  // 计算有没有被遮挡
-              const vec4 bitShift = vec4(1.0, 1.0/256.0, 1.0/(256.0*256.0), 1.0/(256.0*256.0*256.0));
+            } 
+            else {  // 计算有没有被遮挡
+              const vec4 bitShift = vec4(1.0, 1.0/255.0, 1.0/(255.0*255.0),
+                                    1.0/(255.0*255.0*255.0));
               float depth = dot(rgbaDepth, bitShift);
-              if (shadowCoord.z > depth + 0.00015) {
+              if (shadowCoord.z > depth + bias) {
                   shadowVisibility = 0.8;
               }
             }
