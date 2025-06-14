@@ -25,7 +25,7 @@ export default {
         this.world.broadphase = new CANNON.SAPBroadphase(this.world); // 宽相检测算法
         this.world.solver.iterations = 10; // 物理迭代
         this.world.addContactMaterial(this.cannonDefaultCantactMaterial);  // 默认材质关联
-        this.createCannonBodyPool(200_00);  // 创建 cannon body 对象池，以优化性能
+        this.createCannonBodyPool(2000);  // 创建 cannon body 对象池，以优化性能
         this.eventListener();  // 事件监听
         this.animate(); // 动画
         shiftInfo.textContent = '速度:' + 0 + ' | ' // 【测试，临时】

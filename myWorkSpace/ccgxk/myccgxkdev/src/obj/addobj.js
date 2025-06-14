@@ -49,24 +49,25 @@ export default {
                     break;
             }
 
-            body = this.acquireBody();  // 从对象池里取对象
-            body.mass = mass;
-            body.type = mass === 0 ? CANNON.Body.STATIC : CANNON.Body.DYNAMIC;
-            body.shapes = [];
-            body.addShape(boxShape);
-            body.position.set(X, Y, Z);
-            body.material = this.cannonDefaultContactMaterial;
-            body.updateMassProperties();
-            body.wakeUp();
+            // 对象池，暂时不用
+            // body = this.acquireBody();  // 从对象池里取对象
+            // body.mass = mass;
+            // body.type = mass === 0 ? CANNON.Body.STATIC : CANNON.Body.DYNAMIC;
+            // body.shapes = [];
+            // body.addShape(boxShape);
+            // body.position.set(X, Y, Z);
+            // body.material = this.cannonDefaultContactMaterial;
+            // body.updateMassProperties();
+            // body.wakeUp();
 
             
 
-            // body = new CANNON.Body({
-            //     mass : mass,
-            //     shape: boxShape,
-            //     position: new CANNON.Vec3(X, Y, Z),
-            //     material: this.cannonDefaultCantactMaterial,
-            // });
+            body = new CANNON.Body({
+                mass : mass,
+                shape: boxShape,
+                position: new CANNON.Vec3(X, Y, Z),
+                material: this.cannonDefaultCantactMaterial,
+            });
 
             body.collisionFilterGroup = colliGroup;  // 这 6 行，为物理体分配碰撞组。只有玩家和地面与石头碰撞，石头间不会（小物件除外）
             const collisionFilterMaskMap = {
@@ -108,7 +109,7 @@ export default {
         return result;
     },
 
-    // 初始化 cannon body 对象池
+    // 初始化 cannon body 对象池【暂时不用】
     cannonBodyPool : [],  // cannon body 对象池
     createCannonBodyPool : function(size){
         for (let i = 0; i < size; i++) {
@@ -129,6 +130,7 @@ export default {
 
     // 回收 cannon body 对象
     releaseBody : function(body) {
+        // console.log('回收');
         this.cannonBodyPool.push(body);
     }
 }

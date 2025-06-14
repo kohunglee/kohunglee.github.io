@@ -16,9 +16,11 @@ export default {
         for (let index = 0; index < bodyArrlist.length; index++) {
             let indexItem = bodyArrlist[index];
             if(indexItem.name === name){
+                // console.log('物理状态' + isPhysical);
                 if(isPhysical){
+                    // console.log('要删除了');
                     this.world.removeBody(indexItem.body);  // 删除物理计算体
-                    this.releaseBody(indexItem.body);  // 对象池，回收该对象
+                    // this.releaseBody(indexItem.body);  // 对象池，回收该对象【暂时不用】
                 }
                 this.W.delete(name);  // 删除可视化物体
                 this.hiddenBodylist.push({  // 将删除的物体放入隐藏列表
@@ -99,7 +101,7 @@ export default {
         };
         removeIllegalBodies(this.bodylist, true);  // 检测增删 普通模型
         removeIllegalBodies(this.bodylistNotPys);  // .. 纯模型
-        removeIllegalBodies(this.bodylistMass0); // .. 无质量物体
+        removeIllegalBodies(this.bodylistMass0, true); // .. 无质量物体
         for (let i = 0; i < this.hiddenBodylist.length; i++) {  // 恢复已经合法的隐藏物体
             let indexItem = this.hiddenBodylist[i];
             if(this.legalPosID.includes(indexItem.posID)){
