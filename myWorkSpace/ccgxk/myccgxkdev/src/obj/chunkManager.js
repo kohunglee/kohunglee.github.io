@@ -16,9 +16,7 @@ export default {
         for (let index = 0; index < bodyArrlist.length; index++) {
             let indexItem = bodyArrlist[index];
             if(indexItem.name === name){
-                // console.log('物理状态' + isPhysical);
                 if(isPhysical){
-                    // console.log('要删除了');
                     this.world.removeBody(indexItem.body);  // 删除物理计算体
                     // this.releaseBody(indexItem.body);  // 对象池，回收该对象【暂时不用】
                 }
@@ -30,7 +28,6 @@ export default {
                     Y : indexItem.Y,
                     Z : indexItem.Z,
                     myargs : indexItem.myargs,
-                    // body : indexItem.body,
                 });
                 bodyArrlist.splice(index, 1);  // 删除物体列表中的物体
                 break;
@@ -91,7 +88,7 @@ export default {
                 }
             });
         });
-        const removeIllegalBodies = (bodyArrList, isphysical = false) => {
+        const removeIllegalBodies = (bodyArrList, isphysical = false) => {  // 删除函数，根据编码库，删除对应列表中的对象
             for (let i = bodyArrList.length - 1; i >= 0; i--) {  // 从后向前遍历，避免splice影响索引
                 let indexItem = bodyArrList[i];
                 if (!this.legalPosID.includes(indexItem.posID) && indexItem.DPZ !== 1) {
