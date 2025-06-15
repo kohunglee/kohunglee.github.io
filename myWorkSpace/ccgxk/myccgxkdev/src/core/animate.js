@@ -90,7 +90,6 @@ export default {
             _this.showFPS1S(); // 显示 FPS 和 一秒一次 的函数
             _this.cannonAni(); // 物理世界计算
             _this.updataBodylist(); // 更新物体列表
-            var dynaNodesCon = _this.dynaNodes();  // 一秒显示一次主角位置编码
             _this.mainVPlayerMove(_this.mainVPlayer); // 摄像机和主角的移动和旋转
             requestAnimationFrame(viewAnimate);
         }
