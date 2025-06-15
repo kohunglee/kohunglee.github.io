@@ -123,24 +123,23 @@ var numCubes = 100;
 // 尝试调试物理引擎
 k.W.isOpenShadow = !k.W.isOpenShadow;  // 关闭阴影
 k.distanceDPZ[2].len = 35;  // 第四 DZP 级别的探测距离
-numCubes = 20;
+numCubes = 9;
 for (let i = 0; i < numCubes; i++) {
     for (let j = 0; j < numCubes; j++) {
         var index = i * numCubes + j;
         k.addTABox({
             DPZ : 3,
             isPhysical: true,
-            X: i * 10,
+            X: i * 3,
             Y: 1,
-            Z: j * 10,
+            Z: j * 3,
             mass: 0,
-            width: 2,
-            depth: 3,
+            width: 0.5,
+            depth: 0.5,
             height: 5,
             background: '#faa',
             mixValue: 1,
             isShadow: false,
-            // isVisualMode: false,
             texture: marble,
      });
     }

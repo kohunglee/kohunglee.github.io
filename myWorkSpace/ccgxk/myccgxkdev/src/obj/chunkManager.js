@@ -151,23 +151,14 @@ export default {
                 const p_offset = index * 8;
                 this.positionsStatus[p_offset + 7] = 1;
                 this.activeTABox(index);
-                console.log('要激活的：' + index);
             }
         }
         for(const index of indicesToHide){  // 执行隐藏动作
             const p_offset = index * 8;
             this.positionsStatus[p_offset + 7] = 0;
             this.hiddenTABox(index);
-            console.log('要隐藏的：' + index);
         }
         this.currentlyActiveIndices = newActiveIndices;
     },
-
-    // // 测试一下
-    // testAction : function(){
-    //     for (const index of this.currentlyActiveIndices) {  // 激活物理体
-
-    //     }
-    // },
 
 }

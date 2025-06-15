@@ -124,7 +124,6 @@ const W = {
         W.light({y: -1});
         W.camera({fov: 30});
         setTimeout(W.draw, 16);  // 开始绘制
-        
   },
 
   // 设置对象的状态

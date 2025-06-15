@@ -12,17 +12,15 @@ export default {
 
     // 初始化类型化数组（储存物体信息使用，TA = typeArray）
     positionsStatusTA : null,  //位置和状态
-    identitiesTA : null,       // 身份和外观
+    bodyProp : null,           // 属性
     physicsPropsTA : null,     // 物理属性
     freeSlots : null,          // 空位表
-    nameToIndexMap : null,     // name -> index 对应表
+    indexToArgs : new Map(),   // index -> args 对应表
     spatialGrid : new Map(),   // 区块  -> index 对应表
     initBodyTypeArray : function(MAX_BODIES = 1_000_000){  // 根据最多物体数量，初始化
         this.positionsStatus = new Float32Array(MAX_BODIES * 8);  // [x, y, z, qx, qy, qz, qw, status]
-        this.identities = new Uint32Array(MAX_BODIES * 4);  // [shapeID, textureID, color, DPZ_and_colliGroup]
         this.physicsProps = new Float32Array(MAX_BODIES * 4);  // [mass, width, height, depth]
         this.freeSlots = new Array(MAX_BODIES).fill(0).map((_, i) => MAX_BODIES - 1 - i); // 一个从大到小排列的空闲索引栈，如 [5,4,3,2,1]
-        this.nameToIndexMap = new Map(); // name -> index 的快速查找表
     },
 
     // 最起初的添加物体，TA 物体
@@ -33,70 +31,76 @@ export default {
                 quat = {x: 0, y: 0, z: 0, w: 1},
                 mass = 0, width = 1, depth = 1, height = 1, size = 1,
             }){
+        var myargs = Array.from(arguments);  // 提取参数
         if(size !== 1){  // 处理体积大小
             width =  depth =  height = size;
         }
-        if(isPhysical){  // 如果创建物理体，则将关键参数装载到 typeArray 中
-            if (this.freeSlots.length === 0) return;  // 没有空位就退，否则占个位子
-            const index = this.freeSlots.pop();
-            this.nameToIndexMap.set(name, index);
-            const p_offset = index * 8;  //+8 向 TA 传数据的起点，并传入数据
-            this.positionsStatus[p_offset] = X;  //+ 这些数据要经常遍历，所以是精选的几个
-            this.positionsStatus[p_offset + 1] = Y;
-            this.positionsStatus[p_offset + 2] = Z;
-            this.positionsStatus[p_offset + 3] = quat.x;
-            this.positionsStatus[p_offset + 4] = quat.y;
-            this.positionsStatus[p_offset + 5] = quat.z;
-            this.positionsStatus[p_offset + 6] = quat.w;
-            this.positionsStatus[p_offset + 7] = 1;  // 状态位（0=隐藏, 1=激活）
-            this.physicsProps[p_offset] = mass;  //+ 这些不需要经常遍历
-            this.physicsProps[p_offset + 1] = width;
-            this.physicsProps[p_offset + 2] = height;
-            this.physicsProps[p_offset + 3] = depth;
-            const gridKey = `${Math.floor(X / 10)}_${Math.floor(Z / 10)}`;  // 计算区块 key
-            let indicesInCell = this.spatialGrid.get(gridKey);
-            if (!indicesInCell) {
-                indicesInCell = []; 
-            }
-            indicesInCell.push(index);
-            this.spatialGrid.set(gridKey, indicesInCell); // 把新数组放回地图
-        }
-
+        if (this.freeSlots.length === 0) {console.error('BodyTypeArray 容量已达上限，需要扩容！'); return false;};  // 没有空位就退，否则占个位子
+        const index = this.freeSlots.pop();
+        const p_offset = index * 8;  //+8 向 TA 传数据的起点，并传入数据
+        this.positionsStatus[p_offset] = X;  //+ 这些数据要经常遍历，所以是精选的几个
+        this.positionsStatus[p_offset + 1] = Y;
+        this.positionsStatus[p_offset + 2] = Z;
+        this.positionsStatus[p_offset + 3] = quat.x;
+        this.positionsStatus[p_offset + 4] = quat.y;
+        this.positionsStatus[p_offset + 5] = quat.z;
+        this.positionsStatus[p_offset + 6] = quat.w;
+        this.positionsStatus[p_offset + 7] = 1;  // 状态位（0=隐藏, 1=激活）
+        this.physicsProps[p_offset] = mass;  //+ 这些不需要经常遍历
+        this.physicsProps[p_offset + 1] = width;
+        this.physicsProps[p_offset + 2] = height;
+        this.physicsProps[p_offset + 3] = depth;
+        const gridKey = `${Math.floor(X / 10)}_${Math.floor(Z / 10)}`;  //+5 计算区块 key，并填进数组，再填入表
+        let indicesInCell = this.spatialGrid.get(gridKey);
+        if (!indicesInCell) { indicesInCell = [] }
+        indicesInCell.push(index);
+        this.spatialGrid.set(gridKey, indicesInCell);
+        this.indexToArgs.set(index, myargs);  // index -> args
     },
 
     // 激活 TA 物体
     activeTABox : function(index){
         const p_offset = index * 8;
-        const posPara = this.positionsStatus.subarray(p_offset, p_offset + 7);  // 提取位置属性
-
-        if(false){  // 添加物理体
-            body = this.acquireBody();  // 从对象池里取对象
-            body.mass = mass;
-            body.type = mass === 0 ? CANNON.Body.STATIC : CANNON.Body.DYNAMIC;
-            body.shapes = [];
+        const posProp = this.positionsStatus.subarray(p_offset, p_offset + 8);  // 提取位置属性
+        const physicalProp = this.physicsProps.subarray(p_offset, p_offset + 4);     // 提取物理属性
+        if(true){  // 添加物理体
+            const body = this.acquireBody();  // 从对象池里取对象
+            body.mass = physicalProp[0];  // mass
+            body.type = physicalProp[0] === 0 ? CANNON.Body.STATIC : CANNON.Body.DYNAMIC;
+            const boxShape = new CANNON.Box(new CANNON.Vec3(
+                physicalProp[1]/2,  // w
+                physicalProp[2]/2,  // h
+                physicalProp[3]/2   // d
+            ));
             body.addShape(boxShape);
-            body.position.set(X, Y, Z);
+            body.position.set(
+                posProp[0],  // x
+                posProp[1],  // y
+                posProp[2],  // z
+            );
             body.material = this.cannonDefaultContactMaterial;
             body.updateMassProperties();
             body.wakeUp();
-            body.collisionFilterGroup = colliGroup;  // 这 6 行，为物理体分配碰撞组。只有玩家和地面与石头碰撞，石头间不会（小物件除外）
+            body.collisionFilterGroup = 2;  // 这 6 行，为物理体分配碰撞组。只有玩家和地面与石头碰撞，石头间不会（小物件除外）
             const collisionFilterMaskMap = {
                 1: this.stoneGroupNum | this.allGroupNum,
                 2: this.allGroupNum,
             };
-            body.collisionFilterMask = collisionFilterMaskMap[colliGroup];  // 碰撞组
-        
+            body.collisionFilterMask = collisionFilterMaskMap[2];  // 碰撞组
             this.world.addBody(body);
-            if(quat){
-                body.quaternion.set(quat.x, quat.y, quat.z, quat.w);
-            }
-            quat = body.quaternion;
+            body.quaternion.set(
+                posProp[3], // quat.x,
+                posProp[4], // quat.y,
+                posProp[5], // quat.z,
+                posProp[6], // quat.w
+            );
+            this.indexToArgs.get(index).cannonBody = body;
         }
         if(true){  // 添加渲染体
             this.W.cube({
                 n: 'lab' + index,
-                w: 2, d: 3, h: 0.1,
-                x: posPara[0], y:posPara[1], z:posPara[2],
+                w: physicalProp[1], d: physicalProp[3], h: physicalProp[2],
+                x: posProp[0], y:posProp[1], z:posProp[2],
                 t: marble, s: 0, tile: 1,
                 rx: 0, ry: 0, rz: 0, b: '#faa', mix: 0.9,
             });
@@ -106,6 +110,9 @@ export default {
 
     // 隐藏 TA 物体
     hiddenTABox : function(index){
+        var cannonBody = this.indexToArgs.get(index).cannonBody;
+        this.world.removeBody(cannonBody);
+        this.releaseBody(cannonBody);  // 对象池，回收该对象
         this.W.delete('lab' + index);
     },
 

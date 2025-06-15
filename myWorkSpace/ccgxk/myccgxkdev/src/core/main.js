@@ -25,7 +25,7 @@ export default {
         this.world.solver.iterations = 10; // 物理迭代
         this.world.addContactMaterial(this.cannonDefaultCantactMaterial);  // 默认材质关联
         this.createCannonBodyPool(3000);  // 创建 cannon body 对象池，以优化性能
-        this.initBodyTypeArray(1_000);  // 初始化一个物体信息库
+        this.initBodyTypeArray(1_000_000);  // 初始化一个物体信息库
         this.eventListener();  // 事件监听
         this.animate(); // 动画
         shiftInfo.textContent = '速度:' + 0 + ' | ' // 【测试，临时】
