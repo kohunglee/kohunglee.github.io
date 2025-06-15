@@ -70,6 +70,7 @@ export default {
                                         ' - ❀' + this.bodylistNotPys.length +
                                         ' - 口' + this.bodylistMass0.length +
                                         ' - ⚠️' +this.hiddenBodylist.length +
+                                        ' - TA' +this.currentlyActiveIndices.size +
                                                         ' |');  // 一秒显示一次模型数
             this.dynaNodes_lab();  // 一秒计算区块一次
         }

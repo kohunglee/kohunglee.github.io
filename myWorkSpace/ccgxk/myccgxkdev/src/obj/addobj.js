@@ -25,13 +25,11 @@ export default {
 
     // 最起初的添加物体，TA 物体
     addTABox : function({
-                isPhysical = true,  // 是否被物理计算
-                name = 'k'+ this.bodyObjName++,  // 如果没指认，则使用随机数生成 ID
                 X = 5, Y = 5, Z = 5,
                 quat = {x: 0, y: 0, z: 0, w: 1},
                 mass = 0, width = 1, depth = 1, height = 1, size = 1,
-            }){
-        var myargs = Array.from(arguments);  // 提取参数
+            } = {}){
+        const myargs = Array.from(arguments)[0];  // 提取参数
         if(size !== 1){  // 处理体积大小
             width =  depth =  height = size;
         }
@@ -50,7 +48,7 @@ export default {
         this.physicsProps[p_offset + 1] = width;
         this.physicsProps[p_offset + 2] = height;
         this.physicsProps[p_offset + 3] = depth;
-        const gridKey = `${Math.floor(X / 10)}_${Math.floor(Z / 10)}`;  //+5 计算区块 key，并填进数组，再填入表
+        const gridKey = `${Math.floor(X / this.gridsize)}_${Math.floor(Z / this.gridsize)}`;  //+5 计算区块 key，并填进数组，再填入表
         let indicesInCell = this.spatialGrid.get(gridKey);
         if (!indicesInCell) { indicesInCell = [] }
         indicesInCell.push(index);
@@ -58,20 +56,51 @@ export default {
         this.indexToArgs.set(index, myargs);  // index -> args
     },
 
+    // Box 的默认参数
+    defaultBoxArgs : {
+        isPhysical: true,     // 是否物理化
+        isVisualMode: true,   // 是否渲染
+        DPZ: 2,               // 显示优先级
+        colliGroup: 2,        // 碰撞组
+        texture: null,
+        smooth: 0,
+        background: '#888',
+        mixValue: 0.71,
+        rX: 0,
+        rY: 0,
+        rZ: 0,
+        isShadow: 0,
+        tiling: [1, 1],
+        shape: 'cube'
+    },
+
     // 激活 TA 物体
     activeTABox : function(index){
         const p_offset = index * 8;
-        const posProp = this.positionsStatus.subarray(p_offset, p_offset + 8);  // 提取位置属性
-        const physicalProp = this.physicsProps.subarray(p_offset, p_offset + 4);     // 提取物理属性
-        if(true){  // 添加物理体
-            const body = this.acquireBody();  // 从对象池里取对象
+        const posProp = this.positionsStatus.subarray(p_offset, p_offset + 8);    // 提取位置属性
+        const physicalProp = this.physicsProps.subarray(p_offset, p_offset + 4);  // 提取物理属性
+        const org_args = this.indexToArgs.get(index);  // 提取参数
+        const args = {...this.defaultBoxArgs, ...org_args};  // 为节省内存，固不破坏源对象，使用新对象
+        if(args.isPhysical){  // 添加物理体
+
+            // const body = this.acquireBody();  // 从对象池里取对象
+            const body = new CANNON.Body({ mass: 0 });  // 新 new 一个对象
             body.mass = physicalProp[0];  // mass
             body.type = physicalProp[0] === 0 ? CANNON.Body.STATIC : CANNON.Body.DYNAMIC;
-            const boxShape = new CANNON.Box(new CANNON.Vec3(
-                physicalProp[1]/2,  // w
-                physicalProp[2]/2,  // h
-                physicalProp[3]/2   // d
-            ));
+            var boxShape;
+            switch (args.shape) {
+                case 'sphere':
+                    boxShape =  new CANNON.Sphere(physicalProp[1]/2); // 圆的直径以 width 参数值为准
+                    break;
+                default:
+                    const boxSize = new CANNON.Vec3(
+                        physicalProp[1]/2,  // w
+                        physicalProp[2]/2,  // h
+                        physicalProp[3]/2   // d
+                    );
+                    boxShape = new CANNON.Box(boxSize);
+                    break;
+            }
             body.addShape(boxShape);
             body.position.set(
                 posProp[0],  // x
@@ -81,12 +110,12 @@ export default {
             body.material = this.cannonDefaultContactMaterial;
             body.updateMassProperties();
             body.wakeUp();
-            body.collisionFilterGroup = 2;  // 这 6 行，为物理体分配碰撞组。只有玩家和地面与石头碰撞，石头间不会（小物件除外）
+            body.collisionFilterGroup = args.colliGroup;  // 这 6 行，为物理体分配碰撞组。只有玩家和地面与石头碰撞，石头间不会（小物件除外）
             const collisionFilterMaskMap = {
                 1: this.stoneGroupNum | this.allGroupNum,
                 2: this.allGroupNum,
             };
-            body.collisionFilterMask = collisionFilterMaskMap[2];  // 碰撞组
+            body.collisionFilterMask = collisionFilterMaskMap[args.colliGroup];  // 碰撞组
             this.world.addBody(body);
             body.quaternion.set(
                 posProp[3], // quat.x,
@@ -94,15 +123,18 @@ export default {
                 posProp[5], // quat.z,
                 posProp[6], // quat.w
             );
-            this.indexToArgs.get(index).cannonBody = body;
+            org_args.cannonBody = body;  // 注意，是 org_args
         }
-        if(true){  // 添加渲染体
+        if(args.isVisualMode !== false){  // 添加渲染体
+            var tiling = args.tiling;
+            if(typeof tiling === 'number'){ tiling = [tiling, tiling] }  // 处理平铺数
             this.W.cube({
-                n: 'lab' + index,
+                n: 'T' + index,
                 w: physicalProp[1], d: physicalProp[3], h: physicalProp[2],
                 x: posProp[0], y:posProp[1], z:posProp[2],
-                t: marble, s: 0, tile: 1,
-                rx: 0, ry: 0, rz: 0, b: '#faa', mix: 0.9,
+                t: args.texture, s: args.smooth, tile: tiling,
+                rx: args.rX, ry: args.rY, rz: args.rZ, b: args.background, mix: args.mixValue,
+                shadow: args.isShadow,
             });
         }
         
@@ -112,7 +144,7 @@ export default {
     hiddenTABox : function(index){
         var cannonBody = this.indexToArgs.get(index).cannonBody;
         this.world.removeBody(cannonBody);
-        this.releaseBody(cannonBody);  // 对象池，回收该对象
+        // this.releaseBody(cannonBody);  // 对象池，回收该对象
         this.W.delete('lab' + index);
     },
 
@@ -121,6 +153,7 @@ export default {
                 DPZ = 2,  // 显示优先级
                 isPhysical = true,  // 是否被物理计算
                 isVisualMode = true,  // 是否渲染
+                kk = 0,
                 colliGroup = 2,  // 碰撞组，全能为 1， 静止石头为 2
                 name = 'k'+ this.bodyObjName++,  // 如果没指认，则使用随机数生成 ID
                 X = 5, Y = 5, Z = 5,

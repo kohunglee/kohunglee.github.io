@@ -121,12 +121,13 @@ export default {
 
     // -------------------------【 实验 】-----------------------------
     // 新的 dynaNodes
+    gridsize : 20,  // 单个区块大小
     currentlyActiveIndices : new Set(),  // 当前激活状态的物体。也可保存本次的激活物体列表，供下一次使用
     dynaNodes_lab : function(){
         if(this.mainVPlayer === null || this.stopDynaNodes) {return ''};
         var mVP = this.mainVPlayer;
-        const playerGridX = Math.floor(mVP.X / 10);  //+8 计算主角周围 9 个格子的区块
-        const playerGridZ = Math.floor(mVP.Z / 10);
+        const playerGridX = Math.floor(mVP.X / this.gridsize);  //+8 计算主角周围 9 个格子的区块
+        const playerGridZ = Math.floor(mVP.Z / this.gridsize);
         const activeGridKeys = [];  // 装 9 个格子的区块号
         for (let i = -1; i <= 1; i++) {
             for (let j = -1; j <= 1; j++) {
