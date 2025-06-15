@@ -4,6 +4,7 @@
 export default {
     // 按照列表将 物理体 逐个 物理计算可视化 更新
     updataBodylist : function(){
+        // this.dynaNodes_lab();  // 一帧计算区块一次
         for (let i = 0; i < this.bodylist.length; i++) {
             let indexItem = this.bodylist[i];
             if(indexItem.body !== null){ 
@@ -70,6 +71,7 @@ export default {
                                         ' - 口' + this.bodylistMass0.length +
                                         ' - ⚠️' +this.hiddenBodylist.length +
                                                         ' |');  // 一秒显示一次模型数
+            this.dynaNodes_lab();  // 一秒计算区块一次
         }
     },
 

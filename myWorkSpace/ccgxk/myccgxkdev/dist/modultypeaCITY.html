@@ -62,89 +62,89 @@ var list = k.bodylist;
 
 
 // 定义单个立方体对象的多个实例
-const cubeInstances = [];
+// const cubeInstances = [];
 var numCubes = 100;
-const spacing = 2.5;
-const areaSpace = 10**1;
-const random = k.genPR(17, numCubes * numCubes * 5);  // 伪随机数
-for (let i = 0; i < numCubes; i++) {
-for (let j = 0; j < numCubes; j++) {
-    var index = i * numCubes + j;
-    cubeInstances.push({
-        x: Math.floor(random[index] * 99 * areaSpace + 1 - 50 * areaSpace),
-        y: Math.floor(random[index + 1] * 50),
-        z: Math.floor(random[index + 2] * 99 * areaSpace + 1 - 50 * areaSpace),
-        w: 20,
-        d: 30,
-        h: Math.floor(random[index + 3] * 20 + 0.1),
-        b:`#${Math.floor(random[index + 4] * 16777216).toString(16).padStart(6, '0')}`,
-    });
-}
-}
+// const spacing = 2.5;
+// const areaSpace = 10**1;
+// const random = k.genPR(17, numCubes * numCubes * 5);  // 伪随机数
+// for (let i = 0; i < numCubes; i++) {
+// for (let j = 0; j < numCubes; j++) {
+//     var index = i * numCubes + j;
+//     cubeInstances.push({
+//         x: Math.floor(random[index] * 99 * areaSpace + 1 - 50 * areaSpace),
+//         y: Math.floor(random[index + 1] * 50),
+//         z: Math.floor(random[index + 2] * 99 * areaSpace + 1 - 50 * areaSpace),
+//         w: 20,
+//         d: 30,
+//         h: Math.floor(random[index + 3] * 20 + 0.1),
+//         b:`#${Math.floor(random[index + 4] * 16777216).toString(16).padStart(6, '0')}`,
+//     });
+// }
+// }
 
 // 创建 n 个可以绘制许多立方体的实例立方体对象
-for (let index = 0; index < 1; index++) {
-  k.W.cube({
-    n: 'manyCubes' + index,
-    instances: cubeInstances, // 实例属性的数组
-    t: marble,
-    mix: 0.5,
-    y:50 * index * 10,
-  });
-}
+// for (let index = 0; index < 0; index++) {
+//   k.W.cube({
+//     n: 'manyCubes' + index,
+//     instances: cubeInstances, // 实例属性的数组
+//     t: marble,
+//     mix: 0.5,
+//     y:50 * index * 10,
+//   });
+// }
 
 
-// 尝试加上简单的物理引擎
-k.W.isOpenShadow = !k.W.isOpenShadow;  // 关闭阴影
-k.distanceDPZ[2].len = 35;  // 第四 DZP 级别的探测距离
-for (let i = 0; i < numCubes; i++) {
-    for (let j = 0; j < numCubes; j++) {
-        var index = i * numCubes + j;
-        k.addBox({
-            DPZ : 4,
-            isPhysical: true,
-            X: Math.floor(random[index] * 99 * areaSpace + 1 - 50 * areaSpace),
-            Y: Math.floor(random[index + 1] * 50),
-            Z: Math.floor(random[index + 2] * 99 * areaSpace + 1 - 50 * areaSpace),
-            mass: 0,
-            width: 20,
-            depth: 30,
-            height: Math.floor(random[index + 3] * 20 + 0.1),
-            background: `#${Math.floor(random[index + 4] * 16777216).toString(16).padStart(6, '0')}`,
-            mixValue: 1,
-            isShadow: false,
-            isVisualMode: false,
-            texture: marble,
-     });
-    }
-}
-
-
-// // 尝试调试物理引擎
+// // 尝试加上简单的物理引擎
 // k.W.isOpenShadow = !k.W.isOpenShadow;  // 关闭阴影
 // k.distanceDPZ[2].len = 35;  // 第四 DZP 级别的探测距离
-// numCubes = 100;
 // for (let i = 0; i < numCubes; i++) {
 //     for (let j = 0; j < numCubes; j++) {
 //         var index = i * numCubes + j;
 //         k.addBox({
-//             DPZ : 3,
+//             DPZ : 4,
 //             isPhysical: true,
-//             X: i * 10,
-//             Y: 10,
-//             Z: j * 10,
+//             X: Math.floor(random[index] * 99 * areaSpace + 1 - 50 * areaSpace),
+//             Y: Math.floor(random[index + 1] * 50),
+//             Z: Math.floor(random[index + 2] * 99 * areaSpace + 1 - 50 * areaSpace),
 //             mass: 0,
-//             width: 2,
-//             depth: 3,
-//             height: 5,
-//             background: '#faa',
+//             width: 20,
+//             depth: 30,
+//             height: Math.floor(random[index + 3] * 20 + 0.1),
+//             background: `#${Math.floor(random[index + 4] * 16777216).toString(16).padStart(6, '0')}`,
 //             mixValue: 1,
 //             isShadow: false,
-//             // isVisualMode: false,
+//             isVisualMode: false,
 //             texture: marble,
 //      });
 //     }
 // }
+
+
+// 尝试调试物理引擎
+k.W.isOpenShadow = !k.W.isOpenShadow;  // 关闭阴影
+k.distanceDPZ[2].len = 35;  // 第四 DZP 级别的探测距离
+numCubes = 20;
+for (let i = 0; i < numCubes; i++) {
+    for (let j = 0; j < numCubes; j++) {
+        var index = i * numCubes + j;
+        k.addTABox({
+            DPZ : 3,
+            isPhysical: true,
+            X: i * 10,
+            Y: 1,
+            Z: j * 10,
+            mass: 0,
+            width: 2,
+            depth: 3,
+            height: 5,
+            background: '#faa',
+            mixValue: 1,
+            isShadow: false,
+            // isVisualMode: false,
+            texture: marble,
+     });
+    }
+}
 
 k.addBox({  // 创建地面
     DPZ : 1,
@@ -189,7 +189,7 @@ const drawList = [
 k.loadTexture(drawList).then(res => {
     k.addBox({  // 创建一个立方体，测试我的纹理系统
         DPZ : 1,
-        tiling : 6,
+        tiling : 1,
         name: 'testTexture', X: 60, Y: 200, Z: -60,
         mass: 100, size:20, texture: jpflag, mixValue: 0.1
     });

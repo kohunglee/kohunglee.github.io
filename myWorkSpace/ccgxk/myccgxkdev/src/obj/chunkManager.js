@@ -18,7 +18,7 @@ export default {
             if(indexItem.name === name){
                 if(isPhysical){
                     this.world.removeBody(indexItem.body);  // 删除物理计算体
-                    // this.releaseBody(indexItem.body);  // 对象池，回收该对象【暂时不用】
+                    this.releaseBody(indexItem.body);  // 对象池，回收该对象
                 }
                 this.W.delete(name);  // 删除可视化物体
                 this.hiddenBodylist.push({  // 将删除的物体放入隐藏列表
@@ -117,4 +117,57 @@ export default {
         this.dynaLock = false;
         return mainVPPosID;
     },
+
+
+    // -------------------------【 实验 】-----------------------------
+    // 新的 dynaNodes
+    currentlyActiveIndices : new Set(),  // 当前激活状态的物体。也可保存本次的激活物体列表，供下一次使用
+    dynaNodes_lab : function(){
+        if(this.mainVPlayer === null || this.stopDynaNodes) {return ''};
+        var mVP = this.mainVPlayer;
+        const playerGridX = Math.floor(mVP.X / 10);  //+8 计算主角周围 9 个格子的区块
+        const playerGridZ = Math.floor(mVP.Z / 10);
+        const activeGridKeys = [];  // 装 9 个格子的区块号
+        for (let i = -1; i <= 1; i++) {
+            for (let j = -1; j <= 1; j++) {
+                activeGridKeys.push(`${playerGridX + i}_${playerGridZ + j}`);
+            }
+        }
+        const newActiveIndices = new Set();  // 待做出隐藏动作的物体的 index 列表
+        const indicesToHide = new Set(this.currentlyActiveIndices);  // 待做出隐藏动作的物体的 index 列表
+        for(const key of activeGridKeys){
+            const indicesInGrid = this.spatialGrid.get(key);  // 取物体使用（spatialGrid，战地成员列表）
+            if (indicesInGrid) {
+                for (const index of indicesInGrid) {
+                    newActiveIndices.add(index);
+                }
+            }
+        }
+        for (const index of newActiveIndices) {  // 剔除本次还应该是激活状态的
+            indicesToHide.delete(index);
+        }
+        for (const index of newActiveIndices) {  // 执行激活动作
+            if(!this.currentlyActiveIndices.has(index)){  // 上次被激活过，这次就不激活了
+                const p_offset = index * 8;
+                this.positionsStatus[p_offset + 7] = 1;
+                this.activeTABox(index);
+                console.log('要激活的：' + index);
+            }
+        }
+        for(const index of indicesToHide){  // 执行隐藏动作
+            const p_offset = index * 8;
+            this.positionsStatus[p_offset + 7] = 0;
+            this.hiddenTABox(index);
+            console.log('要隐藏的：' + index);
+        }
+        this.currentlyActiveIndices = newActiveIndices;
+    },
+
+    // // 测试一下
+    // testAction : function(){
+    //     for (const index of this.currentlyActiveIndices) {  // 激活物理体
+
+    //     }
+    // },
+
 }
