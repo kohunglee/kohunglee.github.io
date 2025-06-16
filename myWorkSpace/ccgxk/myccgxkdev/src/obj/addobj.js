@@ -82,15 +82,7 @@ export default {
         const org_args = this.indexToArgs.get(index);  // 提取参数
         const args = {...this.defaultBoxArgs, ...org_args};  // 为节省内存，固不破坏源对象，使用新对象
         if(args.isPhysical){  // 添加物理体
-            // const initialQuaternion = new CANNON.Quaternion(
-            //     posProp[3], // x
-            //     posProp[4], // y
-            //     posProp[5], // z
-            //     posProp[6]  // w
-            // );
-            const body = new CANNON.Body({  // 新 new 一个对象，性能不优化了，我不管了
-                // quaternion: initialQuaternion
-            });
+            const body = new CANNON.Body();  // 新 new 一个对象，性能不优化了，我不管了
             body.mass = physicalProp[0];  // mass
             body.type = physicalProp[0] === 0 ? CANNON.Body.STATIC : CANNON.Body.DYNAMIC;
             var boxShape;
@@ -134,13 +126,12 @@ export default {
         if(args.isVisualMode !== false){  // 添加渲染体
             var tiling = args.tiling;
             
-            // if(posProp[3] !== 0){  // 可近似认为四分数被修改过，遂更新参数
-                console.log(posProp[3]);
+            if(posProp[3] !== 0){  // 可近似认为四分数被修改过，遂更新参数
                 var eulerQuat = this.quaternionToEuler({ x: posProp[3], y: posProp[4],  z: posProp[5],  w: posProp[6] });
                 args.rX = eulerQuat.x;
                 args.rY = eulerQuat.y;
                 args.rZ = eulerQuat.z
-            // }
+            }
             if(typeof tiling === 'number'){ tiling = [tiling, tiling] }  // 处理平铺数
             this.W.cube({
                 n: 'T' + index,  // 意为 TypeArray 生成的
