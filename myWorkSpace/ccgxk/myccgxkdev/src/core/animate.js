@@ -3,10 +3,9 @@
  */
 export default {
     // 按照列表将 物理体 逐个 物理计算可视化 更新
-    gridKeyCurrentTime : 0,  // 辅助计算 gridKey 的时间值
+    gridKeyCurrentTime : 0,  // 辅助更新 gridKey 的工具时间值
     updataBodylist : function(){
         this.dynaNodes_lab();  // 一帧计算区块一次
-
         for (let i = 0; i < this.bodylist.length; i++) {
             let indexItem = this.bodylist[i];
             if(indexItem.body !== null){
@@ -42,9 +41,7 @@ export default {
                 });
             }
         }
-
-        var gridKeyCurrentTime = 0;
-        /* -----------------------------[ 实验 ]--------------------------------------- */
+        /* -----------------------------[ 实验 TA 物理更新 ]--------------------------------------- */
         for (const index of this.currentlyActiveIndices) {  // 暂时选择遍历吧，反正也显示不了几个，也兼容后续的 mass 改变
             const p_offset = index * 8;
             if(this.positionsStatus[p_offset + 7] > 0){  // 选择 状态码/mass 大于 0 的物体

@@ -96,28 +96,28 @@ for (let index = 0; index < 1; index++) {
 
 
 // 尝试加上简单的物理引擎
-// k.distanceDPZ[2].len = 35;  // 第四 DZP 级别的探测距离
-// for (let i = 0; i < numCubes; i++) {
-//     for (let j = 0; j < numCubes; j++) {
-//         var index = i * numCubes + j;
-//         k.addTABox({
-//             DPZ : 4,
-//             isPhysical: true,
-//             X: Math.floor(random[index] * 99 * areaSpace + 1 - 50 * areaSpace),
-//             Y: Math.floor(random[index + 1] * 50),
-//             Z: Math.floor(random[index + 2] * 99 * areaSpace + 1 - 50 * areaSpace),
-//             mass: 0,
-//             width: 20,
-//             depth: 30,
-//             height: Math.floor(random[index + 3] * 20 + 1),
-//             background: `#${Math.floor(random[index + 4] * 16777216).toString(16).padStart(6, '0')}`,
-//             mixValue: 1,
-//             isShadow: false,
-//             isVisualMode: false,
-//             texture: marble,
-//         });
-//     }
-// }
+k.distanceDPZ[2].len = 35;  // 第四 DZP 级别的探测距离
+for (let i = 0; i < numCubes; i++) {
+    for (let j = 0; j < numCubes; j++) {
+        var index = i * numCubes + j;
+        k.addTABox({
+            DPZ : 4,
+            isPhysical: true,
+            X: Math.floor(random[index] * 99 * areaSpace + 1 - 50 * areaSpace),
+            Y: Math.floor(random[index + 1] * 50),
+            Z: Math.floor(random[index + 2] * 99 * areaSpace + 1 - 50 * areaSpace),
+            mass: 0,
+            width: 20,
+            depth: 30,
+            height: Math.floor(random[index + 3] * 20 + 1),
+            background: `#${Math.floor(random[index + 4] * 16777216).toString(16).padStart(6, '0')}`,
+            mixValue: 1,
+            isShadow: false,
+            isVisualMode: false,
+            texture: marble,
+        });
+    }
+}
 
 k.mainVPlayer = k.addBox({  // 创建一个立方体，并设置为主角
         name: 'mainPlayer', DPZ : 1,
