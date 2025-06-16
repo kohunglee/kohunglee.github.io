@@ -74,9 +74,11 @@ const W = {
           uniform vec2 tiling;
           uniform vec4 o;
           uniform sampler2D sampler;
+
           out vec4 c;
 
           void main() {
+
             c = mix(texture(sampler, v_uv.xy * tiling), v_col, o[3]);
             if(o[1] > 0.){
               c = vec4(
@@ -207,6 +209,88 @@ const W = {
         }
         W.next[state.n] = state;  // 下一帧的状态
   },
+
+  tempColor : new Uint8Array(4),
+  getPixiv : false,
+  debugFBO : false,
+  makeFBO : () => {
+    W.pickingFBO = W.gl.createFramebuffer();
+    W.gl.bindFramebuffer(W.gl.FRAMEBUFFER, W.pickingFBO);
+
+    // 为FBO创建纹理附件（相当于排练室的“幕布”）
+    W.pickingTexture = W.gl.createTexture();
+    W.gl.bindTexture(W.gl.TEXTURE_2D, W.pickingTexture);
+    W.gl.texImage2D(W.gl.TEXTURE_2D, 0, W.gl.RGBA, W.canvas.width, W.canvas.height, 0, W.gl.RGBA, W.gl.UNSIGNED_BYTE, null);
+    W.gl.framebufferTexture2D(W.gl.FRAMEBUFFER, W.gl.COLOR_ATTACHMENT0, W.gl.TEXTURE_2D, W.pickingTexture, 0);
+
+    // 为FBO创建深度附件（相当于排练室的“地板”，保证3D效果正确）
+    W.pickingRenderbuffer = W.gl.createRenderbuffer();
+    W.gl.bindRenderbuffer(W.gl.RENDERBUFFER, W.pickingRenderbuffer);
+    W.gl.renderbufferStorage(W.gl.RENDERBUFFER, W.gl.DEPTH_COMPONENT16, W.canvas.width, W.canvas.height);
+    W.gl.framebufferRenderbuffer(W.gl.FRAMEBUFFER, W.gl.DEPTH_ATTACHMENT, W.gl.RENDERBUFFER, W.pickingRenderbuffer);
+
+    // 检查FBO是否创建成功
+    if (W.gl.checkFramebufferStatus(W.gl.FRAMEBUFFER) !== W.gl.FRAMEBUFFER_COMPLETE) {
+        console.error("秘密排练室（FBO）创建失败！");
+    }
+
+    // 解绑，让绘制回到主舞台
+    W.gl.bindFramebuffer(W.gl.FRAMEBUFFER, null);
+  },
+
+  testColorPickObj : () => {
+    const player = W.next['mainPlayer'];
+    if (!player) return;
+    W.gl.bindFramebuffer(W.gl.FRAMEBUFFER, W.pickingFBO);  // 切换到 FBO 里
+    W.gl.clearColor(0.0, 0.0, 0.0, 1.0); // 【保证背景纯黑】
+    W.gl.clear(W.gl.COLOR_BUFFER_BIT | W.gl.DEPTH_BUFFER_BIT); // 清空排练室
+
+    var player_proxy = {...player};
+    player_proxy.b = '#fff';
+    player_proxy.t = null;  // <---  就这一行
+    player_proxy.ns = 1;
+    player_proxy.mix = 1;
+    player_proxy.shadow = '0';
+
+    W.gl.activeTexture(W.gl.TEXTURE0);
+    W.gl.bindTexture(W.gl.TEXTURE_2D, null);  // 清空纹理贴图
+    W.gl.activeTexture(W.gl.TEXTURE0 + 3);
+    W.gl.bindTexture(W.gl.TEXTURE_2D, null);  // 清空阴影贴图
+
+    W.render(player_proxy, 0);
+    if(false){  // 我们的 render
+      const model = W.models[player.type]; // 获取演员的模型数据
+
+      // 指令一：告诉舞台工，演员的身体（顶点）在哪里
+      W.gl.bindBuffer(W.gl.ARRAY_BUFFER, model.verticesBuffer);
+      W.gl.vertexAttribPointer(W.attribLocations.pos, 3, W.gl.FLOAT, false, 0, 0);
+      W.gl.enableVertexAttribArray(W.attribLocations.pos);
+
+      // // 指令二：告诉舞台工，演员的动作顺序（索引）
+      // W.gl.bindBuffer(W.gl.ELEMENT_ARRAY_BUFFER, model.indicesBuffer);
+      
+      // // 指令三：开演！
+      // W.gl.drawElements(W.gl.TRIANGLES, model.indices.length, W.gl.UNSIGNED_SHORT, 0);
+      W.gl.drawArrays(W.gl.TRIANGLES, 0, model.vertices.length / 3);
+    }
+    
+
+    const pixels = new Uint8Array(4);
+    W.gl.readPixels(W.gl.canvas.width / 2, W.gl.canvas.height / 2, 1, 1, W.gl.RGBA, W.gl.UNSIGNED_BYTE, pixels);
+    W.gl.bindFramebuffer(W.gl.FRAMEBUFFER, null);
+
+    // player.b = '#888';
+    // // player.t = marble;
+    // // player.ns = originalProps.ns;
+    // // player.shadow = originalProps.shadow;
+
+    // 【关键步骤 3】关闭“傻瓜模式”开关，让他恢复正常
+    W.gl.uniform1i(W.uniformLocations.u_IsPickingMode, 0); // 0 代表 false
+    W.gl.bindFramebuffer(W.gl.FRAMEBUFFER, null); // 切换回主舞台
+    W.clearColor("#7A4141"); // 恢复主画布的背景色
+
+    W.tempColor = pixels;
+  },
   
   // 绘制场景
   draw: (now, dt, v, i, transparent = []) => {
@@ -214,38 +298,45 @@ const W = {
         dt = now - W.lastFrame;
         W.lastFrame = now;
         requestAnimationFrame(W.draw);
-        if(W.next.camera.g){  W.render(W.next[W.next.camera.g], dt, 1); }
-        v = W.animation('camera');  //  获取相机的矩阵
-        if(W.next?.camera?.g){
-          v.preMultiplySelf(W.next[W.next.camera.g].M || W.next[W.next.camera.g].m);
-        }
-        W.gl.uniformMatrix4fv(W.uniformLocations.eye, false, v.toFloat32Array());  // 相机矩阵发往着 eye 着色器
-        v.invertSelf();
-        v.preMultiplySelf(W.projection);
-        W.gl.uniformMatrix4fv( W.uniformLocations.pv,
-                                  false,
-                                  v.toFloat32Array());  // 处理好 pv ，传给着色器      
-        W.wjsHooks.emitSync('shadow_draw', W);  // 绘制阴影插件，测试钩子
-        W.gl.clear(16640);
-        for(i in W.next){  // 遍历渲染模型
-          if(!W.next[i].t && W.col(W.next[i].b)[3] == 1){
-            W.render(W.next[i], dt);
-          } else {
-            transparent.push(W.next[i]);  // 透明的先不渲染，存起来
+        if (W.debugFBO) {  // 如果打开，就播放 FBO 的录像，然后直接结束这一帧
+          renderFBOToCanvas();
+          return; 
+        } else {
+          if(W.next.camera.g){  W.render(W.next[W.next.camera.g], dt, 1); }
+          v = W.animation('camera');  //  获取相机的矩阵
+          if(W.next?.camera?.g){
+            v.preMultiplySelf(W.next[W.next.camera.g].M || W.next[W.next.camera.g].m);
           }
+          W.gl.uniformMatrix4fv(W.uniformLocations.eye, false, v.toFloat32Array());  // 相机矩阵发往着 eye 着色器
+          v.invertSelf();
+          v.preMultiplySelf(W.projection);
+          W.gl.uniformMatrix4fv( W.uniformLocations.pv,
+                                    false,
+                                    v.toFloat32Array());  // 处理好 pv ，传给着色器      
+          W.wjsHooks.emitSync('shadow_draw', W);  // 绘制阴影插件，测试钩子
+          W.gl.clear(16640);
+          for(i in W.next){  // 遍历渲染模型
+            if(!W.next[i].t && W.col(W.next[i].b)[3] == 1){
+              W.render(W.next[i], dt);
+            } else {
+              transparent.push(W.next[i]);  // 透明的先不渲染，存起来
+            }
+          }
+          transparent.sort((a, b) => {return W.dist(b) - W.dist(a);});
+          W.gl.enable(3042 );
+          for(i of transparent){  // 遍历渲染透明对象
+            if( ["plane","billboard"].includes(i.type)) { W.gl.depthMask(0) };  // 广告牌、屏幕特殊处理
+            W.render(i, dt);
+            W.gl.depthMask(1);
+          }
+          W.gl.disable(3042);
         }
-        transparent.sort((a, b) => {return W.dist(b) - W.dist(a);});
-        W.gl.enable(3042 );
-        for(i of transparent){  // 遍历渲染透明对象
-          if( ["plane","billboard"].includes(i.type)) { W.gl.depthMask(0) };  // 广告牌、屏幕特殊处理
-          W.render(i, dt);
-          W.gl.depthMask(1);
-        }
-        W.gl.disable(3042);
+        
         W.gl.uniform3f(  // light 信息发往着色器
           W.uniformLocations.light,
           W.lerp('light','x'), W.lerp('light','y'), W.lerp('light','z')
         );
+      
         if (now - W.lastReportTime >= 1000) {  // 每秒执行一次，用于测量
             W.drawTime = (performance.now() - frameRenderStart).toFixed(2) + 'ms';  // 每帧的绘制时间
             W.lastReportTime = now;
@@ -567,5 +658,44 @@ W.add("pyramid", {
   }
   W.add("sphere", {vertices, uv, indices});
 })();
+
+// ===============================================
+// === FBO 调试器：“录像播放器”函数 ===
+// ===============================================
+function renderFBOToCanvas() {
+  const gl = W.gl;
+  
+  // 告诉 WebGL 我们要开始在主舞台上画画了
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+  // 使用一个简单的平面模型来覆盖整个屏幕
+  const model = W.models.plane;
+  gl.bindBuffer(gl.ARRAY_BUFFER, model.verticesBuffer);
+  gl.vertexAttribPointer(W.attribLocations.pos, 3, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(W.attribLocations.pos);
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, model.uvBuffer);
+  gl.vertexAttribPointer(W.attribLocations.uv, 2, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(W.attribLocations.uv);
+  
+  // 激活并绑定我们想要查看的“录像带”（FBO的纹理）
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D, W.pickingTexture);  // 注意，这里是我们的 FBO 变量
+  gl.uniform1i(W.uniformLocations.sampler, 0);
+
+  // 设置着色器，让它进行最简单的纹理绘制
+  // 我们不需要光照、动画或复杂的3D变换
+  gl.uniformMatrix4fv(W.uniformLocations.pv, false, new DOMMatrix().toFloat32Array()); // 使用单位投影视图矩阵
+  const scaleMatrix = new DOMMatrix().scaleSelf(2, 2, 1); // Plane是-0.5到0.5，放大2倍刚好填满-1到1的裁剪空间
+  gl.uniformMatrix4fv(W.uniformLocations.m, false, scaleMatrix.toFloat32Array()); // 模型矩阵
+  gl.uniform4f(W.uniformLocations.o, 0, 0, 0, 0); // 关闭所有光照效果，mix=0表示100%使用纹理
+  gl.uniform2f(W.uniformLocations.tiling, 1, 1); // 关闭纹理平铺
+  gl.uniform1i(W.uniformLocations.isInstanced, 0); // 不是实例化绘制
+
+  // 绘制这个贴了图的平面
+  gl.drawArrays(gl.TRIANGLES, 0, model.vertices.length / 3);
+}
 
 export default W;

@@ -25,10 +25,10 @@
     height: 30px;
 }
 </style>
-<script src="cannon.min.js"></script>
+<!-- <script src="cannon.min.js"></script> -->
 <!-- <script src="../src/cannon/cannon-x-dev.js"></script> -->
 <!-- <script src="./cannon.js"></script> -->
-<!-- <script src="../src/cannon/cannon29kb.js"></script> -->
+<script src="../src/cannon/cannon29kb.js"></script>
 <img src='./img/texture.jpeg' id=marble hidden>
 <canvas id=c style="width:100vw;height:100vh"></canvas>
 <div id="myHUD" class="myHUD">
@@ -40,6 +40,7 @@
     <span id="modListCount"></span>
     <span id="posIDMVP"></span>
     <canvas id="posMap" width="100" height="100"></canvas>
+    <canvas id="centerPoint" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);"></canvas>
 </div>
 <div id="someCtrl">
     <button id="xforward">前</button>
@@ -127,7 +128,9 @@ k.mainVPlayer = k.addBox({  // 创建一个立方体，并设置为主角
         // X:-30.92, Y:1.00, Z:40.17,
         X:1, Y:1.00, Z:555,
         rX: 0, rY: 0, rZ: 0, size:1, mixValue:0.7,
-        mass: 50, texture: marble
+        mass: 50,
+        background : '#333',
+        texture: marble
     });
 
 k.addTABox({  // 创建一个 旋转测试 细长物理体
@@ -264,6 +267,58 @@ function drawRedDot(t){var l=t.getContext("2d"),e=t.width/2,i=t.height/2,a=k.mai
     l.arc(t,a,1,0,2*Math.PI),l.fillStyle="red",l.fill(),l.strokeStyle="#9AFF4D",l.lineWidth=1,l.beginPath(),l.moveTo(t,a),
     r=k.W.current.mainPlayer,e=calculateNorthAngle(r.rx,r.ry,r.rz);l.lineTo(t-100*Math.sin(e),a-100*Math.cos(e)),l.stroke()}
 
+
+// 画屏幕中心点
+k.W.makeFBO();
+const centerPointColorUpdatax = setInterval(() => { drawCenterPoint() }, 100);
+function drawCenterPoint(){
+    const canvas = document.getElementById('centerPoint');
+    const ctx = canvas.getContext('2d');
+    function resizeCanvas() {
+        canvas.width = 20;
+        canvas.height = 20;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    // k.W.getPixiv = true;  // 激活一次颜色更新
+    k.W.testColorPickObj()
+
+    // 绘制中心圆
+    function drawCircle() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        ctx.beginPath();
+        ctx.arc(
+            canvas.width / 2,  // 圆心x坐标（水平居中）
+            canvas.height / 2, // 圆心y坐标（垂直居中）
+            5,                // 半径5像素
+            0,                // 起始角度
+            Math.PI * 2       // 结束角度（完整圆）
+        );
+        ctx.lineWidth = 1;  // 1像素宽线条
+        ctx.stroke();       // 描边绘制
+
+        const colorArray = k.W.tempColor || [255, 0, 0, 255];
+        const color = `rgba(${colorArray[0]}, ${colorArray[1]}, ${colorArray[2]}, ${colorArray[3]/255})`;
+        // console.log(color);
+        
+
+        ctx.beginPath();
+        ctx.arc(
+            canvas.width / 2,
+            canvas.height / 2,
+            5,
+            0,
+            Math.PI * 2
+        );
+        ctx.fillStyle = color;  // 设置填充颜色
+        ctx.fill();             // 填充绘制
+    
+    }
+
+    drawCircle();
+}
 
 window.k = k;
 window.list = list;
