@@ -33,17 +33,17 @@ export default {
         if(size !== 1){  // 处理体积大小
             width =  depth =  height = size;
         }
-        if (this.freeSlots.length === 0) {console.error('BodyTypeArray 容量已达上限，需要扩容！'); return false;};  // 没有空位就退，否则占个位子
+        if (this.freeSlots.length === 0) {alert('BodyTypeArray 容量已达上限，需要扩容！'); return false;};  // 没有空位就退，否则占个位子
         const index = this.freeSlots.pop();
-        const p_offset = index * 8;  //+8 向 TA 传数据的起点，并传入数据
-        this.positionsStatus[p_offset] = X;  //+ 这些数据要经常遍历，所以是精选的几个
+        const p_offset = index * 8;  //+8 向 TA 传数据的起点，并传入数据（繁琐写法，但性能高）
+        this.positionsStatus[p_offset] = X;  
         this.positionsStatus[p_offset + 1] = Y;
         this.positionsStatus[p_offset + 2] = Z;
         this.positionsStatus[p_offset + 3] = quat.x;
         this.positionsStatus[p_offset + 4] = quat.y;
         this.positionsStatus[p_offset + 5] = quat.z;
         this.positionsStatus[p_offset + 6] = quat.w;
-        this.positionsStatus[p_offset + 7] = 1;  // 状态位（0=隐藏, 1=激活）
+        this.positionsStatus[p_offset + 7] = mass;  // 状态码，-1 代表隐藏，0 表示不计算物理，其他代表 mass 重量
         this.physicsProps[p_offset] = mass;  //+ 这些不需要经常遍历
         this.physicsProps[p_offset + 1] = width;
         this.physicsProps[p_offset + 2] = height;
@@ -56,7 +56,7 @@ export default {
         this.indexToArgs.set(index, myargs);  // index -> args
     },
 
-    // Box 的默认参数
+    // Box 的默认参数（除去 positionsStatus 里的参数）
     defaultBoxArgs : {
         isPhysical: true,     // 是否物理化
         isVisualMode: true,   // 是否渲染
@@ -82,9 +82,7 @@ export default {
         const org_args = this.indexToArgs.get(index);  // 提取参数
         const args = {...this.defaultBoxArgs, ...org_args};  // 为节省内存，固不破坏源对象，使用新对象
         if(args.isPhysical){  // 添加物理体
-
-            // const body = this.acquireBody();  // 从对象池里取对象
-            const body = new CANNON.Body({ mass: 0 });  // 新 new 一个对象
+            const body = new CANNON.Body({ });  // 新 new 一个对象，性能不优化了，我不管了
             body.mass = physicalProp[0];  // mass
             body.type = physicalProp[0] === 0 ? CANNON.Body.STATIC : CANNON.Body.DYNAMIC;
             var boxShape;
@@ -129,7 +127,7 @@ export default {
             var tiling = args.tiling;
             if(typeof tiling === 'number'){ tiling = [tiling, tiling] }  // 处理平铺数
             this.W.cube({
-                n: 'T' + index,
+                n: 'T' + index,  // 意为 TypeArray 生成的
                 w: physicalProp[1], d: physicalProp[3], h: physicalProp[2],
                 x: posProp[0], y:posProp[1], z:posProp[2],
                 t: args.texture, s: args.smooth, tile: tiling,
@@ -137,16 +135,46 @@ export default {
                 shadow: args.isShadow,
             });
         }
-        
     },
 
     // 隐藏 TA 物体
     hiddenTABox : function(index){
-        var cannonBody = this.indexToArgs.get(index).cannonBody;
-        this.world.removeBody(cannonBody);
-        // this.releaseBody(cannonBody);  // 对象池，回收该对象
-        this.W.delete('lab' + index);
+        this.world.removeBody(this.indexToArgs.get(index).cannonBody);
+        this.W.delete('T' + index);
     },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     // 添加 box 物体
     addBox : function({
@@ -187,25 +215,25 @@ export default {
                     break;
             }
 
-            // 对象池
-            body = this.acquireBody();  // 从对象池里取对象
-            body.mass = mass;
-            body.type = mass === 0 ? CANNON.Body.STATIC : CANNON.Body.DYNAMIC;
-            body.shapes = [];
-            body.addShape(boxShape);
-            body.position.set(X, Y, Z);
-            body.material = this.cannonDefaultContactMaterial;
-            body.updateMassProperties();
-            body.wakeUp();
+            // // 对象池
+            // body = this.acquireBody();  // 从对象池里取对象
+            // body.mass = mass;
+            // body.type = mass === 0 ? CANNON.Body.STATIC : CANNON.Body.DYNAMIC;
+            // body.shapes = [];
+            // body.addShape(boxShape);
+            // body.position.set(X, Y, Z);
+            // body.material = this.cannonDefaultContactMaterial;
+            // body.updateMassProperties();
+            // body.wakeUp();
 
             
 
-            // body = new CANNON.Body({
-            //     mass : mass,
-            //     shape: boxShape,
-            //     position: new CANNON.Vec3(X, Y, Z),
-            //     material: this.cannonDefaultCantactMaterial,
-            // });
+            body = new CANNON.Body({
+                mass : mass,
+                shape: boxShape,
+                position: new CANNON.Vec3(X, Y, Z),
+                material: this.cannonDefaultCantactMaterial,
+            });
 
             body.collisionFilterGroup = colliGroup;  // 这 6 行，为物理体分配碰撞组。只有玩家和地面与石头碰撞，石头间不会（小物件除外）
             const collisionFilterMaskMap = {
@@ -268,29 +296,4 @@ export default {
         // this.ccgxkhooks.emitSync('addObj_ok');  // 钩子使用示例
         return result;
     },
-
-    // 初始化 cannon body 对象池【暂时不用】
-    cannonBodyPool : [],  // cannon body 对象池
-    createCannonBodyPool : function(size){
-        for (let i = 0; i < size; i++) {
-            const body = new CANNON.Body({ mass: 0 });
-            this.cannonBodyPool.push(body);
-        }
-    },
-
-    // 从对象池里取一个 cannon body 对象
-    acquireBody : function() {
-        if(this.cannonBodyPool && this.cannonBodyPool.length > 0){
-            return this.cannonBodyPool.pop();
-        } else {
-            console.log('对象池已满，请扩容！');
-            return null;
-        }
-    },
-
-    // 回收 cannon body 对象
-    releaseBody : function(body) {
-        // console.log('回收');
-        this.cannonBodyPool.push(body);
-    }
 }

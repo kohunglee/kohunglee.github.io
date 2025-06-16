@@ -25,7 +25,7 @@ export default {
         's': 'viewBackward',
         'a': 'viewLeft',
         'd': 'viewRight',
-        // 'r': 'viewUp',
+        'i': 'viewUp',
         'v': 'viewDown',
         'o': 'turnUp',
         'p': 'turnDown',
@@ -128,7 +128,7 @@ export default {
             this.displayPOS();
         }
         if (keys.viewUp || keys.viewDown) { // 上下平移
-            var offset = (keys.viewUp - keys.viewDown) / 7;
+            var offset = 1;
             Y += offset;
         }
         if(keys.turnRight || keys.turnLeft) {  // 左右扭动

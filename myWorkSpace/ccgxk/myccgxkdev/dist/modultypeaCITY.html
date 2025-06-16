@@ -28,7 +28,7 @@
 <!-- <script src="cannon.js"></script> -->
 <!-- <script src="../src/cannon/cannon-x-dev.js"></script> -->
 <script src="./cannon.js"></script>
-<!-- <script src="../src/cannon/cannon29kb.js"></script> -->
+<script src="../src/cannon/cannon29kb.js"></script>
 <img src='./img/texture.jpeg' id=marble hidden>
 <canvas id=c style="width:100vw;height:100vh"></canvas>
 <div id="myHUD" class="myHUD">
@@ -60,6 +60,8 @@ var k = ccgxkApp;
 k.initWorld(c);
 var list = k.bodylist;
 
+// k.W.isOpenShadow = !k.W.isOpenShadow;  // 关闭阴影
+
 // 定义单个立方体对象的多个实例
 const cubeInstances = [];
 var numCubes = 100;
@@ -67,20 +69,18 @@ const spacing = 2.5;
 const areaSpace = 10**1;
 const random = k.genPR(17, numCubes * numCubes * 5);  // 伪随机数
 for (let i = 0; i < numCubes; i++) {
-for (let j = 0; j < numCubes; j++) {
-    var index = i * numCubes + j;
-    cubeInstances.push({
-        x: Math.floor(random[index] * 99 * areaSpace + 1 - 50 * areaSpace),
-        y: Math.floor(random[index + 1] * 50),
-        z: Math.floor(random[index + 2] * 99 * areaSpace + 1 - 50 * areaSpace),
-        w: 20,
-        d: 30,
-        h: Math.floor(random[index + 3] * 20 + 1),
-        b:`#${Math.floor(random[index + 4] * 16777216).toString(16).padStart(6, '0')}`,
-    });
-    
-    
-}
+    for (let j = 0; j < numCubes; j++) {
+        var index = i * numCubes + j;
+        cubeInstances.push({
+            x: Math.floor(random[index] * 99 * areaSpace + 1 - 50 * areaSpace),
+            y: Math.floor(random[index + 1] * 50),
+            z: Math.floor(random[index + 2] * 99 * areaSpace + 1 - 50 * areaSpace),
+            w: 20,
+            d: 30,
+            h: Math.floor(random[index + 3] * 20 + 1),
+            b:`#${Math.floor(random[index + 4] * 16777216).toString(16).padStart(6, '0')}`,
+        });
+    }
 }
 
 // 创建 n 个可以绘制许多立方体的实例立方体对象
@@ -96,32 +96,53 @@ for (let index = 0; index < 1; index++) {
 
 
 // 尝试加上简单的物理引擎
-k.W.isOpenShadow = !k.W.isOpenShadow;  // 关闭阴影
-k.distanceDPZ[2].len = 35;  // 第四 DZP 级别的探测距离
-for (let i = 0; i < numCubes; i++) {
-    for (let j = 0; j < numCubes; j++) {
-        var index = i * numCubes + j;
-        k.addTABox({
-            DPZ : 4,
-            isPhysical: true,
-            X: Math.floor(random[index] * 99 * areaSpace + 1 - 50 * areaSpace),
-            Y: Math.floor(random[index + 1] * 50),
-            Z: Math.floor(random[index + 2] * 99 * areaSpace + 1 - 50 * areaSpace),
-            mass: 0,
-            width: 20,
-            depth: 30,
-            height: Math.floor(random[index + 3] * 20 + 1),
-            background: `#${Math.floor(random[index + 4] * 16777216).toString(16).padStart(6, '0')}`,
-            mixValue: 1,
-            isShadow: false,
-            isVisualMode: false,
-            texture: marble,
-        });
-        
-        
-    }
-}
+// k.distanceDPZ[2].len = 35;  // 第四 DZP 级别的探测距离
+// for (let i = 0; i < numCubes; i++) {
+//     for (let j = 0; j < numCubes; j++) {
+//         var index = i * numCubes + j;
+//         k.addTABox({
+//             DPZ : 4,
+//             isPhysical: true,
+//             X: Math.floor(random[index] * 99 * areaSpace + 1 - 50 * areaSpace),
+//             Y: Math.floor(random[index + 1] * 50),
+//             Z: Math.floor(random[index + 2] * 99 * areaSpace + 1 - 50 * areaSpace),
+//             mass: 0,
+//             width: 20,
+//             depth: 30,
+//             height: Math.floor(random[index + 3] * 20 + 1),
+//             background: `#${Math.floor(random[index + 4] * 16777216).toString(16).padStart(6, '0')}`,
+//             mixValue: 1,
+//             isShadow: false,
+//             isVisualMode: false,
+//             texture: marble,
+//         });
+//     }
+// }
 
+k.mainVPlayer = k.addBox({  // 创建一个立方体，并设置为主角
+        name: 'mainPlayer', DPZ : 1,
+        colliGroup: 1,
+        isShadow: 'ok',
+        // X:4.25, Y:1.00, Z:12.09,
+        // X:-30.92, Y:1.00, Z:40.17,
+        X:1, Y:1.00, Z:555,
+        rX: 0, rY: 0, rZ: 0, size:1, mixValue:0.7,
+        mass: 50, texture: marble
+    });
+
+k.addTABox({  // 创建一个 旋转测试 细长物理体
+    DPZ : 2,
+    colliGroup: 1,
+    name: 'longThin', X: 20, Y: 10, Z: 540,
+    mass: 1, width: 40, depth: 2, height: 2, texture: marble
+});
+
+k.addTABox({  // 创建一个 旋转测试 细长物理体
+    DPZ : 1,
+    colliGroup: 2,
+    name: 'longThin02', X: 20, Y: 10, Z: 546,
+    mass: 10, width: 40, depth: 2, height: 2, background: '#333' 
+});
 
 // // 尝试调试物理引擎
 // k.W.isOpenShadow = !k.W.isOpenShadow;  // 关闭阴影
@@ -171,17 +192,6 @@ k.addBox({  // 创建一个参考1米的使用的辅助图片。它会拉低渲�
 });
 
 
-
-k.mainVPlayer = k.addBox({  // 创建一个立方体，并设置为主角
-        name: 'mainPlayer', DPZ : 1,
-        colliGroup: 1,
-        isShadow: 1,
-        // X:4.25, Y:1.00, Z:12.09,
-        X:-30.92, Y:1.00, Z:40.17,
-        rX: 0, rY: 0, rZ: 0, size:1, mixValue:0.7,
-        mass: 50, texture: marble
-    });
-
 // 绘制纹理
 const drawList = [
     {func:drawRandomNoise, id:'xnoise'},
@@ -193,7 +203,7 @@ k.loadTexture(drawList).then(res => {
     k.addBox({  // 创建一个立方体，测试我的纹理系统
         DPZ : 1,
         tiling : 1,
-        name: 'testTexture', X: 60, Y: 200, Z: -60,
+        name: 'testTexture', X: 10, Y: 200, Z: 510,
         mass: 100, size:20, texture: jpflag, mixValue: 0.1
     });
 })
@@ -241,7 +251,7 @@ function calculateNorthAngle(t,a,h){var t=-t*Math.PI/180,a=-a*Math.PI/180,h=h*Ma
 const isMapLittle = true;
 
 // 绘制小地图
-const mapUpdatax = setInterval(() => { drawRedDot(posMap); }, 100);
+const mapUpdatax = setInterval(() => { drawRedDot(posMap); }, 50);
 function drawRedDot(t){var l=t.getContext("2d"),e=t.width/2,i=t.height/2,a=k.mainVPlayer.X/5e3*e,r=k.mainVPlayer.Z/5e3*i,
     h=(l.clearRect(0,0,t.width,t.height),t.width/10);
     

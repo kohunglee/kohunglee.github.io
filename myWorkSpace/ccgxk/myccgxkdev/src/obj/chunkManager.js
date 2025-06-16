@@ -18,7 +18,6 @@ export default {
             if(indexItem.name === name){
                 if(isPhysical){
                     this.world.removeBody(indexItem.body);  // 删除物理计算体
-                    this.releaseBody(indexItem.body);  // 对象池，回收该对象
                 }
                 this.W.delete(name);  // 删除可视化物体
                 this.hiddenBodylist.push({  // 将删除的物体放入隐藏列表
@@ -121,7 +120,8 @@ export default {
 
     // -------------------------【 实验 】-----------------------------
     // 新的 dynaNodes
-    gridsize : 20,  // 单个区块大小
+    gridsize : 20,  // 单个区块面积大小
+    aaa:'',
     currentlyActiveIndices : new Set(),  // 当前激活状态的物体。也可保存本次的激活物体列表，供下一次使用
     dynaNodes_lab : function(){
         if(this.mainVPlayer === null || this.stopDynaNodes) {return ''};
@@ -134,10 +134,11 @@ export default {
                 activeGridKeys.push(`${playerGridX + i}_${playerGridZ + j}`);
             }
         }
+        this.aaa = activeGridKeys;
         const newActiveIndices = new Set();  // 待做出隐藏动作的物体的 index 列表
         const indicesToHide = new Set(this.currentlyActiveIndices);  // 待做出隐藏动作的物体的 index 列表
         for(const key of activeGridKeys){
-            const indicesInGrid = this.spatialGrid.get(key);  // 取物体使用（spatialGrid，战地成员列表）
+            const indicesInGrid = this.spatialGrid.get(key);  // 取物体使用（spatialGrid，俗称战地成员列表）
             if (indicesInGrid) {
                 for (const index of indicesInGrid) {
                     newActiveIndices.add(index);
@@ -150,13 +151,13 @@ export default {
         for (const index of newActiveIndices) {  // 执行激活动作
             if(!this.currentlyActiveIndices.has(index)){  // 上次被激活过，这次就不激活了
                 const p_offset = index * 8;
-                this.positionsStatus[p_offset + 7] = 1;
+                this.positionsStatus[p_offset + 7] = this.physicsProps[p_offset];  // mass 重新赋予
                 this.activeTABox(index);
             }
         }
         for(const index of indicesToHide){  // 执行隐藏动作
             const p_offset = index * 8;
-            this.positionsStatus[p_offset + 7] = 0;
+            this.positionsStatus[p_offset + 7] = -1;
             this.hiddenTABox(index);
         }
         this.currentlyActiveIndices = newActiveIndices;

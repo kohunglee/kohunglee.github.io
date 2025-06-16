@@ -15,7 +15,7 @@ export default function(ccgxkObj) {
         initDepthMapProgram(W);
     });
     W.wjsHooks.on('shadow_draw', function(W){  // 在'绘制阴影'处装载
-        drawShadow(W);
+          drawShadow(W);
     });
     const intervalPOS = setInterval(()=>{executePerSecond(W)}, 1000);  // 每 1 秒更新一次灯光位置
 }
@@ -89,11 +89,6 @@ const initDepthMapProgram = (W) => {
 
 // 绘制深度图
 const drawShadow = (W) => {
-//   if(W.isShodowOne === false){
-//     return;
-//   } else{
-//     W.isShodowOne = false;
-//   }
   W.debugShadow = false;
   if(W.debugShadow === false){
     W.gl.bindFramebuffer(W.gl.FRAMEBUFFER, shadowFBO);  // 进入暗房
@@ -124,7 +119,9 @@ const drawShadow = (W) => {
       continue;
     }
     const object = W.next[i];
-    if (!W.models[object.type] || ['camera', 'light', 'group'].includes(object.type)) {continue};  //+2 只留下我的模型
+    // console.log(object.isShadow);
+    if (!W.models[object.type] || ['camera', 'light', 'group'].includes(object.type) || object.shadow !== 'ok') {continue};  //+2 只留下我的模型
+    // console.log(object.n);
     let modelMatrix = W.animation(object.n);
     const lightMvpMatrix = vLight.multiply(modelMatrix);
     W.gl.uniformMatrix4fv(shadowProgram.u_MvpMatrix, false, lightMvpMatrix.toFloat32Array());  // 物体矩阵化
