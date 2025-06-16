@@ -234,6 +234,11 @@ const W = {
         console.error("秘密排练室（FBO）创建失败！");
     }
 
+    // 创建一个纯白图片，用于阴影贴图使用
+    W.whiteTexture = W.gl.createTexture();
+    W.gl.bindTexture(W.gl.TEXTURE_2D, W.whiteTexture);
+    W.gl.texImage2D(W.gl.TEXTURE_2D, 0, W.gl.RGBA, 1, 1, 0, W.gl.RGBA, W.gl.UNSIGNED_BYTE, new Uint8Array([255, 255, 255, 255]));
+
     // 解绑，让绘制回到主舞台
     W.gl.bindFramebuffer(W.gl.FRAMEBUFFER, null);
   },
@@ -250,12 +255,12 @@ const W = {
     player_proxy.t = null;  // <---  就这一行
     player_proxy.ns = 1;
     player_proxy.mix = 1;
-    player_proxy.shadow = '0';
+    // player_proxy.shadow = '0';
 
     W.gl.activeTexture(W.gl.TEXTURE0);
     W.gl.bindTexture(W.gl.TEXTURE_2D, null);  // 清空纹理贴图
     W.gl.activeTexture(W.gl.TEXTURE0 + 3);
-    W.gl.bindTexture(W.gl.TEXTURE_2D, null);  // 清空阴影贴图
+    W.gl.bindTexture(W.gl.TEXTURE_2D, W.whiteTexture);  // 使用 纯白 贴图代替阴影深度图
 
     W.render(player_proxy, 0);
     if(false){  // 我们的 render
