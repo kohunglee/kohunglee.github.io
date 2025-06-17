@@ -13,10 +13,11 @@ import animate from './core/animate.js';
 
 // 插件
 import wjsShadow from './plugins/wjsShadow.js';
+import centerDot from './plugins/centerDot.js';
 
 
 // 主对象
-const ccgxk ={
+const ccgxk = {
     hooks : hooks,        // JS 钩子，用于扩展
     W     : wjs,          // 三维模型 WebGL 渲染引擎
     ...tool,         // 工具函数
@@ -31,6 +32,8 @@ const ccgxk ={
 
 // 启用插件
 wjsShadow(ccgxk);  // 开启阴影
+centerDot(ccgxk);  // 开启中心点取物
+
 
 // 兼容浏览器平台
 window.ccgxk = ccgxk;

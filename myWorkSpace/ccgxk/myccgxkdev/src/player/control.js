@@ -56,10 +56,15 @@ export default {
                 _this.keys.turnUp = e.movementY * 0.1;
             }
         });
-        c.addEventListener('click', () => {  // 单击画布，开启虚拟鼠标
-            c.requestPointerLock = c.requestPointerLock || c.mozRequestPointerLock || c.webkitRequestPointerLock;
-            c.requestPointerLock();
+        this.canvas.addEventListener('click', () => {  // 单击画布，开启虚拟鼠标
+            this.canvas.requestPointerLock = this.canvas.requestPointerLock || this.canvas.mozRequestPointerLock || this.canvas.webkitRequestPointerLock;
+            this.canvas.requestPointerLock();
             isMouseMove = true;
+            // console.log(document.pointerLockElement);
+            if(document.pointerLockElement){
+                _this.hooks.emitSync('pointer_lock_click', _this);  // 钩子：虚拟鼠标下的单击事件 ()
+            }
+            
         });
         document.addEventListener('pointerlockchange', lockChangeAlert, false);
         document.addEventListener('mozpointerlockchange', lockChangeAlert, false);
@@ -72,8 +77,8 @@ export default {
             }
         }
         window.addEventListener('resize', () => {  // 重置窗口大小
-            c.width = window.innerWidth;
-            c.height = window.innerHeight;
+            this.canvas.width = window.innerWidth;
+            this.canvas.height = window.innerHeight;
             this.W.resetView();
         });
 

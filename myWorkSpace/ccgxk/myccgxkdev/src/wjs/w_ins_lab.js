@@ -125,6 +125,7 @@ const W = {
         W.gl.enable(2929);
         W.light({y: -1});
         W.camera({fov: 30});
+        // W.wjsHooks.emitSync('start_draw', W);  // 钩子：'开始绘制'
         setTimeout(W.draw, 16);  // 开始绘制
   },
 
@@ -210,92 +211,92 @@ const W = {
         W.next[state.n] = state;  // 下一帧的状态
   },
 
-  tempColor : new Uint8Array(4),
-  getPixiv : false,
-  debugFBO : false,
-  makeFBO : () => {
-    W.pickingFBO = W.gl.createFramebuffer();
-    W.gl.bindFramebuffer(W.gl.FRAMEBUFFER, W.pickingFBO);
+  // tempColor : new Uint8Array(4),
+  // getPixiv : false,
+  // debugFBO : false,
+  // makeFBO : () => {
+  //   W.pickingFBO = W.gl.createFramebuffer();
+  //   W.gl.bindFramebuffer(W.gl.FRAMEBUFFER, W.pickingFBO);
 
-    // 为FBO创建纹理附件（相当于排练室的“幕布”）
-    W.pickingTexture = W.gl.createTexture();
-    W.gl.bindTexture(W.gl.TEXTURE_2D, W.pickingTexture);
-    W.gl.texImage2D(W.gl.TEXTURE_2D, 0, W.gl.RGBA, W.canvas.width, W.canvas.height, 0, W.gl.RGBA, W.gl.UNSIGNED_BYTE, null);
-    W.gl.framebufferTexture2D(W.gl.FRAMEBUFFER, W.gl.COLOR_ATTACHMENT0, W.gl.TEXTURE_2D, W.pickingTexture, 0);
+  //   // 为FBO创建纹理附件（相当于排练室的“幕布”）
+  //   W.pickingTexture = W.gl.createTexture();
+  //   W.gl.bindTexture(W.gl.TEXTURE_2D, W.pickingTexture);
+  //   W.gl.texImage2D(W.gl.TEXTURE_2D, 0, W.gl.RGBA, W.canvas.width, W.canvas.height, 0, W.gl.RGBA, W.gl.UNSIGNED_BYTE, null);
+  //   W.gl.framebufferTexture2D(W.gl.FRAMEBUFFER, W.gl.COLOR_ATTACHMENT0, W.gl.TEXTURE_2D, W.pickingTexture, 0);
 
-    // 为FBO创建深度附件（相当于排练室的“地板”，保证3D效果正确）
-    W.pickingRenderbuffer = W.gl.createRenderbuffer();
-    W.gl.bindRenderbuffer(W.gl.RENDERBUFFER, W.pickingRenderbuffer);
-    W.gl.renderbufferStorage(W.gl.RENDERBUFFER, W.gl.DEPTH_COMPONENT16, W.canvas.width, W.canvas.height);
-    W.gl.framebufferRenderbuffer(W.gl.FRAMEBUFFER, W.gl.DEPTH_ATTACHMENT, W.gl.RENDERBUFFER, W.pickingRenderbuffer);
+  //   // 为FBO创建深度附件（相当于排练室的“地板”，保证3D效果正确）
+  //   W.pickingRenderbuffer = W.gl.createRenderbuffer();
+  //   W.gl.bindRenderbuffer(W.gl.RENDERBUFFER, W.pickingRenderbuffer);
+  //   W.gl.renderbufferStorage(W.gl.RENDERBUFFER, W.gl.DEPTH_COMPONENT16, W.canvas.width, W.canvas.height);
+  //   W.gl.framebufferRenderbuffer(W.gl.FRAMEBUFFER, W.gl.DEPTH_ATTACHMENT, W.gl.RENDERBUFFER, W.pickingRenderbuffer);
 
-    // 检查FBO是否创建成功
-    if (W.gl.checkFramebufferStatus(W.gl.FRAMEBUFFER) !== W.gl.FRAMEBUFFER_COMPLETE) {
-        console.error("秘密排练室（FBO）创建失败！");
-    }
+  //   // 检查FBO是否创建成功
+  //   if (W.gl.checkFramebufferStatus(W.gl.FRAMEBUFFER) !== W.gl.FRAMEBUFFER_COMPLETE) {
+  //       console.error("秘密排练室（FBO）创建失败！");
+  //   }
 
-    // 创建一个纯白图片，用于阴影贴图使用
-    W.whiteTexture = W.gl.createTexture();
-    W.gl.bindTexture(W.gl.TEXTURE_2D, W.whiteTexture);
-    W.gl.texImage2D(W.gl.TEXTURE_2D, 0, W.gl.RGBA, 1, 1, 0, W.gl.RGBA, W.gl.UNSIGNED_BYTE, new Uint8Array([255, 255, 255, 255]));
+  //   // 创建一个纯白图片，用于阴影贴图使用
+  //   W.whiteTexture = W.gl.createTexture();
+  //   W.gl.bindTexture(W.gl.TEXTURE_2D, W.whiteTexture);
+  //   W.gl.texImage2D(W.gl.TEXTURE_2D, 0, W.gl.RGBA, 1, 1, 0, W.gl.RGBA, W.gl.UNSIGNED_BYTE, new Uint8Array([255, 255, 255, 255]));
 
-    // 解绑，让绘制回到主舞台
-    W.gl.bindFramebuffer(W.gl.FRAMEBUFFER, null);
-  },
+  //   // 解绑，让绘制回到主舞台
+  //   W.gl.bindFramebuffer(W.gl.FRAMEBUFFER, null);
+  // },
 
-  testColorPickObj : () => {
-    const player = W.next['mainPlayer'];
-    if (!player) return;
-    W.gl.bindFramebuffer(W.gl.FRAMEBUFFER, W.pickingFBO);  // 切换到 FBO 里
-    W.gl.clearColor(0.0, 0.0, 0.0, 1.0); // 【保证背景纯黑】
-    W.gl.clear(W.gl.COLOR_BUFFER_BIT | W.gl.DEPTH_BUFFER_BIT); // 清空排练室
+  // testColorPickObj : () => {
+  //   const player = W.next['mainPlayer'];
+  //   if (!player) return;
+  //   W.gl.bindFramebuffer(W.gl.FRAMEBUFFER, W.pickingFBO);  // 切换到 FBO 里
+  //   W.gl.clearColor(0.0, 0.0, 0.0, 1.0); // 【保证背景纯黑】
+  //   W.gl.clear(W.gl.COLOR_BUFFER_BIT | W.gl.DEPTH_BUFFER_BIT); // 清空排练室
 
-    var player_proxy = {...player};
-    player_proxy.b = '#fff';
-    player_proxy.t = null;  // <---  就这一行
-    player_proxy.ns = 1;
-    player_proxy.mix = 1;
-    // player_proxy.shadow = '0';
+  //   var player_proxy = {...player};
+  //   player_proxy.b = '#fff';
+  //   player_proxy.t = null;  // <---  就这一行
+  //   player_proxy.ns = 1;
+  //   player_proxy.mix = 1;
+  //   // player_proxy.shadow = '0';
 
-    W.gl.activeTexture(W.gl.TEXTURE0);
-    W.gl.bindTexture(W.gl.TEXTURE_2D, null);  // 清空纹理贴图
-    W.gl.activeTexture(W.gl.TEXTURE0 + 3);
-    W.gl.bindTexture(W.gl.TEXTURE_2D, W.whiteTexture);  // 使用 纯白 贴图代替阴影深度图
+  //   W.gl.activeTexture(W.gl.TEXTURE0);
+  //   W.gl.bindTexture(W.gl.TEXTURE_2D, null);  // 清空纹理贴图
+  //   W.gl.activeTexture(W.gl.TEXTURE0 + 3);
+  //   W.gl.bindTexture(W.gl.TEXTURE_2D, W.whiteTexture);  // 使用 纯白 贴图代替阴影深度图
 
-    W.render(player_proxy, 0);
-    if(false){  // 我们的 render
-      const model = W.models[player.type]; // 获取演员的模型数据
+  //   W.render(player_proxy, 0);
+  //   if(false){  // 我们的 render
+  //     const model = W.models[player.type]; // 获取演员的模型数据
 
-      // 指令一：告诉舞台工，演员的身体（顶点）在哪里
-      W.gl.bindBuffer(W.gl.ARRAY_BUFFER, model.verticesBuffer);
-      W.gl.vertexAttribPointer(W.attribLocations.pos, 3, W.gl.FLOAT, false, 0, 0);
-      W.gl.enableVertexAttribArray(W.attribLocations.pos);
+  //     // 指令一：告诉舞台工，演员的身体（顶点）在哪里
+  //     W.gl.bindBuffer(W.gl.ARRAY_BUFFER, model.verticesBuffer);
+  //     W.gl.vertexAttribPointer(W.attribLocations.pos, 3, W.gl.FLOAT, false, 0, 0);
+  //     W.gl.enableVertexAttribArray(W.attribLocations.pos);
 
-      // // 指令二：告诉舞台工，演员的动作顺序（索引）
-      // W.gl.bindBuffer(W.gl.ELEMENT_ARRAY_BUFFER, model.indicesBuffer);
+  //     // // 指令二：告诉舞台工，演员的动作顺序（索引）
+  //     // W.gl.bindBuffer(W.gl.ELEMENT_ARRAY_BUFFER, model.indicesBuffer);
       
-      // // 指令三：开演！
-      // W.gl.drawElements(W.gl.TRIANGLES, model.indices.length, W.gl.UNSIGNED_SHORT, 0);
-      W.gl.drawArrays(W.gl.TRIANGLES, 0, model.vertices.length / 3);
-    }
+  //     // // 指令三：开演！
+  //     // W.gl.drawElements(W.gl.TRIANGLES, model.indices.length, W.gl.UNSIGNED_SHORT, 0);
+  //     W.gl.drawArrays(W.gl.TRIANGLES, 0, model.vertices.length / 3);
+  //   }
     
 
-    const pixels = new Uint8Array(4);
-    W.gl.readPixels(W.gl.canvas.width / 2, W.gl.canvas.height / 2, 1, 1, W.gl.RGBA, W.gl.UNSIGNED_BYTE, pixels);
-    W.gl.bindFramebuffer(W.gl.FRAMEBUFFER, null);
+  //   const pixels = new Uint8Array(4);
+  //   W.gl.readPixels(W.gl.canvas.width / 2, W.gl.canvas.height / 2, 1, 1, W.gl.RGBA, W.gl.UNSIGNED_BYTE, pixels);
+  //   W.gl.bindFramebuffer(W.gl.FRAMEBUFFER, null);
 
-    // player.b = '#888';
-    // // player.t = marble;
-    // // player.ns = originalProps.ns;
-    // // player.shadow = originalProps.shadow;
+  //   // player.b = '#888';
+  //   // // player.t = marble;
+  //   // // player.ns = originalProps.ns;
+  //   // // player.shadow = originalProps.shadow;
 
-    // 【关键步骤 3】关闭“傻瓜模式”开关，让他恢复正常
-    W.gl.uniform1i(W.uniformLocations.u_IsPickingMode, 0); // 0 代表 false
-    W.gl.bindFramebuffer(W.gl.FRAMEBUFFER, null); // 切换回主舞台
-    W.clearColor("#7A4141"); // 恢复主画布的背景色
+  //   // 【关键步骤 3】关闭“傻瓜模式”开关，让他恢复正常
+  //   W.gl.uniform1i(W.uniformLocations.u_IsPickingMode, 0); // 0 代表 false
+  //   W.gl.bindFramebuffer(W.gl.FRAMEBUFFER, null); // 切换回主舞台
+  //   W.clearColor("#7A4141"); // 恢复主画布的背景色
 
-    W.tempColor = pixels;
-  },
+  //   W.tempColor = pixels;
+  // },
   
   // 绘制场景
   draw: (now, dt, v, i, transparent = []) => {
@@ -663,44 +664,5 @@ W.add("pyramid", {
   }
   W.add("sphere", {vertices, uv, indices});
 })();
-
-// ===============================================
-// === FBO 调试器：“录像播放器”函数 ===
-// ===============================================
-function renderFBOToCanvas() {
-  const gl = W.gl;
-  
-  // 告诉 WebGL 我们要开始在主舞台上画画了
-  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-  gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-  // 使用一个简单的平面模型来覆盖整个屏幕
-  const model = W.models.plane;
-  gl.bindBuffer(gl.ARRAY_BUFFER, model.verticesBuffer);
-  gl.vertexAttribPointer(W.attribLocations.pos, 3, gl.FLOAT, false, 0, 0);
-  gl.enableVertexAttribArray(W.attribLocations.pos);
-
-  gl.bindBuffer(gl.ARRAY_BUFFER, model.uvBuffer);
-  gl.vertexAttribPointer(W.attribLocations.uv, 2, gl.FLOAT, false, 0, 0);
-  gl.enableVertexAttribArray(W.attribLocations.uv);
-  
-  // 激活并绑定我们想要查看的“录像带”（FBO的纹理）
-  gl.activeTexture(gl.TEXTURE0);
-  gl.bindTexture(gl.TEXTURE_2D, W.pickingTexture);  // 注意，这里是我们的 FBO 变量
-  gl.uniform1i(W.uniformLocations.sampler, 0);
-
-  // 设置着色器，让它进行最简单的纹理绘制
-  // 我们不需要光照、动画或复杂的3D变换
-  gl.uniformMatrix4fv(W.uniformLocations.pv, false, new DOMMatrix().toFloat32Array()); // 使用单位投影视图矩阵
-  const scaleMatrix = new DOMMatrix().scaleSelf(2, 2, 1); // Plane是-0.5到0.5，放大2倍刚好填满-1到1的裁剪空间
-  gl.uniformMatrix4fv(W.uniformLocations.m, false, scaleMatrix.toFloat32Array()); // 模型矩阵
-  gl.uniform4f(W.uniformLocations.o, 0, 0, 0, 0); // 关闭所有光照效果，mix=0表示100%使用纹理
-  gl.uniform2f(W.uniformLocations.tiling, 1, 1); // 关闭纹理平铺
-  gl.uniform1i(W.uniformLocations.isInstanced, 0); // 不是实例化绘制
-
-  // 绘制这个贴了图的平面
-  gl.drawArrays(gl.TRIANGLES, 0, model.vertices.length / 3);
-}
 
 export default W;

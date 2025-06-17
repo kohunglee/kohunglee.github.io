@@ -11,7 +11,7 @@ export default {
     bodyObjName : 0,
 
     // 初始化类型化数组（储存物体信息使用，TA = typeArray）
-    positionsStatusTA : null,  //位置和状态
+    positionsStatusTA : null,  // 位置和状态
     bodyProp : null,           // 属性
     physicsPropsTA : null,     // 物理属性
     freeSlots : null,          // 空位表

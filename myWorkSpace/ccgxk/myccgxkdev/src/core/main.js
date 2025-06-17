@@ -2,11 +2,12 @@
 export default {
 
     // 配置
-    speedH: 3,       // 最高速度的反数
-    speedL: 8,       // 最低速度的反数
-    speedAdd: 0.1,   // 速度的增加率
-    jumpYVel: 5,     // 跳跃时向上的加速度
-    fov:35,          // 相机视野
+    speedH: 3,              // 最高速度的反数
+    speedL: 8,              // 最低速度的反数
+    speedAdd: 0.1,          // 速度的增加率
+    jumpYVel: 5,            // 跳跃时向上的加速度
+    fov:35,                 // 相机视野
+    colorClear: "#7A4141",  // 画布背景色
 
     // ccgxk 的 cannon.js 物理世界
     world : null,
@@ -15,6 +16,10 @@ export default {
     bodylist : new Array(),  // 有质量，有物理计算，可视化
     bodylistNotPys : new Array(),  // 纯模型，不进行物理计算
     bodylistMass0 : new Array(),  // 无质量的可视模型
+
+    // 画板
+    // canvas : null,
+    canvas : window.document.getElementById('c'),
 
     // 初始化
     initWorld : function(canvas){
@@ -34,12 +39,12 @@ export default {
     // 初始化 W 引擎
     initW : function(c){
         const W = this.W;
-        c.width = window.innerWidth / 1;
-        c.height = window.innerHeight / 1;
+        this.canvas.width = window.innerWidth / 1;
+        this.canvas.height = window.innerHeight / 1;
         W.reset(c);
         W.ambient(0.7);
         W.light({ x: 0.5, y: -0.3, z: 0.5});
-        W.clearColor("#7A4141");
+        W.clearColor(this.colorClear);
         W.camera({n:'camera', fov: this.fov});
         W.group({n:'posZero',x:0,y:1,z:0});  //+8 下面这几行，绘制原点坐标轴
         W.cube({g:'posZero',x:5,w:10,h:.5,d:.5,b:"f44"});

@@ -121,7 +121,7 @@ export default {
     // -------------------------【 实验 】-----------------------------
     // 新的 dynaNodes
     gridsize : 20,  // 单个区块面积大小
-    aaa:'',
+    // aaa:'',
     currentlyActiveIndices : new Set(),  // 当前激活状态的物体。也可保存本次的激活物体列表，供下一次使用
     dynaNodes_lab : function(){
         if(this.mainVPlayer === null || this.stopDynaNodes) {return ''};
@@ -134,7 +134,7 @@ export default {
                 activeGridKeys.push(`${playerGridX + i}_${playerGridZ + j}`);
             }
         }
-        this.aaa = activeGridKeys;
+        // this.aaa = activeGridKeys;
         const newActiveIndices = new Set();  // 待做出隐藏动作的物体的 index 列表
         const indicesToHide = new Set(this.currentlyActiveIndices);  // 待做出隐藏动作的物体的 index 列表
         for(const key of activeGridKeys){

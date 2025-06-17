@@ -40,7 +40,7 @@
     <span id="modListCount"></span>
     <span id="posIDMVP"></span>
     <canvas id="posMap" width="100" height="100"></canvas>
-    <canvas id="centerPoint" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);"></canvas>
+    <canvas id="centerPoint" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);" width="1" height="1"></canvas>
 </div>
 <div id="someCtrl">
     <button id="xforward">前</button>
@@ -51,7 +51,7 @@
     <button id="xShadow">影</button>
     <button id="xVIEW1">视1</button>
     <button id="xVIEW2">视3</button>
-    <button id="xStopDY">停动</button>
+    <button id="xStopDY">小点</button>
 </div>
 <script type="module">
 import ccgxkApp from '../src/ccgxk.js';
@@ -65,7 +65,8 @@ var list = k.bodylist;
 
 // 定义单个立方体对象的多个实例
 const cubeInstances = [];
-var numCubes = 100;
+var cubeTimes = 1;
+var numCubes = 100 * cubeTimes;
 const spacing = 2.5;
 const areaSpace = 10**1;
 const random = k.genPR(17, numCubes * numCubes * 5);  // 伪随机数
@@ -73,9 +74,9 @@ for (let i = 0; i < numCubes; i++) {
     for (let j = 0; j < numCubes; j++) {
         var index = i * numCubes + j;
         cubeInstances.push({
-            x: Math.floor(random[index] * 99 * areaSpace + 1 - 50 * areaSpace),
+            x: Math.floor(random[index] * 99 * areaSpace + 1 - 50 * areaSpace) * cubeTimes,
             y: Math.floor(random[index + 1] * 50),
-            z: Math.floor(random[index + 2] * 99 * areaSpace + 1 - 50 * areaSpace),
+            z: Math.floor(random[index + 2] * 99 * areaSpace + 1 - 50 * areaSpace) * cubeTimes,
             w: 20,
             d: 30,
             h: Math.floor(random[index + 3] * 20 + 1),
@@ -104,9 +105,9 @@ for (let i = 0; i < numCubes; i++) {
         k.addTABox({
             DPZ : 4,
             isPhysical: true,
-            X: Math.floor(random[index] * 99 * areaSpace + 1 - 50 * areaSpace),
+            X: Math.floor(random[index] * 99 * areaSpace + 1 - 50 * areaSpace) * cubeTimes,
             Y: Math.floor(random[index + 1] * 50),
-            Z: Math.floor(random[index + 2] * 99 * areaSpace + 1 - 50 * areaSpace),
+            Z: Math.floor(random[index + 2] * 99 * areaSpace + 1 - 50 * areaSpace) * cubeTimes,
             mass: 0,
             width: 20,
             depth: 30,
@@ -126,7 +127,7 @@ k.mainVPlayer = k.addBox({  // 创建一个立方体，并设置为主角
         isShadow: 'ok',
         // X:4.25, Y:1.00, Z:12.09,
         // X:-30.92, Y:1.00, Z:40.17,
-        X:1, Y:1.00, Z:555,
+        X:1, Y:100.00, Z:555,
         rX: 0, rY: 0, rZ: 0, size:1, mixValue:0.7,
         mass: 50,
         background : '#333',
@@ -268,57 +269,72 @@ function drawRedDot(t){var l=t.getContext("2d"),e=t.width/2,i=t.height/2,a=k.mai
     r=k.W.current.mainPlayer,e=calculateNorthAngle(r.rx,r.ry,r.rz);l.lineTo(t-100*Math.sin(e),a-100*Math.cos(e)),l.stroke()}
 
 
-// 画屏幕中心点
-k.W.makeFBO();
-const centerPointColorUpdatax = setInterval(() => { drawCenterPoint() }, 100);
-function drawCenterPoint(){
-    const canvas = document.getElementById('centerPoint');
-    const ctx = canvas.getContext('2d');
-    function resizeCanvas() {
-        canvas.width = 20;
-        canvas.height = 20;
-    }
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
+// // 画屏幕中心点
+// k.W.makeFBO();
+// window.isDrawCenterPoint = false;
+// // const centerPointColorUpdatax = setInterval(() => { drawCenterPoint() }, 500);
+// function drawCenterPoint(cmd){
+//     // console.log(document.pointerLockElement);
+//     const canvas = document.getElementById('centerPoint');
+//     const ctx = canvas.getContext('2d');
+//     if(cmd === 'clear') {  // 清空命令
+//         canvas.width = 0;
+//         canvas.height = 0;
+//         return;
+//     }
+//     function resizeCanvas() {
+//         canvas.width = 20;
+//         canvas.height = 20;
+//     }
+//     window.addEventListener('resize', resizeCanvas);
+//     resizeCanvas();
 
-    // k.W.getPixiv = true;  // 激活一次颜色更新
-    k.W.testColorPickObj()
+//     // k.W.getPixiv = true;  // 激活一次颜色更新
+//     k.W.testColorPickObj()
 
-    // 绘制中心圆
-    function drawCircle() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+//     // 绘制中心圆
+//     function drawCircle() {
+//         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        ctx.beginPath();
-        ctx.arc(
-            canvas.width / 2,  // 圆心x坐标（水平居中）
-            canvas.height / 2, // 圆心y坐标（垂直居中）
-            5,                // 半径5像素
-            0,                // 起始角度
-            Math.PI * 2       // 结束角度（完整圆）
-        );
-        ctx.lineWidth = 1;  // 1像素宽线条
-        ctx.stroke();       // 描边绘制
+//         ctx.beginPath();
+//         ctx.arc(
+//             canvas.width / 2,  // 圆心x坐标（水平居中）
+//             canvas.height / 2, // 圆心y坐标（垂直居中）
+//             5,                // 半径5像素
+//             0,                // 起始角度
+//             Math.PI * 2       // 结束角度（完整圆）
+//         );
+//         ctx.lineWidth = 1;  // 1像素宽线条
+//         ctx.stroke();       // 描边绘制
 
-        const colorArray = k.W.tempColor || [255, 0, 0, 255];
-        const color = `rgba(${colorArray[0]}, ${colorArray[1]}, ${colorArray[2]}, ${colorArray[3]/255})`;
-        // console.log(color);
-        
+//         const colorArray = k.W.tempColor || [255, 0, 0, 255];
+//         const color = `rgba(${colorArray[0]}, ${colorArray[1]}, ${colorArray[2]}, ${colorArray[3]/255})`;
 
-        ctx.beginPath();
-        ctx.arc(
-            canvas.width / 2,
-            canvas.height / 2,
-            5,
-            0,
-            Math.PI * 2
-        );
-        ctx.fillStyle = color;  // 设置填充颜色
-        ctx.fill();             // 填充绘制
+//         ctx.beginPath();
+//         ctx.arc(
+//             canvas.width / 2,
+//             canvas.height / 2,
+//             5,
+//             0,
+//             Math.PI * 2
+//         );
+//         ctx.fillStyle = color;  // 设置填充颜色
+//         ctx.fill();             // 填充绘制
     
-    }
-
-    drawCircle();
-}
+//     }
+//     drawCircle();
+// }
+// // 单击鼠标，开启小点
+// k.hooks.on('pointer_lock_click', function(){
+//     if(k.centerPointColorUpdatax){
+//         drawCenterPoint('clear');
+//         clearInterval(k.centerPointColorUpdatax);
+//         k.centerPointColorUpdatax = null; // 避免重复清除
+//     } else {
+//         drawCenterPoint();
+//         k.centerPointColorUpdatax = setInterval(() => { drawCenterPoint() }, 500);
+//     }
+// });
 
 window.k = k;
 window.list = list;
@@ -386,10 +402,12 @@ xVIEW2.addEventListener('mousedown', function(event) {
     k.viewType = 0;
 });
 
-// 切换 dynaNodes 状态
-xStopDY.addEventListener('mousedown', function(event) {
-    k.stopDynaNodes = !k.stopDynaNodes;
-});
+// // 小点
+// xStopDY.addEventListener('mousedown', function(event) {
+//     const centerPointColorUpdatax = setInterval(() => { drawCenterPoint() }, 500);
+// });
+
+
 
 document.addEventListener('keydown', function(event) {
     // 检查按下的是否是数字键1
