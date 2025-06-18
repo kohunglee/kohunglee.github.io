@@ -73,7 +73,7 @@ const random = k.genPR(17, numCubes * numCubes * 5);  // 伪随机数
 for (let i = 0; i < numCubes; i++) {
     for (let j = 0; j < numCubes; j++) {
         var index = i * numCubes + j;
-        if(index === 5869){
+        if(index === 5869){  // 测试隐藏某个块块儿
             continue;
         }
         cubeInstances.push({
@@ -152,6 +152,35 @@ k.addTABox({  // 创建一个 旋转测试 细长物理体
     mass: 10, width: 40, depth: 2, height: 2, background: '#333' 
 });
 
+// 纹理列表
+const drawList = [
+    {func:drawRandomNoise, id:'xnoise'},
+    {func:drawjpflag, id:'jpflag'},
+    {func:drawText, id:'xjapangood'},
+];
+
+k.loadTexture(drawList).then(res => {
+    k.addBox({  // 创建一个立方体，测试我的纹理系统
+        DPZ : 1,
+        tiling : 1,
+        name: 'testTexture', X: 10, Y: 200, Z: 510,
+        mass: 100, size:20, texture: jpflag, mixValue: 0.1,
+        background: '#171f7a14'
+    });
+
+    k.addTABox({  // 创建一个 TA 平面试试
+        DPZ : 1,
+        shape: 'plane',
+        isPhysical: false,
+        X: -10, Y: 10, Z: 540, rX: 0,
+        mass: 0, width: 10, depth: 0, height: 10,
+        texture: xjapangood, background: '#171f7a14', mixValue: 0.71,
+    });
+})
+
+
+
+
 // // 尝试调试物理引擎
 // k.W.isOpenShadow = !k.W.isOpenShadow;  // 关闭阴影
 // k.distanceDPZ[2].len = 35;  // 第四 DZP 级别的探测距离
@@ -200,21 +229,10 @@ k.addBox({  // 创建一个参考1米的使用的辅助图片。它会拉低渲�
 });
 
 
-// 绘制纹理
-const drawList = [
-    {func:drawRandomNoise, id:'xnoise'},
-    {func:drawjpflag, id:'jpflag'},
-    {func:drawText, id:'xjapangood'},
-];
 
-k.loadTexture(drawList).then(res => {
-    k.addBox({  // 创建一个立方体，测试我的纹理系统
-        DPZ : 1,
-        tiling : 1,
-        name: 'testTexture', X: 10, Y: 200, Z: 510,
-        mass: 100, size:20, texture: jpflag, mixValue: 0.1
-    });
-})
+
+
+
 
 // 日本国旗
 function drawjpflag(ctx, w, h) {
@@ -249,6 +267,8 @@ function drawText(ctx){
     ctx.fillText("不用扙姜", 150, 90);
 }
 
+// *-----------------------------------------------------------------------------------------------------------------------------------------------------
+
 // 一个能跑起来的计算角度的函数，凑合用吧
 function calculateNorthAngle(t,a,h){var t=-t*Math.PI/180,a=-a*Math.PI/180,h=h*Math.PI/180,M=Math.cos(t),
     t=Math.sin(t),o=Math.cos(a),a=Math.sin(a),h=(Math.cos(h),Math.sin(h),a*M),a=-t,t=o*M,o=[0,0,1],M=t,
@@ -271,74 +291,6 @@ function drawRedDot(t){var l=t.getContext("2d"),e=t.width/2,i=t.height/2,a=k.mai
     for(let e=0;e<10;e++)for(let t=0;t<10;t++)(e+t)%2==0&&l.fillRect(e*h,t*h,h,h);t=e+a,a=i+r,l.beginPath(),l.arc(e,i,2,0,2*Math.PI),
     l.arc(t,a,1,0,2*Math.PI),l.fillStyle="red",l.fill(),l.strokeStyle="#9AFF4D",l.lineWidth=1,l.beginPath(),l.moveTo(t,a),
     r=k.W.current.mainPlayer,e=calculateNorthAngle(r.rx,r.ry,r.rz);l.lineTo(t-100*Math.sin(e),a-100*Math.cos(e)),l.stroke()}
-
-
-// // 画屏幕中心点
-// k.W.makeFBO();
-// window.isDrawCenterPoint = false;
-// // const centerPointColorUpdatax = setInterval(() => { drawCenterPoint() }, 500);
-// function drawCenterPoint(cmd){
-//     // console.log(document.pointerLockElement);
-//     const canvas = document.getElementById('centerPoint');
-//     const ctx = canvas.getContext('2d');
-//     if(cmd === 'clear') {  // 清空命令
-//         canvas.width = 0;
-//         canvas.height = 0;
-//         return;
-//     }
-//     function resizeCanvas() {
-//         canvas.width = 20;
-//         canvas.height = 20;
-//     }
-//     window.addEventListener('resize', resizeCanvas);
-//     resizeCanvas();
-
-//     // k.W.getPixiv = true;  // 激活一次颜色更新
-//     k.W.testColorPickObj()
-
-//     // 绘制中心圆
-//     function drawCircle() {
-//         ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-//         ctx.beginPath();
-//         ctx.arc(
-//             canvas.width / 2,  // 圆心x坐标（水平居中）
-//             canvas.height / 2, // 圆心y坐标（垂直居中）
-//             5,                // 半径5像素
-//             0,                // 起始角度
-//             Math.PI * 2       // 结束角度（完整圆）
-//         );
-//         ctx.lineWidth = 1;  // 1像素宽线条
-//         ctx.stroke();       // 描边绘制
-
-//         const colorArray = k.W.tempColor || [255, 0, 0, 255];
-//         const color = `rgba(${colorArray[0]}, ${colorArray[1]}, ${colorArray[2]}, ${colorArray[3]/255})`;
-
-//         ctx.beginPath();
-//         ctx.arc(
-//             canvas.width / 2,
-//             canvas.height / 2,
-//             5,
-//             0,
-//             Math.PI * 2
-//         );
-//         ctx.fillStyle = color;  // 设置填充颜色
-//         ctx.fill();             // 填充绘制
-    
-//     }
-//     drawCircle();
-// }
-// // 单击鼠标，开启小点
-// k.hooks.on('pointer_lock_click', function(){
-//     if(k.centerPointColorUpdatax){
-//         drawCenterPoint('clear');
-//         clearInterval(k.centerPointColorUpdatax);
-//         k.centerPointColorUpdatax = null; // 避免重复清除
-//     } else {
-//         drawCenterPoint();
-//         k.centerPointColorUpdatax = setInterval(() => { drawCenterPoint() }, 500);
-//     }
-// });
 
 window.k = k;
 window.list = list;
@@ -406,15 +358,8 @@ xVIEW2.addEventListener('mousedown', function(event) {
     k.viewType = 0;
 });
 
-// // 小点
-// xStopDY.addEventListener('mousedown', function(event) {
-//     const centerPointColorUpdatax = setInterval(() => { drawCenterPoint() }, 500);
-// });
-
-
-
+// 视角切换
 document.addEventListener('keydown', function(event) {
-    // 检查按下的是否是数字键1
     if (event.key === '1' || event.key === '2' || event.key === '3' || event.key === '4') {
         if(k.viewType){
             k.mainCamera.pos = {x: 0, y: 2, z: 4}

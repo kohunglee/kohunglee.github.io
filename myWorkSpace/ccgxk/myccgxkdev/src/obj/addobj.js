@@ -134,7 +134,7 @@ export default {
             }
             if(typeof tiling === 'number'){ tiling = [tiling, tiling] }  // 处理平铺数
             const utter = (args.isFictBody) ? 0.1 : 0; // 物理假体，仅在视觉上物体小一圈儿
-            this.W.cube({
+            this.W[args.shape]({
                 n: 'T' + index,  // 意为 TypeArray 生成的
                 w: physicalProp[1] - utter, d: physicalProp[3] - utter, h: physicalProp[2] - utter,
                 x: posProp[0], y:posProp[1], z:posProp[2],
@@ -147,8 +147,13 @@ export default {
 
     // 隐藏 TA 物体
     hiddenTABox : function(index){
-        this.world.removeBody(this.indexToArgs.get(index).cannonBody);
-        this.W.delete('T' + index);
+        const org_args = this.indexToArgs.get(index);  // 提取参数
+        if(org_args.isPhysical !== false){
+            this.world.removeBody(org_args.cannonBody);
+        }
+        if(org_args.isVisualMode !== false){
+            this.W.delete('T' + index);
+        }
     },
 
 

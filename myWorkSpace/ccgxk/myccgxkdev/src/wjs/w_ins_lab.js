@@ -208,93 +208,6 @@ const W = {
         W.next[state.n] = state;  // 下一帧的状态
   },
 
-  // tempColor : new Uint8Array(4),
-  // getPixiv : false,
-  // debugFBO : false,
-  // makeFBO : () => {
-  //   W.pickingFBO = W.gl.createFramebuffer();
-  //   W.gl.bindFramebuffer(W.gl.FRAMEBUFFER, W.pickingFBO);
-
-  //   // 为FBO创建纹理附件（相当于排练室的“幕布”）
-  //   W.pickingTexture = W.gl.createTexture();
-  //   W.gl.bindTexture(W.gl.TEXTURE_2D, W.pickingTexture);
-  //   W.gl.texImage2D(W.gl.TEXTURE_2D, 0, W.gl.RGBA, W.canvas.width, W.canvas.height, 0, W.gl.RGBA, W.gl.UNSIGNED_BYTE, null);
-  //   W.gl.framebufferTexture2D(W.gl.FRAMEBUFFER, W.gl.COLOR_ATTACHMENT0, W.gl.TEXTURE_2D, W.pickingTexture, 0);
-
-  //   // 为FBO创建深度附件（相当于排练室的“地板”，保证3D效果正确）
-  //   W.pickingRenderbuffer = W.gl.createRenderbuffer();
-  //   W.gl.bindRenderbuffer(W.gl.RENDERBUFFER, W.pickingRenderbuffer);
-  //   W.gl.renderbufferStorage(W.gl.RENDERBUFFER, W.gl.DEPTH_COMPONENT16, W.canvas.width, W.canvas.height);
-  //   W.gl.framebufferRenderbuffer(W.gl.FRAMEBUFFER, W.gl.DEPTH_ATTACHMENT, W.gl.RENDERBUFFER, W.pickingRenderbuffer);
-
-  //   // 检查FBO是否创建成功
-  //   if (W.gl.checkFramebufferStatus(W.gl.FRAMEBUFFER) !== W.gl.FRAMEBUFFER_COMPLETE) {
-  //       console.error("秘密排练室（FBO）创建失败！");
-  //   }
-
-  //   // 创建一个纯白图片，用于阴影贴图使用
-  //   W.whiteTexture = W.gl.createTexture();
-  //   W.gl.bindTexture(W.gl.TEXTURE_2D, W.whiteTexture);
-  //   W.gl.texImage2D(W.gl.TEXTURE_2D, 0, W.gl.RGBA, 1, 1, 0, W.gl.RGBA, W.gl.UNSIGNED_BYTE, new Uint8Array([255, 255, 255, 255]));
-
-  //   // 解绑，让绘制回到主舞台
-  //   W.gl.bindFramebuffer(W.gl.FRAMEBUFFER, null);
-  // },
-
-  // testColorPickObj : () => {
-  //   const player = W.next['mainPlayer'];
-  //   if (!player) return;
-  //   W.gl.bindFramebuffer(W.gl.FRAMEBUFFER, W.pickingFBO);  // 切换到 FBO 里
-  //   W.gl.clearColor(0.0, 0.0, 0.0, 1.0); // 【保证背景纯黑】
-  //   W.gl.clear(W.gl.COLOR_BUFFER_BIT | W.gl.DEPTH_BUFFER_BIT); // 清空排练室
-
-  //   var player_proxy = {...player};
-  //   player_proxy.b = '#fff';
-  //   player_proxy.t = null;  // <---  就这一行
-  //   player_proxy.ns = 1;
-  //   player_proxy.mix = 1;
-  //   // player_proxy.shadow = '0';
-
-  //   W.gl.activeTexture(W.gl.TEXTURE0);
-  //   W.gl.bindTexture(W.gl.TEXTURE_2D, null);  // 清空纹理贴图
-  //   W.gl.activeTexture(W.gl.TEXTURE0 + 3);
-  //   W.gl.bindTexture(W.gl.TEXTURE_2D, W.whiteTexture);  // 使用 纯白 贴图代替阴影深度图
-
-  //   W.render(player_proxy, 0);
-  //   if(false){  // 我们的 render
-  //     const model = W.models[player.type]; // 获取演员的模型数据
-
-  //     // 指令一：告诉舞台工，演员的身体（顶点）在哪里
-  //     W.gl.bindBuffer(W.gl.ARRAY_BUFFER, model.verticesBuffer);
-  //     W.gl.vertexAttribPointer(W.attribLocations.pos, 3, W.gl.FLOAT, false, 0, 0);
-  //     W.gl.enableVertexAttribArray(W.attribLocations.pos);
-
-  //     // // 指令二：告诉舞台工，演员的动作顺序（索引）
-  //     // W.gl.bindBuffer(W.gl.ELEMENT_ARRAY_BUFFER, model.indicesBuffer);
-      
-  //     // // 指令三：开演！
-  //     // W.gl.drawElements(W.gl.TRIANGLES, model.indices.length, W.gl.UNSIGNED_SHORT, 0);
-  //     W.gl.drawArrays(W.gl.TRIANGLES, 0, model.vertices.length / 3);
-  //   }
-    
-
-  //   const pixels = new Uint8Array(4);
-  //   W.gl.readPixels(W.gl.canvas.width / 2, W.gl.canvas.height / 2, 1, 1, W.gl.RGBA, W.gl.UNSIGNED_BYTE, pixels);
-  //   W.gl.bindFramebuffer(W.gl.FRAMEBUFFER, null);
-
-  //   // player.b = '#888';
-  //   // // player.t = marble;
-  //   // // player.ns = originalProps.ns;
-  //   // // player.shadow = originalProps.shadow;
-
-  //   // 【关键步骤 3】关闭“傻瓜模式”开关，让他恢复正常
-  //   W.gl.uniform1i(W.uniformLocations.u_IsPickingMode, 0); // 0 代表 false
-  //   W.gl.bindFramebuffer(W.gl.FRAMEBUFFER, null); // 切换回主舞台
-  //   W.clearColor("#7A4141"); // 恢复主画布的背景色
-
-  //   W.tempColor = pixels;
-  // },
-  
   // 绘制场景
   draw: (now, dt, v, i, transparent = []) => {
         const frameRenderStart = performance.now();  // 记录开始的时间
@@ -319,19 +232,28 @@ const W = {
           W.wjsHooks.emitSync('shadow_draw', W);  // 绘制阴影插件，测试钩子
           W.gl.clear(16640);
           for(i in W.next){  // 遍历渲染模型
-            if(!W.next[i].t && W.col(W.next[i].b)[3] == 1){
-              W.render(W.next[i], dt);
+            const object = W.next[i];
+            if (!object.isInstanced && !object.t && W.col(object.b)[3] == 1) {
+              W.render(object, dt);
             } else {
-              transparent.push(W.next[i]);  // 透明的先不渲染，存起来
+              transparent.push(object);  // 透明的先不渲染，存起来
             }
           }
-          transparent.sort((a, b) => {return W.dist(b) - W.dist(a);});
+          // transparent.sort((a, b) => {return W.dist(b) - W.dist(a);});  // 感觉会损失性能，先注释掉
           W.gl.enable(3042 );
-          for(i of transparent){  // 遍历渲染透明对象
-            if( ["plane","billboard"].includes(i.type)) { W.gl.depthMask(0) };  // 广告牌、屏幕特殊处理
-            W.render(i, dt);
-            W.gl.depthMask(1);
+          W.gl.depthMask(1)
+          for(i of transparent) {  // 遍历渲染透明对象
+            if (i.isInstanced) {
+              W.render(i, dt);
+            }
           }
+          // W.gl.depthMask(0);
+          for(i of transparent){
+            if (!i.isInstanced) {
+              W.render(i, dt);
+            }
+          }
+          // W.gl.depthMask(1);
           W.gl.disable(3042);
         }
         

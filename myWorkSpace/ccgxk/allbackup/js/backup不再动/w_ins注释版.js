@@ -193,9 +193,6 @@ W = {
         if(W.next.camera.g){  // 如果相机的group存在
           W.render(W.next[W.next.camera.g], dt, 1);  // 渲染啥？？
         }
-
-        
-
         v = W.animation('camera');  // 创建一个包含当前相机变换的矩阵v ，用于下面的各种变换操作
         if(W.next?.camera?.g){  // 如果相机在组中
           v.preMultiplySelf(W.next[W.next.camera.g].M || W.next[W.next.camera.g].m);  // 相机以组来计算矩阵
@@ -212,15 +209,13 @@ W = {
           false,
           v.toFloat32Array()
         );
-
-
-
         W.gl.clear(16640 /* W.gl.COLOR_BUFFER_BIT | W.gl.DEPTH_BUFFER_BIT */);  // 画布清空
         for(i in W.next){  // 遍历所有已绘制的模型对象
-          if(!W.next[i].t && W.col(W.next[i].b)[3] == 1){  // 渲染纯色物体
+          const object = W.next[i];
+          if (!object.isInstanced && !object.t && W.col(object.b)[3] == 1) {  // 渲染纯色物体
             W.render(W.next[i], dt);
           } else {
-            transparent.push(W.next[i]);  // 把有透明颜色或有纹理的，先装到数组里
+            transparent.push(object);  // 把有透明颜色或有纹理的，先装到数组里
           }
         }
         transparent.sort((a, b) => {  // 从后向前排序透明对象（用以不明，还在研究）

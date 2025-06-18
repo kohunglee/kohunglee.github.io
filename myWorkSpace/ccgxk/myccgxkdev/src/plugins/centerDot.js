@@ -1,7 +1,7 @@
 /**
  * 中心点插件
  * ========
- * 可以在屏幕中显示中心点儿，以颜色法，选中物体（16777215 个物体有效）
+ * 可以在屏幕中显示中心点儿，以颜色法，选中物体（最多支持 16777215 个物体）
  */
 
 // 插件入口
@@ -63,14 +63,20 @@ export default function(ccgxkObj) {
         W.tempColor = pixels;
     }
     ccgxkObj.hooks.on('pointer_lock_click', function(){  // 添加事件了
-        if(ccgxkObj.centerPointColorUpdatax){  // 开启小点
-            drawCenterPoint(canvas, ccgxkObj, true);
-            clearInterval(ccgxkObj.centerPointColorUpdatax);
-            ccgxkObj.centerPointColorUpdatax = null; // 避免重复清除
-        } else {  // 关闭小点
+        if(ccgxkObj.centerPointColorUpdatax){  
+            if(ccgxkObj.hotPoint) {  // 如果有热点，单击热点后
+                hotAction(ccgxkObj);
+            } else {
+                drawCenterPoint(canvas, ccgxkObj, true);
+                clearInterval(ccgxkObj.centerPointColorUpdatax);
+                ccgxkObj.centerPointColorUpdatax = null; // 避免重复清除
+                ccgxkObj.mainCamera.pos = {x: 0, y: 2, z: 4};
+            }
+        } else {  // 开启小点
             if(W.makeFBOSucess !== true){ W.makeFBO() }
             drawCenterPoint(canvas, ccgxkObj);
             ccgxkObj.centerPointColorUpdatax = setInterval(() => { drawCenterPoint(canvas, ccgxkObj) }, 500);
+            ccgxkObj.mainCamera.pos = {x:0, y:1, z:0};
         }
     });
 }
@@ -88,8 +94,9 @@ function drawCenterPoint(canvas, thisObj, isClear){
     const color = `rgba(${255 - colorArray[0]}, ${255 - colorArray[1]}, ${255 - colorArray[2]}, ${colorArray[3]/255})`;
     const objIndex = colorArray[0] * 256 ** 2 + colorArray[1] * 256 + colorArray[2];  // 根据颜色获取到了对应的 index 值
     document.getElementById('xStopDY').innerHTML = objIndex;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
     if(objIndex !== 0){
-        thisObj.hotPoint = true;
+        thisObj.hotPoint = objIndex;
         ctx.beginPath();
         ctx.strokeStyle = color;
         ctx.arc(
@@ -99,10 +106,9 @@ function drawCenterPoint(canvas, thisObj, isClear){
             0,                
             Math.PI * 2       
         );
-        ctx.lineWidth = 1;
+        ctx.lineWidth = 2;
         ctx.stroke(); 
     } else if (thisObj.hotPoint) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
         thisObj.hotPoint = false;
     }
     ctx.beginPath();
@@ -117,3 +123,7 @@ function drawCenterPoint(canvas, thisObj, isClear){
     ctx.fill();  // 绘制圆点
 }
 
+// 单击热点后的事件
+function hotAction(thisObj){
+    console.log(thisObj.hotPoint);
+}
