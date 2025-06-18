@@ -131,7 +131,7 @@ k.mainVPlayer = k.addBox({  // 创建一个立方体，并设置为主角
         isShadow: 'ok',
         // X:4.25, Y:1.00, Z:12.09,
         // X:-30.92, Y:1.00, Z:40.17,
-        X:1, Y:5.00, Z:555,
+        X:-69, Y:5.00, Z:510,
         rX: 0, rY: 0, rZ: 0, size:1, mixValue:0.7,
         mass: 50,
         background : '#333',
@@ -156,7 +156,7 @@ k.addTABox({  // 创建一个 旋转测试 细长物理体
 const drawList = [
     {func:drawRandomNoise, id:'xnoise'},
     {func:drawjpflag, id:'jpflag'},
-    {func:drawText, id:'xjapangood'},
+    {func:drawText, id:'xjapangood', type: 'png'},
 ];
 
 k.loadTexture(drawList).then(res => {
@@ -164,21 +164,57 @@ k.loadTexture(drawList).then(res => {
         DPZ : 1,
         tiling : 1,
         name: 'testTexture', X: 10, Y: 200, Z: 510,
-        mass: 100, size:20, texture: jpflag, mixValue: 0.1,
-        background: '#171f7a14'
+        mass: 100, size:20, texture: jpflag, mixValue: 0.1
     });
 
-    k.addTABox({  // 创建一个 TA 平面试试
-        DPZ : 1,
-        shape: 'plane',
-        isPhysical: false,
-        X: -10, Y: 10, Z: 540, rX: 0,
-        mass: 0, width: 10, depth: 0, height: 10,
-        texture: xjapangood, background: '#171f7a14', mixValue: 0.71,
-    });
+    
 })
 
 
+// 测试创造一个文字纹理和物体绑定
+function makeTestTextT(){
+    const indexObj= 8074;
+    const indexOfArr = indexObj * 8;
+    const objWidth  = k.physicsProps[indexOfArr + 1];
+    const objHeight = k.physicsProps[indexOfArr + 2];
+    const objDepth  = k.physicsProps[indexOfArr + 3];
+    const objPosX = k.positionsStatus[indexOfArr];
+    const objPosY = k.positionsStatus[indexOfArr + 1] ;
+    const objPosZ = k.positionsStatus[indexOfArr + 2] + objDepth / 2 + 0.1;
+    k.loadTexture([
+        {
+            func:function(ctx){drawText(ctx, '日本狗香毁了~/n为啥这么香\n香憨')},
+            id:'T8074N',
+            type: 'png',
+            width: objWidth * 50,
+            height: objHeight * 50,
+        },
+    ]).then(res => {
+        k.addBox({  // 创建一个 TA 平面试试
+            DPZ : 1,
+            shape: 'plane',
+            isPhysical: false,
+            X: objPosX, Y: objPosY, Z: objPosZ, rX: 0,
+            mass: 0, width: objWidth, depth: 0, height: objHeight,
+            texture: T8074N, mixValue: 0,
+        });
+    })
+}
+makeTestTextT();
+
+// 写字
+function drawText(ctx, value = '日本肉香毁了~/n为啥这么香\n香憨', typeObj = {}){
+    ctx.font = typeObj.font || "30px Arial";          // 字体大小和类型
+    ctx.fillStyle =  typeObj.fillStyle || "black";            // 填充颜色
+    ctx.strokeStyle =  typeObj.strokeStyle || "blue";         // 描边颜色
+    ctx.textAlign =  typeObj.textAlign || "center";         // 水平对齐方式（left/center/right）
+    ctx.textBaseline =  typeObj.textBaseline ||"middle";      // 垂直对齐方式（top/middle/bottom）
+    const valueByLine = value.split('\n');
+    const lineHeight = parseInt(ctx.font) || 30;
+    valueByLine.forEach((line, i) => {
+        ctx.fillText(line, 150, 50 + (i * lineHeight + 5));
+    });
+}
 
 
 // // 尝试调试物理引擎
@@ -256,16 +292,7 @@ function drawRandomNoise(ctx, w, h) {
     }
 }
 
-// 写字
-function drawText(ctx){
-    ctx.font = "30px Arial";          // 字体大小和类型
-    ctx.fillStyle = "red";            // 填充颜色
-    ctx.strokeStyle = "blue";         // 描边颜色
-    ctx.textAlign = "center";         // 水平对齐方式（left/center/right）
-    ctx.textBaseline = "middle";      // 垂直对齐方式（top/middle/bottom）
-    ctx.fillText("www.ccgxk.com", 150, 50);
-    ctx.fillText("不用扙姜", 150, 90);
-}
+
 
 // *-----------------------------------------------------------------------------------------------------------------------------------------------------
 

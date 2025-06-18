@@ -19,7 +19,7 @@ export default {
     spatialGrid : new Map(),   // 区块  -> index 对应表
     initBodyTypeArray : function(MAX_BODIES = 1_000_000){  // 根据最多物体数量，初始化
         this.positionsStatus = new Float32Array(MAX_BODIES * 8);  // [x, y, z, qx, qy, qz, qw, status]
-        this.physicsProps = new Float32Array(MAX_BODIES * 4);  // [mass, width, height, depth]
+        this.physicsProps = new Float32Array(MAX_BODIES * 8);  // [mass, width, height, depth]
         this.freeSlots = new Array(MAX_BODIES).fill(0).map((_, i) => MAX_BODIES - 1 - i); // 一个从大到小排列的空闲索引栈，如 [5,4,3,2,1]
     },
 

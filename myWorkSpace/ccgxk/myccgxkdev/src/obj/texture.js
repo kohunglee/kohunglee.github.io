@@ -19,11 +19,11 @@ export default {
     // 给定 canvas 绘制程序，可以绘制纹理并返回 base64
     dToBase64 : function(drawItem) {  // 【之后优化】复用同一个 canvas 元素（清空并重绘），可以避免频繁创建和销毁 canvas 元素。
         const canvas = document.createElement('canvas');
-        canvas.width = canvas.height = 400;
+        canvas.width = drawItem.width || 400;
+        canvas.height = drawItem.height || 400;
         const ctx = canvas.getContext('2d')
-        ctx.fillStyle = 'white';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
         drawItem.func(ctx, canvas.width, canvas.height);
+        console.log(drawItem.type);
         if(drawItem.type === 'png'){  // 为透明化作铺垫
             return canvas.toDataURL('image/png');
         } else {

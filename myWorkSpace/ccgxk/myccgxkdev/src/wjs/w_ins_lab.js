@@ -239,21 +239,21 @@ const W = {
               transparent.push(object);  // 透明的先不渲染，存起来
             }
           }
-          // transparent.sort((a, b) => {return W.dist(b) - W.dist(a);});  // 感觉会损失性能，先注释掉
+          transparent.sort((a, b) => {return W.dist(b) - W.dist(a);});  // 感觉会损失性能，先注释掉
           W.gl.enable(3042 );
           W.gl.depthMask(1)
-          for(i of transparent) {  // 遍历渲染透明对象
+          for(i of transparent) {  // 遍历渲染透明对象（这几行好抽象，后续再优化）
             if (i.isInstanced) {
               W.render(i, dt);
             }
           }
-          // W.gl.depthMask(0);
+          W.gl.depthMask(0);
           for(i of transparent){
             if (!i.isInstanced) {
               W.render(i, dt);
             }
           }
-          // W.gl.depthMask(1);
+          W.gl.depthMask(1);
           W.gl.disable(3042);
         }
         
