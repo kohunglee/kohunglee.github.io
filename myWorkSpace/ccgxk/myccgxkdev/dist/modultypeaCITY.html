@@ -73,13 +73,16 @@ const random = k.genPR(17, numCubes * numCubes * 5);  // 伪随机数
 for (let i = 0; i < numCubes; i++) {
     for (let j = 0; j < numCubes; j++) {
         var index = i * numCubes + j;
+        if(index === 5869){
+            continue;
+        }
         cubeInstances.push({
             x: Math.floor(random[index] * 99 * areaSpace + 1 - 50 * areaSpace) * cubeTimes,
             y: Math.floor(random[index + 1] * 50),
             z: Math.floor(random[index + 2] * 99 * areaSpace + 1 - 50 * areaSpace) * cubeTimes,
             w: 20,
             d: 30,
-            h: Math.floor(random[index + 3] * 20 + 1),
+            h: Math.floor(random[index + 3] * 19 + 1),
             b:`#${Math.floor(random[index + 4] * 16777216).toString(16).padStart(6, '0')}`,
         });
     }
@@ -111,11 +114,12 @@ for (let i = 0; i < numCubes; i++) {
             mass: 0,
             width: 20,
             depth: 30,
-            height: Math.floor(random[index + 3] * 20 + 1),
+            height: Math.floor(random[index + 3] * 19 + 1),
             background: `#${Math.floor(random[index + 4] * 16777216).toString(16).padStart(6, '0')}`,
             mixValue: 1,
             isShadow: false,
-            isVisualMode: false,
+            // isVisualMode: false,
+            isFictBody: true,
             texture: marble,
         });
     }
@@ -127,7 +131,7 @@ k.mainVPlayer = k.addBox({  // 创建一个立方体，并设置为主角
         isShadow: 'ok',
         // X:4.25, Y:1.00, Z:12.09,
         // X:-30.92, Y:1.00, Z:40.17,
-        X:1, Y:100.00, Z:555,
+        X:1, Y:5.00, Z:555,
         rX: 0, rY: 0, rZ: 0, size:1, mixValue:0.7,
         mass: 50,
         background : '#333',

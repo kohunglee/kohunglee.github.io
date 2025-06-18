@@ -13,7 +13,6 @@ export default {
                 const dx = pos.x - indexItem.X;
                 const dy = pos.y - indexItem.Y;
                 var disten = Math.sqrt(dx*dx + dy*dy);  // 计算与自身上次的距离（必须大于 某个值 才能被可视化）
-
                 let quat = indexItem.body.quaternion;
                 let indexItemEuler = this.quaternionToEuler(quat);
 
@@ -52,7 +51,7 @@ export default {
                 const disyY = canBody.position.y - this.positionsStatus[p_offset + 1];
                 const diszZ = canBody.position.z - this.positionsStatus[p_offset + 2];
                 const disten = Math.sqrt(disxX*disxX + disyY*disyY + diszZ*diszZ);  // 计算与自身上次的距离（必须大于 某个值 才能被可视化）
-                this.positionsStatus[p_offset] = canBody.position.x;  //+7 位置储存到变量里
+                this.positionsStatus[p_offset] = canBody.position.x;  //+7 位置储存到变量里（这种挨个赋值的方式性能最好）
                 this.positionsStatus[p_offset + 1] = canBody.position.y;
                 this.positionsStatus[p_offset + 2] = canBody.position.z;
                 this.positionsStatus[p_offset + 3] = canBody.quaternion.x;

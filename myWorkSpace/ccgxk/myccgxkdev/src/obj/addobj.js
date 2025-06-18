@@ -71,7 +71,8 @@ export default {
         rZ: 0,
         isShadow: 0,
         tiling: [1, 1],
-        shape: 'cube'
+        shape: 'cube',
+        isFictBody: false,    // 物理假体，视觉比真实物理体小一圈，用于颜色探测
     },
 
     // 激活 TA 物体
@@ -123,9 +124,8 @@ export default {
             );
             org_args.cannonBody = body;  // 注意，是 org_args
         }
-        if(args.isVisualMode !== false){  // 添加渲染体
+        if(args.isVisualMode !== false){  // 添加渲染物体
             var tiling = args.tiling;
-            
             if(posProp[3] !== 0){  // 可近似认为四分数被修改过，遂更新参数
                 var eulerQuat = this.quaternionToEuler({ x: posProp[3], y: posProp[4],  z: posProp[5],  w: posProp[6] });
                 args.rX = eulerQuat.x;
@@ -133,9 +133,10 @@ export default {
                 args.rZ = eulerQuat.z
             }
             if(typeof tiling === 'number'){ tiling = [tiling, tiling] }  // 处理平铺数
+            const utter = (args.isFictBody) ? 0.1 : 0; // 物理假体，仅在视觉上物体小一圈儿
             this.W.cube({
                 n: 'T' + index,  // 意为 TypeArray 生成的
-                w: physicalProp[1], d: physicalProp[3], h: physicalProp[2],
+                w: physicalProp[1] - utter, d: physicalProp[3] - utter, h: physicalProp[2] - utter,
                 x: posProp[0], y:posProp[1], z:posProp[2],
                 t: args.texture, s: args.smooth, tile: tiling,
                 rx: args.rX, ry: args.rY, rz: args.rZ, b: args.background, mix: args.mixValue,

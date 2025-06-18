@@ -31,7 +31,7 @@ const ccgxk = {
 }
 
 // 启用插件
-wjsShadow(ccgxk);  // 开启阴影
+// wjsShadow(ccgxk);  // 开启阴影（暂时有性能问题，待改进）
 centerDot(ccgxk);  // 开启中心点取物
 
 

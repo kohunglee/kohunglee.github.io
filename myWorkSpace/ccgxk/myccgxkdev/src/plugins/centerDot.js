@@ -1,7 +1,7 @@
 /**
  * 中心点插件
  * ========
- * 可以在屏幕中显示中心点儿，以选中物体
+ * 可以在屏幕中显示中心点儿，以颜色法，选中物体（16777215 个物体有效）
  */
 
 // 插件入口
@@ -34,6 +34,19 @@ export default function(ccgxkObj) {
         W.gl.bindFramebuffer(W.gl.FRAMEBUFFER, W.pickingFBO);  // 切换到 FBO 里
         W.gl.clearColor(0.0, 0.0, 0.0, 1.0); // 黑背景
         W.gl.clear(W.gl.COLOR_BUFFER_BIT | W.gl.DEPTH_BUFFER_BIT); // 清空排练室
+        for (const index of ccgxkObj.currentlyActiveIndices) {
+            const obj = W.next['T' + index];
+            if (!obj) continue;
+            var obj_proxy = {...obj};  // 创建代理，想办法将代理显示成纯色
+            obj_proxy.b = index.toString(16).padStart(6, '0');
+            obj_proxy.ns = 1;
+            obj_proxy.mix = 1;
+            W.gl.activeTexture(W.gl.TEXTURE0);
+            W.gl.bindTexture(W.gl.TEXTURE_2D, null);  // 清空纹理贴图
+            W.gl.activeTexture(W.gl.TEXTURE0 + 3);
+            W.gl.bindTexture(W.gl.TEXTURE_2D, W.whiteTexture);  // 使用 纯白 贴图代替阴影深度图（以便清除阴影）
+            W.render(obj_proxy, 0);
+        }
         var player_proxy = {...player};  // 创建代理，想办法将代理显示成纯色
         player_proxy.b = '#f00';
         player_proxy.ns = 1;
@@ -49,12 +62,12 @@ export default function(ccgxkObj) {
         W.clearColor(ccgxkObj.colorClear); // 恢复主画布的背景色
         W.tempColor = pixels;
     }
-    ccgxkObj.hooks.on('pointer_lock_click', function(){  // 单击鼠标，开启小点
-        if(ccgxkObj.centerPointColorUpdatax){
+    ccgxkObj.hooks.on('pointer_lock_click', function(){  // 添加事件了
+        if(ccgxkObj.centerPointColorUpdatax){  // 开启小点
             drawCenterPoint(canvas, ccgxkObj, true);
             clearInterval(ccgxkObj.centerPointColorUpdatax);
             ccgxkObj.centerPointColorUpdatax = null; // 避免重复清除
-        } else {
+        } else {  // 关闭小点
             if(W.makeFBOSucess !== true){ W.makeFBO() }
             drawCenterPoint(canvas, ccgxkObj);
             ccgxkObj.centerPointColorUpdatax = setInterval(() => { drawCenterPoint(canvas, ccgxkObj) }, 500);
@@ -72,7 +85,26 @@ function drawCenterPoint(canvas, thisObj, isClear){
     const ctx = canvas.getContext('2d');
     thisObj.W.getColorPickObj();  // 拾取颜色一次
     const colorArray = thisObj.W.tempColor || [255, 0, 0, 255];  //+2 获取当前颜色值并转化
-    const color = `rgba(${colorArray[0]}, ${colorArray[1]}, ${colorArray[2]}, ${colorArray[3]/255})`;
+    const color = `rgba(${255 - colorArray[0]}, ${255 - colorArray[1]}, ${255 - colorArray[2]}, ${colorArray[3]/255})`;
+    const objIndex = colorArray[0] * 256 ** 2 + colorArray[1] * 256 + colorArray[2];  // 根据颜色获取到了对应的 index 值
+    document.getElementById('xStopDY').innerHTML = objIndex;
+    if(objIndex !== 0){
+        thisObj.hotPoint = true;
+        ctx.beginPath();
+        ctx.strokeStyle = color;
+        ctx.arc(
+            canvas.width / 2,
+            canvas.height / 2,
+            9,                
+            0,                
+            Math.PI * 2       
+        );
+        ctx.lineWidth = 1;
+        ctx.stroke(); 
+    } else if (thisObj.hotPoint) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        thisObj.hotPoint = false;
+    }
     ctx.beginPath();
     ctx.arc(  
         canvas.width / 2,
@@ -84,3 +116,4 @@ function drawCenterPoint(canvas, thisObj, isClear){
     ctx.fillStyle = color;
     ctx.fill();  // 绘制圆点
 }
+

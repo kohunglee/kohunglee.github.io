@@ -74,11 +74,8 @@ const W = {
           uniform vec2 tiling;
           uniform vec4 o;
           uniform sampler2D sampler;
-
           out vec4 c;
-
           void main() {
-
             c = mix(texture(sampler, v_uv.xy * tiling), v_col, o[3]);
             if(o[1] > 0.){
               c = vec4(

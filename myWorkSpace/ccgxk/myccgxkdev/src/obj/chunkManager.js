@@ -119,9 +119,8 @@ export default {
 
 
     // -------------------------【 实验 】-----------------------------
-    // 新的 dynaNodes
+    // 新的 dynaNodes（适用于长宽 40 以内的物体）
     gridsize : 20,  // 单个区块面积大小
-    // aaa:'',
     currentlyActiveIndices : new Set(),  // 当前激活状态的物体。也可保存本次的激活物体列表，供下一次使用
     dynaNodes_lab : function(){
         if(this.mainVPlayer === null || this.stopDynaNodes) {return ''};
@@ -134,14 +133,15 @@ export default {
                 activeGridKeys.push(`${playerGridX + i}_${playerGridZ + j}`);
             }
         }
-        // this.aaa = activeGridKeys;
         const newActiveIndices = new Set();  // 待做出隐藏动作的物体的 index 列表
         const indicesToHide = new Set(this.currentlyActiveIndices);  // 待做出隐藏动作的物体的 index 列表
         for(const key of activeGridKeys){
             const indicesInGrid = this.spatialGrid.get(key);  // 取物体使用（spatialGrid，俗称战地成员列表）
             if (indicesInGrid) {
                 for (const index of indicesInGrid) {
-                    newActiveIndices.add(index);
+                    if(Math.abs(this.positionsStatus[index * 8 + 1] - mVP.Y) < this.gridsize){  // 高度距离（Y）要接近
+                        newActiveIndices.add(index);
+                    }
                 }
             }
         }
@@ -151,7 +151,7 @@ export default {
         for (const index of newActiveIndices) {  // 执行激活动作
             if(!this.currentlyActiveIndices.has(index)){  // 上次被激活过，这次就不激活了
                 const p_offset = index * 8;
-                this.positionsStatus[p_offset + 7] = this.physicsProps[p_offset];  // mass 重新赋予
+                this.positionsStatus[p_offset + 7] = this.physicsProps[p_offset];  // 状态码（或 mass） 重新赋予
                 this.activeTABox(index);
             }
         }
@@ -162,5 +162,6 @@ export default {
         }
         this.currentlyActiveIndices = newActiveIndices;
     },
+    // ------------------------------------------------------
 
 }
