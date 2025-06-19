@@ -62,14 +62,14 @@ export default function(ccgxkObj) {
         W.clearColor(ccgxkObj.colorClear); // 恢复主画布的背景色
         W.tempColor = pixels;
     }
-    ccgxkObj.hooks.on('pointer_lock_click', function(){  // 添加事件了
+    ccgxkObj.hooks.on('pointer_lock_click', function(){
         if(ccgxkObj.centerPointColorUpdatax){  
             if(ccgxkObj.hotPoint) {  // 如果有热点，单击热点后
                 hotAction(ccgxkObj);
             } else {
                 drawCenterPoint(canvas, ccgxkObj, true);
                 clearInterval(ccgxkObj.centerPointColorUpdatax);
-                ccgxkObj.centerPointColorUpdatax = null; // 避免重复清除
+                ccgxkObj.centerPointColorUpdatax = null;  // 避免重复清除
                 ccgxkObj.mainCamera.pos = {x: 0, y: 2, z: 4};
             }
         } else {  // 开启小点

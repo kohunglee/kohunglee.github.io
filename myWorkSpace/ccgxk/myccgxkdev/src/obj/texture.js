@@ -23,7 +23,6 @@ export default {
         canvas.height = drawItem.height || 400;
         const ctx = canvas.getContext('2d')
         drawItem.func(ctx, canvas.width, canvas.height);
-        console.log(drawItem.type);
         if(drawItem.type === 'png'){  // 为透明化作铺垫
             return canvas.toDataURL('image/png');
         } else {

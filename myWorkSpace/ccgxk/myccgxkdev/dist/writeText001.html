@@ -1,0 +1,53 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Canvas多行文本示例</title>
+    <style>
+        body { display: flex; justify-content: center; padding: 20px; }
+        canvas { border: 1px solid #ccc; margin: 10px; }
+        .controls { margin-left: 20px; }
+        textarea { width: 300px; height: 150px; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <canvas id="textCanvas" width="400" height="300"></canvas>
+    
+    <div class="controls">
+        <textarea id="textInput">日本肉香毁了~
+为啥这么香
+香憨</textarea><br>
+        <button onclick="updateText()">更新文字</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('textCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // 写字函数
+        function drawText(ctx, value = 'abc', typeObj = {}){
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.font = typeObj.font || "30px Arial";
+            ctx.fillStyle = typeObj.fillStyle || "black";
+            ctx.strokeStyle = typeObj.strokeStyle || "blue";
+            ctx.textAlign = typeObj.textAlign || "center";
+            ctx.textBaseline = typeObj.textBaseline || "middle";
+            
+            const valueByLine = String(value).split('\n');
+            const lineHeight = parseInt(ctx.font) || 30;
+            valueByLine.forEach((line, i) => {
+                ctx.fillText(line, canvas.width/2, 50 + (i * (lineHeight + 5)));
+            });
+        }
+        
+        // 初始绘制
+        drawText(ctx, document.getElementById('textInput').value);
+        
+        // 更新文字
+        function updateText() {
+            const newText = document.getElementById('textInput').value;
+            drawText(ctx, newText);
+        }
+    </script>
+</body>
+</html>

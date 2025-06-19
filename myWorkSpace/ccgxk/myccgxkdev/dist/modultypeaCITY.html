@@ -155,7 +155,7 @@ k.addTABox({  // 创建一个 旋转测试 细长物理体
 // 纹理列表
 const drawList = [
     {func:drawRandomNoise, id:'xnoise'},
-    {func:drawjpflag, id:'jpflag'},
+    {func:drawjpflag, id:'jpflag', type: 'jpg'},
     {func:drawText, id:'xjapangood', type: 'png'},
 ];
 
@@ -164,7 +164,7 @@ k.loadTexture(drawList).then(res => {
         DPZ : 1,
         tiling : 1,
         name: 'testTexture', X: 10, Y: 200, Z: 510,
-        mass: 100, size:20, texture: jpflag, mixValue: 0.1
+        mass: 100, size:20, texture: jpflag, mixValue: 0
     });
 
     
@@ -183,7 +183,7 @@ function makeTestTextT(){
     const objPosZ = k.positionsStatus[indexOfArr + 2] + objDepth / 2 + 0.1;
     k.loadTexture([
         {
-            func:function(ctx){drawText(ctx, '日本狗香毁了~/n为啥这么香\n香憨')},
+            func:function(ctx){drawText(ctx, '为啥狗都嫩憨\n狗肉弄不清！！')},
             id:'T8074N',
             type: 'png',
             width: objWidth * 50,
@@ -203,15 +203,15 @@ function makeTestTextT(){
 makeTestTextT();
 
 // 写字
-function drawText(ctx, value = '日本肉香毁了~/n为啥这么香\n香憨', typeObj = {}){
-    ctx.font = typeObj.font || "30px Arial";          // 字体大小和类型
+function drawText(ctx, value = 'abc', typeObj = {}){
+    ctx.font = typeObj.font || "30px Arial";                  // 字体大小和类型
     ctx.fillStyle =  typeObj.fillStyle || "black";            // 填充颜色
     ctx.strokeStyle =  typeObj.strokeStyle || "blue";         // 描边颜色
-    ctx.textAlign =  typeObj.textAlign || "center";         // 水平对齐方式（left/center/right）
+    ctx.textAlign =  typeObj.textAlign || "center";           // 水平对齐方式（left/center/right）
     ctx.textBaseline =  typeObj.textBaseline ||"middle";      // 垂直对齐方式（top/middle/bottom）
-    const valueByLine = value.split('\n');
+    const valueByLine = String(value).split('\n');
     const lineHeight = parseInt(ctx.font) || 30;
-    valueByLine.forEach((line, i) => {
+    valueByLine.forEach((line, i) => {  // 分行
         ctx.fillText(line, 150, 50 + (i * lineHeight + 5));
     });
 }
@@ -272,6 +272,7 @@ k.addBox({  // 创建一个参考1米的使用的辅助图片。它会拉低渲�
 
 // 日本国旗
 function drawjpflag(ctx, w, h) {
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h);
     const radius = 150;
     ctx.beginPath();
     ctx.arc(w / 2, h / 2, radius, 0, Math.PI * 2);
