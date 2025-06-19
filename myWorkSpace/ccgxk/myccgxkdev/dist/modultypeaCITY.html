@@ -172,22 +172,25 @@ k.loadTexture(drawList).then(res => {
 
 
 // 测试创造一个文字纹理和物体绑定
-function makeTestTextT(){
-    const indexObj= 8074;
+function makeTestTextT(indexObj = 8074){
+    const expRatio = 40;
     const indexOfArr = indexObj * 8;
-    const objWidth  = k.physicsProps[indexOfArr + 1];
+    const objWidth  = k.physicsProps[indexOfArr + 1];  // 这样排列写，性能好一点
     const objHeight = k.physicsProps[indexOfArr + 2];
     const objDepth  = k.physicsProps[indexOfArr + 3];
     const objPosX = k.positionsStatus[indexOfArr];
     const objPosY = k.positionsStatus[indexOfArr + 1] ;
     const objPosZ = k.positionsStatus[indexOfArr + 2] + objDepth / 2 + 0.1;
+    const cWidth = objWidth * expRatio;
+    const cHeight = objHeight * expRatio;
+    const imgID = 'T' + indexObj + 'N';
     k.loadTexture([
         {
-            func:function(ctx){drawText(ctx, '为啥狗都嫩憨\n狗肉弄不清！！')},
-            id:'T8074N',
+            func:function(ctx){drawText(ctx, '为啥狗都嫩憨\n狗肉弄不清！！', {}, cWidth, cHeight)},
+            id: imgID,
             type: 'png',
-            width: objWidth * 50,
-            height: objHeight * 50,
+            width: objWidth * expRatio,
+            height: objHeight * expRatio,
         },
     ]).then(res => {
         k.addBox({  // 创建一个 TA 平面试试
@@ -196,15 +199,17 @@ function makeTestTextT(){
             isPhysical: false,
             X: objPosX, Y: objPosY, Z: objPosZ, rX: 0,
             mass: 0, width: objWidth, depth: 0, height: objHeight,
-            texture: T8074N, mixValue: 0,
+            texture: window[imgID], mixValue: 0,
         });
     })
 }
-makeTestTextT();
+makeTestTextT(8074);
+makeTestTextT(723);
+makeTestTextT(8600);
 
 // 写字
-function drawText(ctx, value = 'abc', typeObj = {}){
-    ctx.font = typeObj.font || "30px Arial";                  // 字体大小和类型
+function drawText(ctx, value = 'abc', typeObj = {}, cWidth, cHeight){
+    ctx.font = typeObj.font || "20px Arial";                  // 字体大小和类型
     ctx.fillStyle =  typeObj.fillStyle || "black";            // 填充颜色
     ctx.strokeStyle =  typeObj.strokeStyle || "blue";         // 描边颜色
     ctx.textAlign =  typeObj.textAlign || "center";           // 水平对齐方式（left/center/right）

@@ -62,9 +62,9 @@ export default function(ccgxkObj) {
         W.clearColor(ccgxkObj.colorClear); // 恢复主画布的背景色
         W.tempColor = pixels;
     }
-    ccgxkObj.hooks.on('pointer_lock_click', function(){
-        if(ccgxkObj.centerPointColorUpdatax){  
-            if(ccgxkObj.hotPoint) {  // 如果有热点，单击热点后
+    ccgxkObj.hooks.on('pointer_lock_click', function(obj, e){
+        if(ccgxkObj.centerPointColorUpdatax || e.button === 2){  
+            if(ccgxkObj.hotPoint && e.button !== 2) {  // 如果有热点，单击热点后
                 hotAction(ccgxkObj);
             } else {
                 drawCenterPoint(canvas, ccgxkObj, true);

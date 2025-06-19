@@ -56,13 +56,13 @@ export default {
                 _this.keys.turnUp = e.movementY * 0.1;
             }
         });
-        this.canvas.addEventListener('click', () => {  // 单击画布，开启虚拟鼠标
+        this.canvas.addEventListener('click', (e) => {  // 单击画布，开启虚拟鼠标
             this.canvas.requestPointerLock = this.canvas.requestPointerLock || this.canvas.mozRequestPointerLock || this.canvas.webkitRequestPointerLock;
             this.canvas.requestPointerLock();
             isMouseMove = true;
             // console.log(document.pointerLockElement);
             if(document.pointerLockElement){
-                _this.hooks.emitSync('pointer_lock_click', _this);  // 钩子：虚拟鼠标下的单击事件 ()
+                _this.hooks.emitSync('pointer_lock_click', _this, e);  // 钩子：虚拟鼠标下的单击事件 ()
             }
             
         });

@@ -3,16 +3,25 @@
  */
 export default {
 
+    // 纹理列表
+    textureMap : new Map(),
+
     // 一个异步函数，用于加载纹理
     loadTexture : function(drawFunclist) {
-        return new Promise(resolve => {
+        return new Promise(resolve => {  // 避免重复添加纹理
+            var allExist = true;
             for(var i = 0; i < drawFunclist.length; i++){
-                const img = new Image();
-                img.onload = () => resolve(img);  // 或许可以直接传入 wjs，以后优化吧
-                img.id = drawFunclist[i].id;
-                img.src = this.dToBase64(drawFunclist[i]);
-                window[img.id] = img;
+                if(this.textureMap.has(drawFunclist[i].id) === false) {  // 不重复添加
+                    allExist = false;
+                    const img = new Image();
+                    img.onload = () => resolve(img);  // 或许可以直接传入 wjs，以后优化吧
+                    img.id = drawFunclist[i].id;
+                    img.src = this.dToBase64(drawFunclist[i]);
+                    window[img.id] = img;
+                    this.textureMap.set(img.id, img);
+                }
             }
+            if(allExist) {resolve(null)};
         });
     },
 
@@ -22,10 +31,13 @@ export default {
         canvas.width = drawItem.width || 400;
         canvas.height = drawItem.height || 400;
         const ctx = canvas.getContext('2d')
-        drawItem.func(ctx, canvas.width, canvas.height);
         if(drawItem.type === 'png'){  // 为透明化作铺垫
+            drawItem.func(ctx, canvas.width, canvas.height);
             return canvas.toDataURL('image/png');
         } else {
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            drawItem.func(ctx, canvas.width, canvas.height);
             var quality = drawItem.quality || 0.7;
             return canvas.toDataURL('image/jpeg', quality);
         }
