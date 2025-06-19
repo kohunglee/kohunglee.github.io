@@ -118,8 +118,8 @@ for (let i = 0; i < numCubes; i++) {
             background: `#${Math.floor(random[index + 4] * 16777216).toString(16).padStart(6, '0')}`,
             mixValue: 1,
             isShadow: false,
-            // isVisualMode: false,
-            isFictBody: true,
+            isVisualMode: false,
+            // isFictBody: true,
             texture: marble,
         });
     }
@@ -193,7 +193,7 @@ function makeTestTextT(indexObj = 8074){
             height: objHeight * expRatio,
         },
     ]).then(res => {
-        k.addBox({  // 创建一个 TA 平面试试
+        k.addTABox({  // 创建一个 TA 平面试试
             DPZ : 1,
             shape: 'plane',
             isPhysical: false,
@@ -206,6 +206,30 @@ function makeTestTextT(indexObj = 8074){
 makeTestTextT(8074);
 makeTestTextT(723);
 makeTestTextT(8600);
+
+// for (let i = 0; i < 9000; i++) {
+//     makeTestTextT(i);
+// }
+
+let currentIndex = 0;
+const totalTasks = 9000;
+function runTasksWhenIdle(deadline) {
+    while (deadline.timeRemaining() > 0 && currentIndex < totalTasks) {
+        makeTestTextT(currentIndex);
+        // console.log('当前任务索引：', currentIndex);
+        if(currentIndex % 100 === 0){
+            xforward.innerHTML = currentIndex;
+        }
+        currentIndex++;
+    }
+    if (currentIndex < totalTasks) {
+        requestIdleCallback(runTasksWhenIdle);
+    } else {
+        console.log("所有9000步已优雅地完成！");
+    }
+}
+requestIdleCallback(runTasksWhenIdle);
+
 
 // 写字
 function drawText(ctx, value = 'abc', typeObj = {}, cWidth, cHeight){

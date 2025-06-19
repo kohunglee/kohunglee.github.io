@@ -132,9 +132,10 @@ export default {
             X += (-keys.viewLeft + keys.viewRight) * Math.sin((RY + 90) * Math.PI / 180) / 10;
             this.displayPOS();
         }
-        if (keys.viewUp || keys.viewDown) { // 上下平移
-            var offset = 1;
-            Y += offset;
+        if (keys.viewUp || keys.viewDown) { // 上下平移（已经名存实亡了）
+            // var offset = 1;
+            // Y += offset;
+            Y = 150;
         }
         if(keys.turnRight || keys.turnLeft) {  // 左右扭动
             var offset = (-keys.turnRight + keys.turnLeft);
