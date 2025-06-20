@@ -134,14 +134,50 @@ export default {
             }
             if(typeof tiling === 'number'){ tiling = [tiling, tiling] }  // 处理平铺数
             const utter = (args.isFictBody) ? 0.1 : 0; // 物理假体，仅在视觉上物体小一圈儿
-            this.W[args.shape]({
+
+            var texture, textureError = false;
+            if(typeof args.texture === 'string'){  // 处理纹理
+                if(window[args.texture] !== undefined){  // 纹理数据 能在全局找到（后续，改成从库里找吧，先使用 window）
+                    texture = window[args.texture];
+                } else {  // 找不到，需要换个默认纹理
+                    texture = null;
+                    textureError = true;
+                }
+            } else {
+                texture = args.texture;
+            }
+
+            this.W[args.shape]({  // 渲染引擎添加物体
                 n: 'T' + index,  // 意为 TypeArray 生成的
                 w: physicalProp[1] - utter, d: physicalProp[3] - utter, h: physicalProp[2] - utter,
                 x: posProp[0], y:posProp[1], z:posProp[2],
-                t: args.texture, s: args.smooth, tile: tiling,
+                t: texture, s: args.smooth, tile: tiling,
                 rx: args.rX, ry: args.rY, rz: args.rZ, b: args.background, mix: args.mixValue,
                 shadow: args.isShadow,
             });
+
+            if(textureError){  // 纹理加载失败，尝试换上警告纹理（id 还是原 id）
+                const expRatio = 40;  // 缩放比例
+                const cWidth = (physicalProp[1] - utter) * expRatio;
+                const cHeight = (physicalProp[2] - utter) * expRatio;
+                this.loadTexture([ {
+                    func: this.errorTexture,
+                    id: args.texture,
+                    type: 'png',
+                    width: cWidth,
+                    height: cHeight,
+                    index: index,
+                }]).then(res => {
+                    this.W[args.shape]({
+                        n: 'T' + index,
+                        t: window[args.texture],
+                        mix: args.mixValue,
+                    });
+                });
+            }
+
+    
+
         }
     },
 

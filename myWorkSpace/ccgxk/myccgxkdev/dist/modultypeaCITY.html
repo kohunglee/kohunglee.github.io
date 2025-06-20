@@ -118,8 +118,8 @@ for (let i = 0; i < numCubes; i++) {
             background: `#${Math.floor(random[index + 4] * 16777216).toString(16).padStart(6, '0')}`,
             mixValue: 1,
             isShadow: false,
-            // isVisualMode: false,
-            isFictBody: true,
+            isVisualMode: false,
+            // isFictBody: true,
             texture: marble,
         });
     }
@@ -143,51 +143,83 @@ function makeTestTextT(indexObj = 8074){
     const cWidth = objWidth * expRatio;
     const cHeight = objHeight * expRatio;
     const imgID = 'T' + indexObj + 'N';
-    k.loadTexture([
-        {
-            func:function(ctx){drawText(ctx, '为啥狗都嫩憨\n狗肉弄不清！！', {}, cWidth, cHeight)},
-            id: imgID,
-            type: 'png',
-            width: objWidth * expRatio,
-            height: objHeight * expRatio,
-        },
-    ]).then(res => {
-        k.addTABox({  // 创建一个 TA 平面试试
-            DPZ : 1,
-            shape: 'plane',
-            isPhysical: false,
-            X: objPosX, Y: objPosY, Z: objPosZ, rX: 0,
-            mass: 0, width: objWidth, depth: 0, height: objHeight,
-            texture: window[imgID], mixValue: 0,
-        });
-    })
-}
-makeTestTextT(8074);
-makeTestTextT(723);
-makeTestTextT(8600);
+    
+    k.addTABox({  // 创建一个 TA 平面试试
+        DPZ : 1,
+        shape: 'plane',
+        isPhysical: false,
+        // isVisualMode: false,
+        X: objPosX, Y: objPosY, Z: objPosZ, rX: 0,
+        mass: 0, width: objWidth, depth: 0, height: objHeight,
+        texture: imgID, mixValue: 0.5,
+    });
 
-// for (let i = 0; i < 9000; i++) {
-//     makeTestTextT(i);
-// }
+    // if(window[imgID]){
+    //     k.addTABox({  // 创建一个 TA 平面试试
+    //         DPZ : 1,
+    //         shape: 'plane',
+    //         isPhysical: false,
+    //         X: objPosX, Y: objPosY, Z: objPosZ, rX: 0,
+    //         mass: 0, width: objWidth, depth: 0, height: objHeight,
+    //         texture: window[imgID], mixValue: 0,
+    //     });
+    // } else {
+    //     k.loadTexture([
+    //             {
+    //                 func:function(ctx){drawText(ctx, '为啥狗都嫩憨\n狗肉弄不清！！', {}, cWidth, cHeight)},
+    //                 id: imgID,
+    //                 type: 'png',
+    //                 width: objWidth * expRatio,
+    //                 height: objHeight * expRatio,
+    //             },
+    //         ]).then(res => {
+    //             k.addTABox({  // 创建一个 TA 平面试试
+    //                 DPZ : 1,
+    //                 shape: 'plane',
+    //                 isPhysical: false,
+    //                 X: objPosX, Y: objPosY, Z: objPosZ, rX: 0,
+    //                 mass: 0, width: objWidth, depth: 0, height: objHeight,
+    //                 texture: window[imgID], mixValue: 0,
+    //             });
+    //         })
+    // }
+}
 
 let currentIndex = 0;
-const totalTasks = 9000;
+const totalTasks = 10000;
 function runTasksWhenIdle(deadline) {
     while (deadline.timeRemaining() > 0 && currentIndex < totalTasks) {
-        makeTestTextT(currentIndex);
-        // console.log('当前任务索引：', currentIndex);
-        if(currentIndex % 100 === 0){
-            xforward.innerHTML = currentIndex;
-        }
+        makeTestTextT(currentIndex);  // 执行任务
         currentIndex++;
     }
     if (currentIndex < totalTasks) {
         requestIdleCallback(runTasksWhenIdle);
     } else {
-        console.log("所有9000步已优雅地完成！");
+        console.log("所有 xxx 步已优雅地完成！");
+    }
+    if(currentIndex % 100 === 0){  // 显示进度
+        xforward.innerHTML = currentIndex;
     }
 }
-// requestIdleCallback(runTasksWhenIdle);
+requestIdleCallback(runTasksWhenIdle);
+
+
+// 尝试自定义纹理
+k.hooks.on('errorTexture_diy', function(ctx, width, height, index, _this){
+    const value = '肉狗 ' + index;
+    const typeObj = {};
+    ctx.font = typeObj.font || "20px Arial";                  // 字体大小和类型
+    ctx.fillStyle =  typeObj.fillStyle || "black";            // 填充颜色
+    ctx.strokeStyle =  typeObj.strokeStyle || "blue";         // 描边颜色
+    ctx.textAlign =  typeObj.textAlign || "center";           // 水平对齐方式（left/center/right）
+    ctx.textBaseline =  typeObj.textBaseline ||"middle";      // 垂直对齐方式（top/middle/bottom）
+    const valueByLine = String(value).split('\n');
+    const lineHeight = parseInt(ctx.font) || 30;
+    ctx.clearRect(0, 0, width, height);
+    valueByLine.forEach((line, i) => {  // 分行
+        ctx.fillText(line, 50, 50 + ((i) * lineHeight));
+    });
+})
 
 
 // 写字
@@ -247,14 +279,15 @@ k.addTABox({  // 创建一个 旋转测试 细长物理体
     DPZ : 2,
     colliGroup: 1,
     name: 'longThin', X: 29, Y: 10, Z: 496,
-    mass: 1, width: 3, depth: 2, height: 2, texture: marble
+    mass: 1, width: 3, depth: 2, height: 2, texture: 'marble'
 });
 
 k.addTABox({  // 创建一个 旋转测试 细长物理体
     DPZ : 1,
     colliGroup: 2,
     name: 'longThin02', X: 20, Y: 10, Z: 546,
-    mass: 10, width: 40, depth: 2, height: 2, background: '#333' 
+    mass: 10, width: 40, depth: 2, height: 2, background: '#333',
+    texture: 'gourou',
 });
 
 // 纹理列表
@@ -271,8 +304,6 @@ k.loadTexture(drawList).then(res => {
         name: 'testTexture', X: 10, Y: 200, Z: 510,
         mass: 100, size:20, texture: jpflag, mixValue: 0
     });
-
-    
 })
 
 k.addBox({  // 创建地面
