@@ -173,8 +173,8 @@ const W = {
             new DOMMatrix([
               (1 / Math.tan(state.fov * Math.PI / 180)) / (W.canvas.width / W.canvas.height), 0, 0, 0, 
               0, (1 / Math.tan(state.fov * Math.PI / 180)), 0, 0, 
-              0, 0, -(viewLimit + 1) / (viewLimit - 1), -1,
-              0, 0, -(2 * viewLimit + 2) / (viewLimit - 1), 0
+              0, 0, -(viewLimit + 0.1) / (viewLimit - 0.1), -1,
+              0, 0, -(2 * viewLimit * 0.1) / (viewLimit - 0.1), 0
             ]);
         }
         state = {  // 保存和初始化对象的类型

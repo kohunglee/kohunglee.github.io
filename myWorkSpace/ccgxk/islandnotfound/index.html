@@ -175,12 +175,24 @@ a:hover{
   } = Math;
   const TWO_PI = PI * 2;
   const DEG_TO_RAD = PI / 180;
+
+
+  /* 数字边界守护 */
   const clamp = (value, minimum, maximum) => min(max(value, minimum), maximum);
+
+
+  /* 角度守护  */
   const wrapAngleInRadians = (angle) => angle - TWO_PI * floor((angle + PI) / TWO_PI);
+
+
+  /* 加减乘除 */
   const scalarAdd = (a, b) => a + b;
   const scalarSubtract = (a, b) => a - b;
   const scalarMultiply = (a, b) => a * b;
   const scalarDivide = (a, b) => a / b;
+
+
+  /* 精度增高 */
   const unpackFloatBytes4 = (r, g, b, a) => {
     return r / 255 + g / 65025 + b / 16581375 + a / 40948250625;
   };
@@ -258,11 +270,17 @@ a:hover{
   };
   onkeydown = (ev) => _setKeyPressed(ev, true);  //+2 两个监听器
   onkeyup = (ev) => _setKeyPressed(ev, false);
+
+
+  /* 向量 */
   const vec3New = (x, y, z) => ({x, y, z});
   const vec3NewValue = (value = 0) => ({x: value, y: value, z: value});
   const vec3Temp0 = vec3NewValue();
   const vec3Temp1 = vec3NewValue();
   const VEC3_UNIT_Y = vec3New(0, 1, 0);
+
+
+  /* 快速赋值一个向量 */
   const vec3Set = (out, x, y, z) => {
     out.x = x;
     out.y = y;
@@ -1118,7 +1136,7 @@ a:hover{
   };
 
 
-  转换成 WAV 格式
+  // 转换成 WAV 格式
   const musicCreateWave = function() {
     const headerLen = 44;
     const l1 = headerLen + mNumWords * 2 - 8;
@@ -1689,4 +1707,84 @@ a:hover{
     requestAnimationFrame(animationFrame);
   }, 99);
 
+
+/*
+核心工具与数学助手 (Math & Vector Helpers)
+
+clamp(value, minimum, maximum): 边界守护者。确保一个数值永远不会超出指定的最小和最大范围，就像一个严格的门卫。
+wrapAngleInRadians(angle): 角度循环者。将一个任意大小的角度（比如720度）转换到标准的-PI到+PI（-180到+180度）范围内，确保角度计算的正确性。
+scalarAdd, scalarSubtract, scalarMultiply, scalarDivide: 基础算术师。执行最基本的数字加、减、乘、除运算。
+unpackFloatBytes4(r, g, b, a): 字节解码师。将4个字节（0-255）的颜色值，解码成一个高精度的浮点数。主要用于从纹理中读取距离信息。
+vec3New, vec3NewValue, vec2New: 向量创造者。创建三维或二维向量对象，用来表示空间中的位置、方向或坐标。
+vec3Set, vec2Set: 向量赋值师。快速设置一个向量的x, y, z（或x, y）值。
+vec3SetEachVecVec, vec3SetEachVecScalar: 向量批量操作师。对向量的每个分量执行相同的数学运算。
+vec3Dot, vec3LengthSquared, vec3Length, vec3DistanceSquared, vec3Distance, vec3Add, vec3Subtract, vec3ScalarMultiply, vec3DivideScalar, vec3Normalize, vec3Direction, vec3Cross: 高级向量魔法师。执行所有三维向量的数学运算，如点积（判断角度）、计算长度、距离、加减乘除、归一化（变成单位长度）、计算方向和叉积（计算垂直向量）。这是所有3D计算的基石。
+typedArraySet(array, ...values): 数组填充工。快速向一个类型化数组（如Float32Array）中填充数值。
+
+
+游戏主循环与状态管理 (Game Loop & State)
+
+updateTime(browserTimeInMilliseconds, paused): 时间之神。计算游戏流逝的时间（gameTimeDelta），更新游戏总时间（gameTime），并判断当前帧是否需要渲染。
+clearTexts(): 文本清道夫。清空屏幕上的所有提示文字。
+setText(text, timeout): 文本信使。在屏幕上显示一段文字，并可以设定一个自动消失的时间。
+updateText(): 文本管家。每一帧检查是否有新的文本需要显示，或旧的文本是否到期需要移除。
+getVisibleObject(): 视线探测器。检查玩家的视线前方是否有可以互动的游戏对象。
+updateGameObjects(): 游戏世界观察者。每一帧调用getVisibleObject，并根据结果更新屏幕提示或处理玩家的互动。
+updateAnimations(): 动画总管。每一帧更新所有正在运行的动画（如开门、电梯升降）的状态。
+runAnimation(anim, direction): 动画启动器。触发一个指定的动画开始运行。
+deepMerge(original, item): 记忆融合师。在加载游戏时，将存档中的数据深度合并到当前的游戏状态中。
+SAVE_GAME(): 记忆封存师。将当前游戏状态保存到浏览器的localStorage中。
+LOAD_GAME(): 记忆唤醒师。从localStorage中读取存档并恢复游戏状态。
+getDataFromLocalStorage(): 记忆石板读取者。从localStorage中获取存档字符串。
+
+
+玩家输入与控制 (Player Input & Control)
+
+_setKeyPressed(e, value): 按键记录员。当键盘按下或松开时，记录相应的按键状态。
+onkeydown, onkeyup, onmousemove: 感官神经。监听键盘和鼠标的原始事件。
+movementForward(direction), movementStrafe(direction): 移动指令官。将“前进/后退”或“左/右平移”的意图，转换为具体的移动向量。
+updateCameraDirFromEulerAngles(): 视线计算师。根据玩家的鼠标转动（欧拉角），计算出摄像机当前朝向的精确三维方向向量。
+updateCamera(): 玩家化身操纵者。每一帧根据按键状态和鼠标移动，更新玩家在游戏世界中的位置和朝向。
+canvasRequestPointerLock(e): 鼠标锁定请求者。请求浏览器将鼠标锁定在游戏窗口内，以实现第一人称的无边界视角转动。
+
+
+音频合成 (Music Synthesis)
+
+osc_sin, osc_square, osc_tri: 音波振荡器。生成正弦波、方波、三角波等基础波形，它们是所有声音的“原子”。
+getnotefreq(n): 音高翻译家。将音符的数字编号（如MIDI音高）转换成对应的频率。
+musicInit(): 乐队指挥。初始化音乐播放器，准备好乐谱和录音带。
+createNote(instr, n, rowLen): 乐器演奏家。根据乐器定义和音高，合成出一段代表单个音符的声音数据。
+musicGenerate(): 乐章演奏师。遍历乐谱，调用createNote来生成一整个乐章（一个音轨）的声音。
+musicCreateWave(): 唱片压制师。将所有乐章混合后的声音数据，打包成一个标准的WAV格式文件。
+loadMusic(): 音乐加载总管。调用上述函数，完成从无到有的音乐生成过程。
+playMusic(), pauseMusic(), setVolume(v): 播放器控制台。提供播放、暂停和调节音量的接口。
+
+
+界面与交互 (UI & Interaction)
+
+handleResize(): 舞台尺寸调节师。当浏览器窗口大小改变时，重新计算并设置游戏画面的尺寸，保持宽高比。
+showMainMenu(): 菜单召唤师。显示主菜单，暂停游戏，并释放鼠标锁定。
+onpointerlockchange: 鼠标状态监视器。监听鼠标锁定状态的变化，如果玩家手动退出锁定（如按ESC），则自动弹出菜单。
+startOrResumeClick(newGame): 游戏启动/恢复按钮。处理“新游戏”或“继续游戏”按钮的点击事件，初始化或恢复游戏状态。
+
+
+WebGL与渲染 (WebGL & Rendering)
+
+glSetTextureSampling(...): 纹理质感设定师。设置纹理的采样方式（如重复、边缘拉伸）和平滑度（线性、临近）。
+loadShaderFunction(mainFunction): 着色器魔法书装订工。加载、编译并链接GLSL着色器代码，准备好渲染所需的“魔法程序”，并返回一个用于施法的函数。
+buildHeightmapTexture(): 地形雕刻家。使用一个专门的着色器，生成一张代表岛屿整体地形起伏的高度图纹理。
+buildNoiseTexture(): 噪声炼金师。用纯数学算法生成一张充满随机细节的噪声纹理，用于增加物体表面的质感。
+readDist(x, y): 碰撞距离读取者。从已渲染的碰撞纹理中，读取指定方向上的距离信息。
+getAngleFromIdx(x): 碰撞角度计算器。将碰撞纹理中的像素索引，转换成对应的碰撞检测角度。
+initCollider(): 碰撞场初始化者。创建并准备用于物理碰撞检测的纹理和帧缓冲。
+updateCollider(): 物理碰撞模拟师。渲染一张特殊的“距离场”纹理，读取其中的信息来检测玩家是否与墙壁等障碍物碰撞，并修正玩家位置。
+bindScreenTexture(index): 屏幕纹理切换师。在多个预渲染的屏幕纹理之间进行切换。
+captureScreenTexture(index): 屏幕快照师。将一个2D Canvas的内容“拍摄”下来，并上传到WebGL作为纹理。
+drawFreq(freq, phase): 频率波形绘制工。在2D Canvas上绘制小游戏中的正弦波。
+updateMinigameTexture(): 小游戏画面更新师。重绘小游戏的界面，并将其作为纹理上传。
+updateMinigameValues(frequencyDelta, phaseDelta): 小游戏数值控制器。根据玩家输入更新小游戏的频率和相位值。
+buildScreenTextures(): 所有屏幕画面生成者。在游戏开始时，预先生成小游戏中用到的所有静态和动态画面。
+initPrerenderedTexture(): 预渲染画布准备者。初始化一个用于优化渲染的中间纹理。
+
+*/
 </script></body></html>

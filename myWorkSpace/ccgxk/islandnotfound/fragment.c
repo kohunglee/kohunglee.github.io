@@ -1,15 +1,15 @@
 #version 300 es
 precision highp float;
 
-#define MATERIAL_SKY 0
-#define MATERIAL_TERRAIN 1
-#define MATERIAL_BUILDINGS 2
-#define MATERIAL_SCREEN 3
+#define MATERIAL_SKY 0  // 天空
+#define MATERIAL_TERRAIN 1  // 大地
+#define MATERIAL_BUILDINGS 2   // 建筑
+#define MATERIAL_SCREEN 3  // 屏幕
 
-// Sub materials of MATERIAL_BUILDINGS
+// 材料的子材料
 #define SUBMATERIAL_WOOD -1
-#define SUBMATERIAL_CONCRETE 0  // 0 and below have concrete texture.
-#define SUBMATERIAL_METAL 1  //>0 is smooth and has specular
+#define SUBMATERIAL_CONCRETE 0  // 0及以下具有具体纹理。
+#define SUBMATERIAL_METAL 1  //> 0很光滑，有镜面
 #define SUBMATERIAL_BRIGHT_RED 2
 #define SUBMATERIAL_DARK_RED 3
 #define SUBMATERIAL_BLACK_PURPLE 4
@@ -17,139 +17,136 @@ precision highp float;
 
 const float PI = 3.14159265359;
 
-// Size in pixels of the noise texture
+// 噪音纹理的像素的大小
 const float NOISE_TEXTURE_SIZE = 512.;
-
 const float COLLISION_TEXTURE_SIZE = 128.;
-
 const float PRERENDERED_TEXTURE_SIZE = 256.;
-
 const int NOISE_TEXTURE_BITMASK = 0x1ff;
 
-// Aspect ratio is fixed to 1.5 by design
+// 纵横比按设计固定为1.5
 const float SCREEN_ASPECT_RATIO = 1.5;
 
-// The field of view, in radians
+// 视野，弧度
 const float FIELD_OF_VIEW = radians(45.0);
 
-// Projection matrix
+// 投影矩阵
 const float PROJECTION_LEN = 1. / tan(.5 * FIELD_OF_VIEW);
 
 in vec2 FC;
 
-uniform vec2 iR;
-uniform vec3 iP;
-uniform vec4 iD;
-uniform vec4 iA;
+uniform vec2 iR;  // 屏幕分辨率
+uniform vec3 iP;  // 相机位置
+uniform vec4 iD;  // 相机方向和距离
+uniform vec4 iA;  // 动画制服
 uniform vec4 iB;
 uniform vec4 iC;
 uniform vec4 iS;
 uniform vec4 iX;
-uniform mat3 iM;
-uniform lowp int iF;
+uniform mat3 iM;  // 相机旋转矩阵
+uniform lowp int iF;  // 记录着手电筒是否打开、钥匙是否捡到等信息
 
-///// I/O /////
+///// h ///////
 
-// Screen position, in pixels. Bottom left is (0, 0), top right is (iResolution.x-1, iResolution.y-1).
+// 屏幕位置，以像素为单位。左下是（0，0），右上为（iresolution.x-1，irestolution.y-1）。
 #define fragCoord FC
 
-// Output color
+// 输出颜色
 #define oColor oC
 out vec4 oColor;
 
-///// Core uniforms /////
+///// 核心制服//////
 
-// Screen resolution in pixels.
+// 像素中的屏幕分辨率。
 #define iResolution iR
 
-// Camera position
+// 相机位置
 #define iCameraPos iP
 
-// Camera directiom
+// 方向相机
 #define iCameraDir iD.xyz
 
-// Time in seconds
+// 几秒钟的时间
 #define iTime iD.w
 
-// Sunlight direction
+// 阳光方向
 #define iSunDirection iS.xyz
 
-// Current level of water
+// 当前的水
 #define iWaterLevel iS.w
 
-// Camera rotation matrix
+// 相机旋转矩阵
 #define iCameraMat3 iM
 
-///// Game object uniforms /////
+///// 游戏对象制服/////////
 
-// Flashlight on
+// 手电筒打开
 #define iFlashlightOn ((iF & 0x01) != 0)
 
-// Prison Key
+// 监狱钥匙
 #define iGOKeyVisible ((iF & 0x02) != 0)
 
-// Flashlight
+// 手电筒
 #define iGOFlashlightVisible ((iF & 0x04) != 0)
 
-// Antenna key
+// 天线钥匙
 #define iGOAntennaKeyVisible ((iF & 0x08) != 0)
 
-// Floppy Disk
+// 软盘
 #define iGOFloppyDiskVisible ((iF & 0x10) != 0)
 
-///// Animation uniforms /////
+///// 动画制服///////
 
-// Prison Door 0 - closed, 1 - open
+// 监狱门0-关闭，1-开放
 #define iAnimPrisonDoor iA.x
 
-// Antenna Door 0-1
+// 天线门0-1
 #define iAnimAntennaDoor iA.y
 
-// Monument Descend
+// 纪念碑下降
 #define iAnimMonumentDescend iA.z
 
-// Oil Rig Ramp (and lever in antenna room for 0-1 of it)
+// 石油钻机坡道（在天线室内杠杆以达到0-1）
 #define iAnimOilrigRamp iA.w
 
-// the wheel on the rig
+// 钻机上的轮子
 #define iAnimOilrigWheel iB.x
 
-// antenna rotation
+// 天线旋转
 #define iAnimAntennaRotation iB.y
 
-// elevator height
+// 电梯高度
 #define iAnimElevatorHeight iB.z
 
-// submarine position
+// 潜艇职位
 #define iSubmarineHeight iB.w
 
-// the inner ramp
+// 内部坡道
 #define iAnimOilrigInnerRamp iX.x
 
-///// Textures /////
+///// 纹理//////
 
-// Noise texture
+// 噪声纹理
 #define iNoise tN
 uniform highp sampler2D iNoise;
 
-// Heightmap texture
+// 高度图纹理
 #define iHeightmap tH
 uniform highp sampler2D iHeightmap;
 
-// Prerendered texture
+// 预先质地
 #define iPrerendered tP
 uniform highp sampler2D iPrerendered;
 
-// Screens texture
+// 屏幕纹理
 #define iScreens tS
 uniform highp sampler2D iScreens;
 
-//=== STATE ===
+//===状态===
 
-// Keep the current epsilon global
+// 保持当前的Epsilon全球
 float epsilon;
 
-//=== COLORS ===
+//===颜色===
 
 const vec3 COLOR_SKY = vec3(.4, .8, 1);
 const vec3 COLOR_SUN = vec3(1.065, .95, .85);
@@ -158,21 +155,23 @@ const vec3 TERRAIN_SIZE = vec3(120., 19., 78.);
 const float TERRAIN_OFFSET = 3.;
 const float UNDERGROUND_LEVEL = -TERRAIN_OFFSET + 0.0005;
 
-// maximums
+// 最大值
 const int MAX_ITERATIONS = 100;
 const float MIN_DIST = 0.15;
 const float MAX_DIST = 150.;
 const float HORIZON_DIST = 500.;
 
+
+
+/* 数字边界监护人 */
 float clamp01(float v) {
   return clamp(v, 0., 1.);
 }
-
 vec2 clamp01(vec2 v) {
   return clamp(v, 0., 1.);
 }
 
-// polynomial smooth min (k = 0.1);
+// 多项式平滑最小（k = 0.1）;
 float smin(float a, float b, float k) {
   float h = max(k - abs(a - b), 0.) / k;
   return min(a, b) - h * h * k / 4.;
@@ -190,8 +189,8 @@ float unpackFloat(vec4 rgba) {
 }
 
 /**
- Returns 3D value noise (in .x)  and its derivatives (in .yz).
- Based on https://www.iquilezles.org/www/articles/gradientnoise/gradientnoise.htm by Iq
+ 返回3D值噪声（in .x）及其衍生物（in .yz）。
+ 基于https://www.iquilezles.org/www/articles/gradientnoise/gradientnoise.htm by iq
 */
 vec3 noiseDxy(vec2 x) {
   vec4 T = texelFetch(iNoise, ivec2(floor(x)) & NOISE_TEXTURE_BITMASK, 0);
@@ -206,7 +205,7 @@ vec3 noiseDxy(vec2 x) {
 int subMaterial = SUBMATERIAL_CONCRETE;
 float subMaterialDistance = MAX_DIST;
 
-// Updates the subMaterialDistance and subMaterial if the distance is lower
+// 如果距离更低
 void updateSubMaterial(int sm, float dist) {
   if (dist < epsilon && dist != subMaterialDistance) {
     subMaterial = sm;
@@ -214,7 +213,7 @@ void updateSubMaterial(int sm, float dist) {
   }
 }
 
-//=== PRIMITIVES ===
+//===原始===
 float sphere(vec3 p, float s) {
   return length(p) - s;
 }
@@ -238,9 +237,9 @@ float torus(vec3 p, vec2 t) {
   return length(vec2(length(p.xz) - t.x, p.y)) - t.y;
 }
 
-//=== OPERATIONS ===
-// hg_sdf: http://mercury.sexy/hg_sdf/
-// splits world up with limits
+//===操作===
+// hg_sdf：http：//mercury.sexy/hg_sdf/
+// 将世界划分为极限
 float pModInterval(float value, float size, float start, float stop) {
   float halfsize = size * .5;
   float c = floor((value + halfsize) / size);
@@ -248,14 +247,14 @@ float pModInterval(float value, float size, float start, float stop) {
   return c > stop ? p + size * (c - stop) : c < start ? p + size * (c - start) : p;
 }
 
-// Repeat around the origin a number of times
+// 多次重复来源
 vec2 pModPolar2(vec2 xy, float repetitions) {
   float halfAngle = PI / repetitions;
   float a = mod(atan(xy.y, xy.x) + halfAngle, halfAngle * 2.) - halfAngle;
   return vec2(cos(a), sin(a)) * length(xy);
 }
 
-// Repeat around the origin a number of times, also adding a rotation
+// 多次在原点上重复，也添加旋转
 vec2 pModPolar2Rot(vec2 xy, float repetitions, float additionalRotation) {
   float halfAngle = PI / repetitions;
   float a = mod(atan(xy.y, xy.x) + halfAngle + additionalRotation, halfAngle * 2.) - halfAngle;
@@ -268,7 +267,7 @@ float opOnion(float sdf, float thickness) {
 
 #define ELONGATE(p, h) (p - clamp(p, -h, h))
 
-// Rotation by a dynamic angle
+// 动态角度旋转
 mat2 rot(float a) {
   float c = cos(a), s = sin(a);
   return mat2(c, s, -s, c);
@@ -278,7 +277,7 @@ vec3 invZ(vec3 p) {
   return vec3(p.xy, -p.z);
 }
 
-// === GEOMETRY ===
+// ===几何===
 float gameObjectFlashlight(vec3 p) {
   float bounds = length(p) - .3;
   if (bounds > .3)
@@ -292,8 +291,8 @@ float gameObjectKey(vec3 p) {
   float bounds = length(p) - .3;
   if (bounds > .3)
     return bounds;
-  float r = cylinder(p, .01, .06);  // shaft
-  r = min(r, cylinder(p.yzx + vec3(0, .1, 0), .04, .005));  // handle
+  float r = cylinder(p, .01, .06);  // 轴
+  r = min(r, cylinder(p.yzx + vec3(0, .1, 0), .04, .005));  // 处理
   r = min(r, cuboid(p - vec3(0, -.01, .04), vec3(.002, .02, .02)));
 
   return r;
@@ -305,7 +304,7 @@ float gameObjectFloppy(vec3 p) {
   return min(cuboid(p, vec3(.06, .005, .06)), clip);
 }
 
-// s is number of segments (*2 + 1, so 5 = 11 segments)
+// s是段的数量（*2 + 1，所以5 = 11个段）
 float bridge(vec3 p, float s, float bend) {
   float bounds = length(p) - s * .6;
   if (bounds > 4.) {
@@ -351,17 +350,17 @@ float antennaDoor(vec3 p) {
   if (bounds > .5)
     return bounds;
   p.xz -= vec2(1., -.05);
-  p.zx *= rot(iAnimAntennaDoor * -2.5);  // Door opening animation
+  p.zx *= rot(iAnimAntennaDoor * -2.5);  // 门打开动画
   p.xz += vec2(1., -.05);
-  float door = cylinder(p, .99, .05);  // the door itself
+  float door = cylinder(p, .99, .05);  // 门本身
   vec3 rp = vec3(pModPolar2(p.xy, 8.), p.z);
   return max(door,
-      -min(cuboid(rp - vec3(.5, 0, .1), vec3(.02, .1, .1)),  // The monument-style impression
-          cylinder(rp - vec3(0, 0, .1), .02, .1)  // key-hole in the center
+      -min(cuboid(rp - vec3(.5, 0, .1), vec3(.02, .1, .1)),  // 纪念碑风格的印象
+          cylinder(rp - vec3(0, 0, .1), .02, .1)  // 中心的钥匙孔
           ));
 }
 
-/* leverState goes from 0-1 - 0 is up, 1 is down */
+/* 杠杆从0-1-0开始，1下降 */
 float lever(vec3 p, float leverState) {
   float bounds = length(p) - 1.;
   if (bounds > 1.)
@@ -376,7 +375,7 @@ float lever(vec3 p, float leverState) {
   return r;
 }
 
-// rotation.x controls elevation/altitude, rotation.y controls azimuth
+// 旋转。x控制高程/高度，旋转。y控制方位角
 float antenna(vec3 p) {
   const float size = 9.;
   float bounds = length(p) - size * 2.;
@@ -390,7 +389,7 @@ float antenna(vec3 p) {
   q.y -= size;
   float dishSphere = sphere(q, size);
   float dish = max(opOnion(dishSphere, .01),
-      q.y + size / 2.  // cut the sphere part-way up
+      q.y + size / 2.  // 切开球的一部分
   );
   dish = min(dish, cylinder(q.xzy + vec3(0, 0, size * .5), .1, size * .5));
   dish = min(dish, sphere(q, .3));
@@ -398,10 +397,10 @@ float antenna(vec3 p) {
   float structure = cuboid(p, size / vec3(4., 2.5, 2.));
   structure = min(structure,
       min(max(opOnion(cylinder(p.xzy - vec3(size / 4., 0, 0), size / 2. - .1, size / 2.5 - .1), .1),
-              -min(cylinder(p.zyx - vec3(0, 1.8, 0), 1., 100.),  // hole for the door
-                  cylinder(p - vec3(4.5, 2.3, 0), .4, 100.)  // hole for the windows
+              -min(cylinder(p.zyx - vec3(0, 1.8, 0), 1., 100.),  // hole
+                  cylinder(p - vec3(4.5, 2.3, 0), .4, 100.)  // 窗户的孔
                   )),
-          cylinder(p.xzy - vec3(size / 4., 0, -2.2), size / 2. - .1, size / 3. - .1)  // Floor of the internal room
+          cylinder(p.xzy - vec3(size / 4., 0, -2.2), size / 2. - .1, size / 3. - .1)  // 内部房间的地板
           ));
   float console = antennaConsole(p - vec3(3, 1.5, 2));
   float door = antennaDoor(p.zyx - vec3(0, 1.8, 6.5));
@@ -426,7 +425,7 @@ float monument(vec3 p) {
     return bounds;
   }
 
-  float r = cylinder(p.xzy, .2, .5);  // the button mount
+  float r = cylinder(p.xzy, .2, .5);  // 按钮安装
 
   float ph = p.y + iAnimMonumentDescend * 4.;
   if (iGOAntennaKeyVisible) {
@@ -437,13 +436,13 @@ float monument(vec3 p) {
     }
   }
 
-  float m = cuboid(vec3(pModPolar2(p.xz, 8.), ph).xzy - vec3(1.5, 0, 0), vec3(.1, 5, .2));  // the actual monument
+  float m = cuboid(vec3(pModPolar2(p.xz, 8.), ph).xzy - vec3(1.5, 0, 0), vec3(.1, 5, .2));  // 实际的纪念碑
   if (m < r) {
     updateSubMaterial(SUBMATERIAL_BLACK_PURPLE, m);
     r = m;
   }
 
-  float b = cylinder(p.xzy + vec3(0, 0, clamp(iAnimMonumentDescend, 0., .02)), .05, .53);  // the button
+  float b = cylinder(p.xzy + vec3(0, 0, clamp(iAnimMonumentDescend, 0., .02)), .05, .53);  // 按钮
   if (b < r) {
     updateSubMaterial(SUBMATERIAL_METAL, b);
     r = b;
@@ -460,21 +459,21 @@ float prison(vec3 ip) {
     return bounds;
   p.y -= 2.;
   float cornerBox = cuboid(p - vec3(-2.7, -1, -1.3), vec3(0.35, .5, .5));
-  float structure = max(opOnion(cuboid(p, vec3(4, 1.6, 2)), 0.23),  // The main box
-      -min(  // Cut holes for:
+  float structure = max(opOnion(cuboid(p, vec3(4, 1.6, 2)), 0.23),  // 主盒
+      -min(  // 切孔的孔：
           cylinder(p - vec3(0, .5, 0), .8, 100.),  // the windows
-          cuboid(p - vec3(4, -.37, 1), vec3(2, 1, .53))  // the door
+          cuboid(p - vec3(4, -.37, 1), vec3(2, 1, .53))  // 门
           ));
 
-  // The door itself & animation
+  // 门本身和动画
   vec3 q = p - vec3(4, -.77, .5);
   q.xz *= rot(-iAnimPrisonDoor * PI / 2.);
   float door = cuboid(q - vec3(0, .4, .5), vec3(.05, .99, .52));
 
-  // The bars on the windows:
-  p.x = pModInterval(p.x, .3, -10., 10.);  // repeat along x
-  p.z = abs(p.z);  // mirror on z axis
-  float bars = cylinder(p.xzy - vec3(0, 2, .5), .01, 1.);  // draw a single bar
+  // 窗户上的条：
+  p.x = pModInterval(p.x, .3, -10., 10.);  // 沿x重复
+  p.z = abs(p.z);  // Z轴上的镜子
+  float bars = cylinder(p.xzy - vec3(0, 2, .5), .01, 1.);  // 画一个酒吧
   float woodThings = min(cornerBox, door);
   updateSubMaterial(SUBMATERIAL_METAL, bars);
   updateSubMaterial(SUBMATERIAL_WOOD, woodThings);
@@ -499,7 +498,7 @@ float prison(vec3 ip) {
 }
 
 float submarine(vec3 p) {
-  // clang-format off
+  // 叮当响
   float bounds = length(p)-9.;
   if (bounds > 1.) {
     return bounds;
@@ -509,9 +508,9 @@ float submarine(vec3 p) {
   p.y -= iSubmarineHeight;
   vec3 q = p.xzy - vec3(-2.,0,2.);
   float sub = smin(
-    sphere(ELONGATE(p, vec3(6,0,0)), 1.7), //main body
+    sphere(ELONGATE(p, vec3(6,0,0)), 1.7), //主体
     min(
-      cylinder(ELONGATE(q, vec3(.5,0,0)), .4, .5), //the top/periscope thingy
+      cylinder(ELONGATE(q, vec3(.5,0,0)), .4, .5), //顶部/潜望镜
       min(
         cuboid(p-vec3(7.5,0,0), vec3(0.3,2,.05)) - .05,
         cuboid(p-vec3(7.5,0,0), vec3(0.3,.05,2)) - .05
@@ -521,7 +520,7 @@ float submarine(vec3 p) {
   );
   updateSubMaterial(SUBMATERIAL_DARK_RED, sub);
   return min(dock, sub);
-  // clang-format on
+  // 叮当声
 }
 
 float oilrig(vec3 p) {
@@ -530,31 +529,31 @@ float oilrig(vec3 p) {
     return bounds;
   }
 
-  vec3 absp = abs(p);  // mirror
-  vec3 q = vec3(absp.x, abs(p.y - 4.58), absp.z);  // mirror in x & z and y with a translation
+  vec3 absp = abs(p);  // 镜子
+  vec3 q = vec3(absp.x, abs(p.y - 4.58), absp.z);  // X＆Z和Y的镜子，并翻译
   float yellow = lever(invZ(p.xzy - vec3(1.9, -1.5, .2)) * .5, min(1., (6. - iAnimOilrigInnerRamp) * .2)) / .5;
   float platforms =
-      max(cuboid(vec3(p.x, abs(p.y - 3.5) - 3.5, p.z), vec3(6, .2, 6)) - .05,  // platforms (mirrored around y=3.5)
-          max(-cube(p - vec3(2, 7, 2), 1.5),  // hole in upper platform
-              -cube(p - vec3(5.7, 0, 4), .52))  // hole in lower platform for the bridge
+      max(cuboid(vec3(p.x, abs(p.y - 3.5) - 3.5, p.z), vec3(6, .2, 6)) - .05,  // 平台（在y = 3.5左右镜像）
+          max(-cube(p - vec3(2, 7, 2), 1.5),  // 上层平台的孔
+              -cube(p - vec3(5.7, 0, 4), .52))  // 桥下平台的孔
       );
 
   vec3 u = p - vec3(5, 7.6, -2);
-  u.xy *= rot(.3);  // rotate the console towards player
+  u.xy *= rot(.3);  // 旋转控制台向播放器
 
-  vec3 e = vec3(p.xy, abs(p.z + 2.));  // mirror around z=2
+  vec3 e = vec3(p.xy, abs(p.z + 2.));  // 镜像周围z = 2
   yellow = min(yellow,
-      min(min(cylinder(e.xzy - vec3(-6, 1.1, 8.7), 1., 1.75),  // tank
-              cylinder(e.xzy - vec3(-6.5, 1.1, 0), .2, 8.)),  // pipe from tanks to sea
-          cylinder(vec3(p.z, abs(p.y - 7.6), p.x) - vec3(-3, .2, 0), .1, 5.)));  // pipes from console to tank
+      min(min(cylinder(e.xzy - vec3(-6, 1.1, 8.7), 1., 1.75),  // 坦克
+              cylinder(e.xzy - vec3(-6.5, 1.1, 0), .2, 8.)),  // 管道从坦克到大海
+          cylinder(vec3(p.z, abs(p.y - 7.6), p.x) - vec3(-3, .2, 0), .1, 5.)));  // 从控制台到坦克的管道
 
   float metal =
-      min(min(min(cylinder(vec3(absp.xz, p.y) - vec3(5, 5, 0), .5, 8.3),  // main platform cylinders
-                  cylinder(q.zyx - vec3(5.3, 3.5, 0), .05, 5.3)),  // guard rails
-              max(cylinder(q - vec3(5.3, 3.5, 0), .05, 5.3),  // guard rails
-                  -cube(p - vec3(5, .7, 4), .8)  // cut a hole in the guard rails where the bridge will connect
+      min(min(min(cylinder(vec3(absp.xz, p.y) - vec3(5, 5, 0), .5, 8.3),  // 主平台缸
+                  cylinder(q.zyx - vec3(5.3, 3.5, 0), .05, 5.3)),  // 防护轨
+              max(cylinder(q - vec3(5.3, 3.5, 0), .05, 5.3),  // 防护轨
+                  -cube(p - vec3(5, .7, 4), .8)  // 在桥将连接的后卫导轨上切一个孔
                   )),
-          cuboid(u, vec3(.5, .6, 1.5)) - 0.05  // console
+          cuboid(u, vec3(.5, .6, 1.5)) - 0.05  // 安慰
       );
 
   updateSubMaterial(SUBMATERIAL_METAL, metal);
@@ -562,15 +561,15 @@ float oilrig(vec3 p) {
   vec3 r = p - vec3(2, 3.59, -.1);
   r.zy *= rot(-PI / 4.);
   r.y -= iAnimOilrigInnerRamp;
-  yellow = min(yellow, cuboid(r, vec3(1, 5.1, .02)) - .05);  // ramp from lower platform to upper
+  yellow = min(yellow, cuboid(r, vec3(1, 5.1, .02)) - .05);  // 从下平台到上部的坡道
   updateSubMaterial(SUBMATERIAL_YELLOW, yellow);
   float result = min(min(platforms, yellow), metal);
 
   vec3 t = u - vec3(0, .8, 0);
-  if (length(t) - 1. < 2.) {  // Wheel
+  if (length(t) - 1. < 2.) {  // 车轮
     float wheel =
-        min(min(torus(t, vec2(.5, .02)), cylinder(t.xzy + vec3(0, 0, .5), .02, .5)),  // center-column of spokes
-            cylinder(vec3(pModPolar2Rot(t.xz, 5., iAnimOilrigWheel), t.y).zyx - vec3(0, 0, .25), .01, .25));  // spokes
+        min(min(torus(t, vec2(.5, .02)), cylinder(t.xzy + vec3(0, 0, .5), .02, .5)),  // 辐条的中央列
+            cylinder(vec3(pModPolar2Rot(t.xz, 5., iAnimOilrigWheel), t.y).zyx - vec3(0, 0, .25), .01, .25));  // 辐条
     if (wheel < result) {
       updateSubMaterial(SUBMATERIAL_BRIGHT_RED, wheel);
       result = wheel;
@@ -582,14 +581,14 @@ float oilrig(vec3 p) {
 float oilrigBridge(vec3 p) {
   vec3 q = p.zyx - vec3(4, -1, 17);
   q.zy *= rot(-.19);
-  q.z -= 19. - iAnimOilrigRamp;  // 0: sticking out of sand slightly, 19 - connected with the oil rig
+  q.z -= 19. - iAnimOilrigRamp;  // 0：略微伸出沙子，19与油钻机相连
   return min(bridge(q, 21., 0.), cylinder(q.xzy + vec3(0, 10.5, 6), 0.15, 5.));
 }
 
 float guardTower(vec3 ip) {
   vec3 p = ip - vec3(8.7, 9.3, 37);
 
-  // clang-format off
+  // 叮当响
   float bounds = length(p.xz) - 5.;
   if (bounds > 4.) {
     return bounds;
@@ -601,23 +600,23 @@ float guardTower(vec3 ip) {
   float structure = max(
       max(
         min(
-          cylinder(p.xzy,1.1,12.),  //outer cylinder
+          cylinder(p.xzy,1.1,12.),  //外缸
           max(
-            opOnion(cylinder(p.xzy-vec3(0,0,14.),4.,2.), .2),  //top part
-            -cuboid(q-vec3(4.,14,0),vec3(1., 1., 2.))  //cut out the windows
+            opOnion(cylinder(p.xzy-vec3(0,0,14.),4.,2.), .2),  //顶部
+            -cuboid(q-vec3(4.,14,0),vec3(1., 1., 2.))  //剪掉窗户
           )
         ),
         -min(
-          cylinder(p.xzy,1.,13.),  //cut hole down center (not using opOnion, because want to cut out the end too)
-          cuboid(z-vec3(1.,0,0),vec3(.2, .3, .13)) //cut out the slits
+          cylinder(p.xzy,1.,13.),  //切下孔的中心（不使用Oponion，因为也想切断末端）
+          cuboid(z-vec3(1.,0,0),vec3(.2, .3, .13)) //剪掉缝隙
         )
       ),
-      -cuboid(p+vec3(0,7,1), vec3(.8,1.2,.8))  //cut doorway out
+      -cuboid(p+vec3(0,7,1), vec3(.8,1.2,.8))  //切开门
   );
 
   vec3 l = vec3(p.x, p.y - iAnimElevatorHeight, p.z);
 
-  float elevator = cylinder(l.xzy,1.,11.);  //elevator
+  float elevator = cylinder(l.xzy,1.,11.);  //电梯
 
   l.y = pModInterval(l.y, 1.5, -7., 7.);
 
@@ -642,7 +641,7 @@ float guardTower(vec3 ip) {
 
   float nearest = min(
     min(structure, min(buttonPost, elevator)),
-    cuboid(p+vec3(0,10.3,3), vec3(1.1,2.,3.)) //the platform to the bottom lift section
+    cuboid(p+vec3(0,10.3,3), vec3(1.1,2.,3.)) //底部升降机部分的平台
   );
 
   if (iGOFloppyDiskVisible) {
@@ -654,7 +653,7 @@ float guardTower(vec3 ip) {
   }
 
   return nearest;
-  // clang-format on
+  // 叮当声
 }
 
 vec2 screenCoords;
@@ -749,11 +748,11 @@ float rayMarch(vec3 p, vec3 dir, float min_epsilon, float dist) {
         material = MATERIAL_TERRAIN;
         return t;
       }
-      break;  // Nothingness...
+      break;  // 虚无...
     }
 
     if (hit.y > 45.) {
-      break;  // Too high
+      break;  // 太高
     }
 
     float nearest = distanceToNearestSurface(hit);
@@ -778,9 +777,9 @@ float rayMarch(vec3 p, vec3 dir, float min_epsilon, float dist) {
 
 #define SHADOW_ITERATIONS 50
 float getShadow(vec3 p, float camDistance, vec3 n, float res) {
-  float dist = clamp(camDistance * 0.005, 0.01, .1);  // start further out from the surface if the camera is far away
+  float dist = clamp(camDistance * 0.005, 0.01, .1);  // 如果相机很远，则从表面开始
 
-  p = p + n * dist;  // Jump out of the surface by the normal * that dist
+  p = p + n * dist;  // 通过正常 *跳出表面
 
   float maxHitY = iWaterLevel - epsilon * 2.;
 
@@ -788,19 +787,19 @@ float getShadow(vec3 p, float camDistance, vec3 n, float res) {
     vec3 hit = p + iSunDirection * dist;
 
     if (dist >= 80. || hit.y > 45. || hit.y < maxHitY || length(p) >= MAX_DIST) {
-      break;  // Nothing to render so far
+      break;  // 到目前为止什么都没有
     }
 
     float nearest = nonTerrain(hit);
 
     float shadowEpsilon = max(epsilon, 0.01 * min(1., dist) + i * (.01 / float(SHADOW_ITERATIONS)));
     if (nearest <= shadowEpsilon) {
-      return 0.;  // Hit or inside something.
+      return 0.;  // 击中或内部。
     }
 
     res = min(res, 85. * nearest / dist);
     if (res < 0.078) {
-      return 0.;  // Dark enough already.
+      return 0.;  // 已经足够黑了。
     }
 
     dist += nearest + epsilon;
@@ -813,7 +812,7 @@ float rayTraceWater(vec3 p, vec3 dir) {
   return min(t >= 0. ? t : HORIZON_DIST, HORIZON_DIST);
 }
 
-// Inspired from https://www.shadertoy.com/view/Xl2XRW
+// 灵感来自https://www.shadertoy.com/view/xl2xrw
 vec3 waterFBM(vec2 p) {
   vec3 f = vec3(0);
   float tot = 0.;
@@ -844,13 +843,15 @@ vec3 applyFog(vec3 rgb, float dist, vec3 rayDir) {
   return mix(rgb, fogColor, fogAmount);
 }
 
+
+// 此函数记录如何发现世界，并决定颜色的全过程
 vec3 intersectWithWorld(vec3 p, vec3 dir) {
   vec4 packed = texelFetch(iPrerendered, ivec2(fragCoord * PRERENDERED_TEXTURE_SIZE / iResolution), 0);
-  float unpacked = uintBitsToFloat(
+  float unpacked = uintBitsToFloat(  // 查阅距离
       (uint(packed.x * 255.) << 24 | uint(packed.y * 255.) << 16 | uint(packed.z * 255.) << 8 | uint(packed.w * 255.)));
 
-  float dist = rayMarch(p, dir, 0.001, unpacked);
-  float wdist = rayTraceWater(p, dir);
+  float dist = rayMarch(p, dir, 0.001, unpacked);  // 询问距离
+  float wdist = rayTraceWater(p, dir);  // 计算水面的交点
 
   vec3 color;
   vec3 normal = vec3(0, 1, 0);
@@ -860,9 +861,9 @@ vec3 intersectWithWorld(vec3 p, vec3 dir) {
     return iAnimAntennaRotation > 0. ? texture(iScreens, screenCoords).xyz : vec3(0);
   }
 
-  vec3 hit = p + dir * dist;
+  vec3 hit = p + dir * dist;  // 计算撞到的三维坐标
 
-  bool isWater = wdist < HORIZON_DIST && wdist < dist;
+  bool isWater = wdist < HORIZON_DIST && wdist < dist;  // 如果水面交点更近，那看到的就是水了
   vec3 waterColor;
   float waterOpacity = 0.;
   if (isWater) {
@@ -882,18 +883,18 @@ vec3 intersectWithWorld(vec3 p, vec3 dir) {
 
   int mat = material;
   int submat = subMaterial;
-  if (material == MATERIAL_SKY) {
+  if (material == MATERIAL_SKY) {  // 天空
     color = COLOR_SKY;
-  } else {
+  } else {  // 视线撞到了物体
     vec3 hitNormal;
 
     if (hit.y <= UNDERGROUND_LEVEL) {
-      hitNormal = vec3(0, 1, 0);
+      hitNormal = vec3(0, 1, 0);  // 撞到的是哪个方向（用于计算光线）
       color = vec3(1, 1, 1);
     } else {
       color = vec3(.8);
 
-      switch (mat) {
+      switch (mat) {  // 从颜色盒里取颜色
         case MATERIAL_TERRAIN:
           hitNormal = computeTerrainNormal(hit, dist);
 
@@ -908,7 +909,7 @@ vec3 intersectWithWorld(vec3 p, vec3 dir) {
           hitNormal = computeNonTerrainNormal(hit);
 
           switch (submat) {
-            case SUBMATERIAL_METAL: color = vec3(1); break;  // extra bright
+            case SUBMATERIAL_METAL: color = vec3(1); break;  // 额外的明亮
             case SUBMATERIAL_BRIGHT_RED: color = vec3(1, 0, 0); break;
             case SUBMATERIAL_DARK_RED: color = vec3(.5, 0, 0); break;
             case SUBMATERIAL_BLACK_PURPLE: color = vec3(.2, .1, .2); break;
@@ -926,6 +927,7 @@ vec3 intersectWithWorld(vec3 p, vec3 dir) {
     }
   }
 
+  //+ 计算光照
   float specular = isWater || (mat == MATERIAL_BUILDINGS && submat > SUBMATERIAL_CONCRETE)
       ? pow(clamp01(dot(iSunDirection, reflect(dir, normal))), 50.)
       : 0.;
@@ -945,7 +947,7 @@ vec3 intersectWithWorld(vec3 p, vec3 dir) {
     shadow = getShadow(p + dir * mdist, mdist, normal, 1.);
   }
 
-  // Flashlight
+  // 手电筒
   if (iFlashlightOn && dist < 20.) {
     float flashLightShadow = pow(clamp(dot(iCameraDir, dir), 0., 1.), 32.) * smoothstep(10., 0., dist);
     lightIntensity += flashLightShadow * max(dot(normal, -dir), 0.) * (1. - lightIntensity);
@@ -959,8 +961,8 @@ vec3 intersectWithWorld(vec3 p, vec3 dir) {
 }
 
 /**********************************************************************/
-/* collision shader
-/**********************************************************************/
+/* 碰撞着色器
+/*******************************************************************************/
 
 void main_c() {
   vec3 ray = vec3(0, 0, 1);
@@ -972,8 +974,8 @@ void main_c() {
 }
 
 /**********************************************************************/
-/* prerender shader
-/**********************************************************************/
+/* Prerender着色器
+/*******************************************************************************/
 
 void main_p() {
   vec2 screen = fragCoord / (PRERENDERED_TEXTURE_SIZE * .5) - 1. + .5 / PRERENDERED_TEXTURE_SIZE;
@@ -988,10 +990,10 @@ void main_p() {
 }
 
 /**********************************************************************/
-/* main shader
-/**********************************************************************/
+/* 主着色器
+/*******************************************************************************/
 
-// Main shader
+// 主着色器
 void main_m() {
   vec2 screen = fragCoord / (iResolution * .5) - 1.;
 
@@ -1001,14 +1003,16 @@ void main_m() {
 }
 
 /**********************************************************************/
-/* heightmap shader
-/**********************************************************************/
+/* 高度图着色器
+/*******************************************************************************/
 
 float heightmapCircle(vec2 coord, float centerX, float centerY, float radius, float smoothness) {
   vec2 dist = coord - vec2(centerX, centerY);
   return clamp01(1. - smoothstep(radius - (radius * smoothness), radius, dot(dist, dist) * 4.));
 }
 
+
+// main_heightmap 创造数字地图
 void main_h() {
   vec2 coord = fragCoord / (iResolution * 0.5) - 1., size = vec2(1.3, 1.), derivative = vec2(0.);
   float heightA = 0., heightB = 1., persistence = 1., normalization = 0., octave = 1.;
