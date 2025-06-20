@@ -25,9 +25,11 @@ export default {
         });
     },
 
+    canvasObj : document.createElement('canvas'),
+
     // 给定 canvas 绘制程序，可以绘制纹理并返回 base64
     dToBase64 : function(drawItem) {  // 【之后优化】复用同一个 canvas 元素（清空并重绘），可以避免频繁创建和销毁 canvas 元素。
-        const canvas = document.createElement('canvas');
+        const canvas = this.canvasObj;
         canvas.width = drawItem.width || 400;
         canvas.height = drawItem.height || 400;
         const ctx = canvas.getContext('2d')
@@ -43,11 +45,8 @@ export default {
         }
     },
 
-    // 默认红色纹理（字符串声明的纹理不存在）
+    // 默认纹理（字符串声明的纹理不存在）
     errorTexture : function(ctx, width, height, index = 0, _this) {
-        ctx.fillStyle = 'red';
-        ctx.fillRect(0, 0, width, height);
-        // ctx.clearRect(0, 0, width, height);
         _this.hooks.emitSync('errorTexture_diy', ctx, width, height, index, _this);  // 钩子：'自定义错误纹理' (后续再修改值，记得清除 textureMap)
     },
 };

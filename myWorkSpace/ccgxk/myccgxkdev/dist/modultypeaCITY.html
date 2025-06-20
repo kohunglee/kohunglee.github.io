@@ -43,7 +43,7 @@
     <canvas id="centerPoint" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);" width="1" height="1"></canvas>
 </div>
 <div id="someCtrl">
-    <button id="xforward">前</button>
+    <button id="xforward" style="width: 90px;">前</button>
     <button id="xbackward">后</button>
     <button id="xleft">左</button>
     <button id="xright">右</button>
@@ -73,9 +73,9 @@ const random = k.genPR(17, numCubes * numCubes * 5);  // 伪随机数
 for (let i = 0; i < numCubes; i++) {
     for (let j = 0; j < numCubes; j++) {
         var index = i * numCubes + j;
-        if(index === 5869){  // 测试隐藏某个块块儿
-            continue;
-        }
+        // if(index === 5869){  // 测试隐藏某个块块儿
+        //     continue;
+        // }
         cubeInstances.push({
             x: Math.floor(random[index] * 99 * areaSpace + 1 - 50 * areaSpace) * cubeTimes,
             y: Math.floor(random[index + 1] * 50),
@@ -131,7 +131,7 @@ for (let i = 0; i < numCubes; i++) {
 
 
 // 测试创造一个文字纹理和物体绑定
-function makeTestTextT(indexObj = 8074){
+function makeTestObj(indexObj = 8074){
     const expRatio = 40;
     const indexOfArr = indexObj * 8;
     const objWidth  = k.physicsProps[indexOfArr + 1];  // 这样排列写，性能好一点
@@ -151,7 +151,7 @@ function makeTestTextT(indexObj = 8074){
         // isVisualMode: false,
         X: objPosX, Y: objPosY, Z: objPosZ, rX: 0,
         mass: 0, width: objWidth, depth: 0, height: objHeight,
-        texture: imgID, mixValue: 0.5,
+        texture: imgID, background:'#00000000', mixValue: 0,
     });
 
     // if(window[imgID]){
@@ -185,23 +185,67 @@ function makeTestTextT(indexObj = 8074){
     // }
 }
 
-let currentIndex = 0;
+
+// 测试创造一个文字纹理和物体绑定
+function makeTestTexture(indexObj = 8074){
+    const expRatio = 40;
+    const indexOfArr = indexObj * 8;
+    const objWidth  = k.physicsProps[indexOfArr + 1];  // 这样排列写，性能好一点
+    const objHeight = k.physicsProps[indexOfArr + 2];
+    const objDepth  = k.physicsProps[indexOfArr + 3];
+    const objPosX = k.positionsStatus[indexOfArr];
+    const objPosY = k.positionsStatus[indexOfArr + 1] ;
+    const objPosZ = k.positionsStatus[indexOfArr + 2] + objDepth / 2 + 0.1;
+    const cWidth = objWidth * expRatio;
+    const cHeight = objHeight * expRatio;
+    const imgID = 'T' + indexObj + 'N';
+
+    k.loadTexture([ {
+            func: k.errorTexture,
+            id: imgID,
+            type: 'png',
+            width: cWidth,
+            height: cHeight,
+            index: indexObj,
+        }]).then(res => {});
+}
+
+let currentIndex_obj = 0;
+
 const totalTasks = 10000;
-function runTasksWhenIdle(deadline) {
-    while (deadline.timeRemaining() > 0 && currentIndex < totalTasks) {
-        makeTestTextT(currentIndex);  // 执行任务
-        currentIndex++;
+function runTasksWhenIdle(deadline) {  // 添加物体
+    while (deadline.timeRemaining() > 0 && currentIndex_obj < totalTasks) {
+        makeTestObj(currentIndex_obj);  // 执行任务
+        currentIndex_obj++;
     }
-    if (currentIndex < totalTasks) {
+    if (currentIndex_obj < totalTasks) {
         requestIdleCallback(runTasksWhenIdle);
     } else {
         console.log("所有 xxx 步已优雅地完成！");
+        // requestIdleCallback(runTasksWhenIdle000002);  // 物体添加完毕，开始添加纹理
     }
-    if(currentIndex % 100 === 0){  // 显示进度
-        xforward.innerHTML = currentIndex;
+    if(currentIndex_obj % 100 === 0){  // 显示进度
+        xforward.innerHTML = 'obj ' + currentIndex_obj;
     }
 }
 requestIdleCallback(runTasksWhenIdle);
+
+let currentIndex_texture = 0;
+function runTasksWhenIdle000002(deadline) {  // 添加纹理
+    while (deadline.timeRemaining() > 0 && currentIndex_texture < totalTasks) {
+        makeTestTexture(currentIndex_texture);  // 执行任务
+        currentIndex_texture++;
+    }
+    if (currentIndex_texture < totalTasks) {
+        requestIdleCallback(runTasksWhenIdle000002);
+    } else {
+        console.log("texture 所有 xxx 步已优雅地完成！");
+    }
+    // if(currentIndex_texture % 100 === 0){  // 显示进度
+    //     xforward.innerHTML = 'texture ' + currentIndex_texture;
+    // }
+}
+
 
 
 // 尝试自定义纹理
