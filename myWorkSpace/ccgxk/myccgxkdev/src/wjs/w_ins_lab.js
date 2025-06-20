@@ -231,6 +231,9 @@ const W = {
                                     v.toFloat32Array());  // 处理好 pv ，传给着色器      
           W.wjsHooks.emitSync('shadow_draw', W);  // 绘制阴影插件，测试钩子
           W.gl.clear(16640);
+
+
+          /* ------------ */
           for(i in W.next){  // 遍历渲染模型
             const object = W.next[i];
             if (!object.isInstanced && !object.t && W.col(object.b)[3] == 1) {
@@ -241,13 +244,14 @@ const W = {
           }
           transparent.sort((a, b) => {return W.dist(b) - W.dist(a);});  // 感觉会损失性能，先注释掉
           W.gl.enable(3042 );
+
           W.gl.depthMask(1)
           for(i of transparent) {  // 遍历渲染透明对象（这几行好抽象，后续再优化）
             if (i.isInstanced) {
               W.render(i, dt);
             }
           }
-          W.gl.depthMask(0);
+          // W.gl.depthMask(0);  // 貌似没用、还产生 BUG
           for(i of transparent){
             if (!i.isInstanced) {
               W.render(i, dt);
@@ -255,8 +259,10 @@ const W = {
           }
           W.gl.depthMask(1);
           W.gl.disable(3042);
-        }
         
+
+        /* --------------- */
+        }
         W.gl.uniform3f(  // light 信息发往着色器
           W.uniformLocations.light,
           W.lerp('light','x'), W.lerp('light','y'), W.lerp('light','z')

@@ -118,57 +118,16 @@ for (let i = 0; i < numCubes; i++) {
             background: `#${Math.floor(random[index + 4] * 16777216).toString(16).padStart(6, '0')}`,
             mixValue: 1,
             isShadow: false,
-            isVisualMode: false,
-            // isFictBody: true,
+            // isVisualMode: false,
+            isFictBody: true,
             texture: marble,
         });
     }
 }
 
-k.mainVPlayer = k.addBox({  // 创建一个立方体，并设置为主角
-        name: 'mainPlayer', DPZ : 1,
-        colliGroup: 1,
-        isShadow: 'ok',
-        // X:4.25, Y:1.00, Z:12.09,
-        // X:-30.92, Y:1.00, Z:40.17,
-        X:-69, Y:5.00, Z:510,
-        rX: 0, rY: 0, rZ: 0, size:1, mixValue:0.7,
-        mass: 50,
-        background : '#333',
-        texture: marble
-    });
 
-k.addTABox({  // 创建一个 旋转测试 细长物理体
-    DPZ : 2,
-    colliGroup: 1,
-    name: 'longThin', X: 20, Y: 10, Z: 540,
-    mass: 1, width: 40, depth: 2, height: 2, texture: marble
-});
 
-k.addTABox({  // 创建一个 旋转测试 细长物理体
-    DPZ : 1,
-    colliGroup: 2,
-    name: 'longThin02', X: 20, Y: 10, Z: 546,
-    mass: 10, width: 40, depth: 2, height: 2, background: '#333' 
-});
 
-// 纹理列表
-const drawList = [
-    {func:drawRandomNoise, id:'xnoise'},
-    {func:drawjpflag, id:'jpflag', type: 'jpg'},
-    {func:drawText, id:'xjapangood', type: 'png'},
-];
-
-k.loadTexture(drawList).then(res => {
-    k.addBox({  // 创建一个立方体，测试我的纹理系统
-        DPZ : 1,
-        tiling : 1,
-        name: 'testTexture', X: 10, Y: 200, Z: 510,
-        mass: 100, size:20, texture: jpflag, mixValue: 0
-    });
-
-    
-})
 
 
 // 测试创造一个文字纹理和物体绑定
@@ -228,7 +187,7 @@ function runTasksWhenIdle(deadline) {
         console.log("所有9000步已优雅地完成！");
     }
 }
-requestIdleCallback(runTasksWhenIdle);
+// requestIdleCallback(runTasksWhenIdle);
 
 
 // 写字
@@ -270,6 +229,51 @@ function drawText(ctx, value = 'abc', typeObj = {}, cWidth, cHeight){
 //      });
 //     }
 // }
+
+k.mainVPlayer = k.addBox({  // 创建一个立方体，并设置为主角
+        name: 'mainPlayer', DPZ : 1,
+        colliGroup: 1,
+        isShadow: 'ok',
+        // X:4.25, Y:1.00, Z:12.09,
+        // X:-30.92, Y:1.00, Z:40.17,
+        X:33, Y:5.00, Z:498,
+        rX: 0, rY: 0, rZ: 0, size:1, mixValue:0.7,
+        mass: 50,
+        background : '#333',
+        texture: marble
+    });
+
+k.addTABox({  // 创建一个 旋转测试 细长物理体
+    DPZ : 2,
+    colliGroup: 1,
+    name: 'longThin', X: 29, Y: 10, Z: 496,
+    mass: 1, width: 3, depth: 2, height: 2, texture: marble
+});
+
+k.addTABox({  // 创建一个 旋转测试 细长物理体
+    DPZ : 1,
+    colliGroup: 2,
+    name: 'longThin02', X: 20, Y: 10, Z: 546,
+    mass: 10, width: 40, depth: 2, height: 2, background: '#333' 
+});
+
+// 纹理列表
+const drawList = [
+    {func:drawRandomNoise, id:'xnoise'},
+    {func:drawjpflag, id:'jpflag', type: 'jpg'},
+    {func:drawText, id:'xjapangood', type: 'png'},
+];
+
+k.loadTexture(drawList).then(res => {
+    k.addBox({  // 创建一个立方体，测试我的纹理系统
+        DPZ : 1,
+        tiling : 1,
+        name: 'testTexture', X: 10, Y: 200, Z: 510,
+        mass: 100, size:20, texture: jpflag, mixValue: 0
+    });
+
+    
+})
 
 k.addBox({  // 创建地面
     DPZ : 1,
