@@ -123,8 +123,8 @@ export default {
     gridsize : 20,  // 单个区块面积大小
     currentlyActiveIndices : new Set(),  // 当前激活状态的物体。也可保存本次的激活物体列表，供下一次使用
     activationQueue : new Array(),  // 激活任务队列
-    isActivationScheduled : false,  // 是否已经安排了激活任务
-    isRealtimeAddBox : false,  // 是否实时添加物体
+    // isActivationScheduled : false,  // 是否已经安排了激活任务
+    // isRealtimeAddBox : false,  // 是否实时添加物体
     dynaNodes_lab : function(){
         if(this.mainVPlayer === null || this.stopDynaNodes) {return ''};
         var mVP = this.mainVPlayer;

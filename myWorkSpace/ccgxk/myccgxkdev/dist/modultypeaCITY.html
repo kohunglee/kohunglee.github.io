@@ -128,10 +128,6 @@ for (let i = 0; i < numCubes; i++) {
 }
 
 
-
-
-
-
 // 测试创造一个文字纹理和物体绑定
 k.initTextData = new Map();
 function makeTestObj(indexObj = 8074){
@@ -165,7 +161,7 @@ function makeTestObj(indexObj = 8074){
             // isVisualMode: false,
             X: face.X, Y: face.Y, Z: face.Z, rX: face.rX, rY: face.rY, rZ: 0,
             mass: 0, width: objWidth, depth: 0, height: objHeight,
-            texture: 'marble', background:'#00000000', mixValue: 0,
+            texture: imgID + face.name, background:'#00000000', mixValue: 0,
             forObjID: imgID + face.name,  // 相当于备份宿主的编号，因为后续 texture 属性可能会被修改
         });
     })
@@ -193,18 +189,6 @@ function makeTestObj(indexObj = 8074){
     }
 }
 
-// 一个修改文字的 DEMO
-k.modTextDemo = (indexID) =>{
-    const forObjID = k.indexToArgs.get(indexID).forObjID || -1;
-    k.initTextData.set(forObjID, '狗精，肉不正经！！');
-    k.textureMap.delete(forObjID);
-    window[forObjID] = undefined;
-    k.W.cube({
-        n: forObjID,
-        t: k.textureMap.get(forObjID),
-    });
-    k.currentlyActiveIndices.delete(indexID)
-}
 
 // 测试创造一个文字纹理和物体绑定
 function makeTestTexture(indexObj = 8074){
@@ -220,15 +204,55 @@ function makeTestTexture(indexObj = 8074){
     const cHeight = objHeight * expRatio;
     const imgID = 'T' + indexObj + 'N';
 
-    k.loadTexture([ {
+    const faceSuffix = ['_forward', '_backward', '_top', '_down', '_right', '_left'];  // 后缀名
+    for (let index = 0; index < faceSuffix.length; index++) {
+        const faceSuffixName = faceSuffix[index];
+        k.loadTexture([ {
             func: k.errorTexture,
-            id: imgID,
-            // forObjID: imgID,
+            id: imgID + faceSuffixName,
             type: 'png',
             width: cWidth,
             height: cHeight,
             index: indexObj,
         }]).then(res => {});
+    }
+}
+
+
+
+// 预先获取要绘制的方块 index
+k.preRanderTexture = () => {
+    const gridsize = 20;
+    const mVP = k.mainVPlayer;
+
+    //  先算开要预渲染的坐标
+    const playerGridX = Math.floor(mVP.X / gridsize);  //+8 计算主角周围 9 个格子的区块
+    const playerGridZ = Math.floor(mVP.Z / gridsize);
+    const activeGridKeys = [];  // 装 9 个格子的区块号
+    for (let i = -1; i <= 1; i++) {
+        for (let j = -1; j <= 1; j++) {
+            activeGridKeys.push(`${playerGridX + i}_${playerGridZ + j}`);
+        }
+    }
+
+    // 根据映射和坐标把物体给算进来
+    const newActiveIndices = new Set();  // 待做出隐藏动作的物体的 index 列表    
+    for(const key of activeGridKeys){
+        const indicesInGrid = k.spatialGrid.get(key);  // 取物体使用（spatialGrid，俗称战地成员列表）
+        if (indicesInGrid) {
+            for (const index of indicesInGrid) {
+                    newActiveIndices.add(index);
+            }
+        }
+    }
+
+    // 重新定义任务总量
+    preRanderTextTotalTask = newActiveIndices.size;
+
+    // 遍历预渲染任务
+    for (const index of newActiveIndices) {
+        makeTestTexture(index);
+    }
 }
 
 let currentIndex_obj = 0;
@@ -242,7 +266,7 @@ function runTasksWhenIdle(deadline) {  // 添加物体
     if (currentIndex_obj < totalTasks) {
         requestIdleCallback(runTasksWhenIdle);
     } else {
-        // console.log("所有 xxx 步已优雅地完成！");
+        console.log("所有 add obj 步已优雅地完成！");
         // requestIdleCallback(runTasksWhenIdle000002);  // 物体添加完毕，开始添加纹理
     }
     if(currentIndex_obj % 100 === 0){  // 显示进度
@@ -252,26 +276,27 @@ function runTasksWhenIdle(deadline) {  // 添加物体
 requestIdleCallback(runTasksWhenIdle);
 
 let currentIndex_texture = 0;
+let preRanderTextTotalTask = 100_0000;
 function runTasksWhenIdle000002(deadline) {  // 添加纹理
-    while (deadline.timeRemaining() > 0 && currentIndex_texture < totalTasks) {
-        makeTestTexture(currentIndex_texture);  // 执行任务
+    while (deadline.timeRemaining() > 0 && currentIndex_texture < preRanderTextTotalTask) {
+        // makeTestTexture(currentIndex_texture);  // 执行任务
         currentIndex_texture++;
     }
-    if (currentIndex_texture < totalTasks) {
+    if (currentIndex_texture < preRanderTextTotalTask) {
         requestIdleCallback(runTasksWhenIdle000002);
     } else {
-        console.log("texture 所有 xxx 步已优雅地完成！");
+        console.log("texture 所有 add texture 步已优雅地完成！");
     }
-    // if(currentIndex_texture % 100 === 0){  // 显示进度
-    //     xforward.innerHTML = 'texture ' + currentIndex_texture;
-    // }
+    if(currentIndex_texture % 100 === 0){  // 显示进度
+        xforward.innerHTML = 'texture ' + currentIndex_texture;
+    }
 }
 
 
 
 // 尝试自定义纹理
 k.hooks.on('errorTexture_diy', function(ctx, width, height, index, id, _this){
-    return
+    // return
     // const value = '肉狗 ' + id + ' ' + convertFiveDigitNumberToCommonChars(index);
     const value = k.initTextData.get(id) || 'NO.' + index;
     if(index === 12278){ console.log(value); }
@@ -328,6 +353,20 @@ k.hooks.on('errorTexture_diy', function(ctx, width, height, index, id, _this){
 //             texture: marble,
 //      });
 //     }
+// }
+
+
+// // 一个修改文字的 DEMO
+// k.modTextDemo = (indexID) =>{
+//     const forObjID = k.indexToArgs.get(indexID).forObjID || -1;
+//     k.initTextData.set(forObjID, '狗精，肉不正经！！');
+//     k.textureMap.delete(forObjID);
+//     window[forObjID] = undefined;
+//     k.W.cube({
+//         n: forObjID,
+//         t: k.textureMap.get(forObjID),
+//     });
+//     k.currentlyActiveIndices.delete(indexID)
 // }
 
 // 从 COOKIE 里取出上一次的位置
