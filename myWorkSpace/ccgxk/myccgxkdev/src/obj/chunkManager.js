@@ -153,13 +153,13 @@ export default {
         }
         for (const index of newActiveIndices) {  // 执行激活动作
             if(!this.currentlyActiveIndices.has(index)){  // 上次被激活过，这次就不激活了
-                if(this.isRealtimeAddBox && this.isActivationScheduled === false){
+                // if(this.isRealtimeAddBox && this.isActivationScheduled === false){
                     const p_offset = index * 8;
                     this.positionsStatus[p_offset + 7] = this.physicsProps[p_offset];  // 状态码（或 mass） 重新赋予
                     this.activeTABox(index);
-                } else {
-                    this.activationQueue.push(index);  // 将任务推入队列(闲时、延迟执行)
-                }
+                // } else {
+                //     this.activationQueue.push(index);  // 将任务推入队列(闲时、延迟执行)
+                // }
                 
                 
             }
@@ -177,24 +177,24 @@ export default {
 
     },
 
-    // 处理激活任务（闲时，可能会改善卡顿）
-    _processActivationQueue : function(deadline) {
-        // console.log(`开始处理激活队列，剩余任务: ${this.activationQueue.length}, 可用时间: ${deadline.timeRemaining().toFixed(2)}ms`);
-        while (this.activationQueue.length > 0 && deadline.timeRemaining() > 0) {
-            const index = this.activationQueue.shift();
-            const p_offset = index * 8;
-            this.positionsStatus[p_offset + 7] = this.physicsProps[p_offset];  // 状态码（或 mass） 重新赋予
-            this.activeTABox(index);
-        }
-        if (this.activationQueue.length > 0) {
-            requestIdleCallback(this._processActivationQueue.bind(this));
-        } else {
-            this.isActivationScheduled = false;
-            // console.log(`激活队列处理完毕。`);
-        }
+    // // 处理激活任务（闲时，可能会改善卡顿）
+    // _processActivationQueue : function(deadline) {
+    //     // console.log(`开始处理激活队列，剩余任务: ${this.activationQueue.length}, 可用时间: ${deadline.timeRemaining().toFixed(2)}ms`);
+    //     while (this.activationQueue.length > 0 && deadline.timeRemaining() > 0) {
+    //         const index = this.activationQueue.shift();
+    //         const p_offset = index * 8;
+    //         this.positionsStatus[p_offset + 7] = this.physicsProps[p_offset];  // 状态码（或 mass） 重新赋予
+    //         this.activeTABox(index);
+    //     }
+    //     if (this.activationQueue.length > 0) {
+    //         requestIdleCallback(this._processActivationQueue.bind(this));
+    //     } else {
+    //         this.isActivationScheduled = false;
+    //         // console.log(`激活队列处理完毕。`);
+    //     }
 
         
-    },
+    // },
     // ------------------------------------------------------
 
 }

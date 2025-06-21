@@ -131,9 +131,10 @@ function hotAction(thisObj){
 
 // 一个修改文字的 DEMO
 function modTextDemo(indexID, content = '狗精，肉不正经！！', thisObj) {
-    if(thisObj.indexToArgs.get(indexID).forObjID === false){ return 0 }
+    if(!thisObj.indexToArgs.get(indexID).forObjID){ return 0 }
     const forObjID = thisObj.indexToArgs.get(indexID).forObjID;
-    thisObj.initTextData.set(forObjID, content);
+    console.log(forObjID + '能进来');
+    thisObj.initTextData.set(forObjID, content);  // 重新设置内容
     thisObj.textureMap.delete(forObjID);
     window[forObjID] = undefined;
     thisObj.W.cube({
