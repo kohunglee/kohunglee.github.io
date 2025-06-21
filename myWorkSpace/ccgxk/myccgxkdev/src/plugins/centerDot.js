@@ -126,4 +126,19 @@ function drawCenterPoint(canvas, thisObj, isClear){
 // 单击热点后的事件
 function hotAction(thisObj){
     console.log(thisObj.hotPoint);
+    modTextDemo(thisObj.hotPoint, '狗太憨了，肉都气刀！！！',thisObj);
+}
+
+// 一个修改文字的 DEMO
+function modTextDemo(indexID, content = '狗精，肉不正经！！', thisObj) {
+    if(thisObj.indexToArgs.get(indexID).forObjID === false){ return 0 }
+    const forObjID = thisObj.indexToArgs.get(indexID).forObjID;
+    thisObj.initTextData.set(forObjID, content);
+    thisObj.textureMap.delete(forObjID);
+    window[forObjID] = undefined;
+    thisObj.W.cube({
+        n: forObjID,
+        t: thisObj.textureMap.get(forObjID),
+    });
+    thisObj.currentlyActiveIndices.delete(indexID)
 }

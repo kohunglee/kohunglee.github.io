@@ -160,6 +160,7 @@ function makeTestObj(indexObj = 8074){
         X: objPosX, Y: objPosY, Z: objPosZ, rX: 0,
         mass: 0, width: objWidth, depth: 0, height: objHeight,
         texture: imgID, background:'#00000000', mixValue: 0,
+        forObjID: imgID,  // 可得到宿主的编号
     });
 
     // if(window[imgID]){
@@ -193,6 +194,18 @@ function makeTestObj(indexObj = 8074){
     // }
 }
 
+// 一个修改文字的 DEMO
+k.modTextDemo = (indexID) =>{
+    const forObjID = k.indexToArgs.get(indexID).forObjID || -1;
+    k.initTextData.set(forObjID, '狗精，肉不正经！！');
+    k.textureMap.delete(forObjID);
+    window[forObjID] = undefined;
+    k.W.cube({
+        n: forObjID,
+        t: k.textureMap.get(forObjID),
+    });
+    k.currentlyActiveIndices.delete(indexID)
+}
 
 // 测试创造一个文字纹理和物体绑定
 function makeTestTexture(indexObj = 8074){
@@ -211,6 +224,7 @@ function makeTestTexture(indexObj = 8074){
     k.loadTexture([ {
             func: k.errorTexture,
             id: imgID,
+            // forObjID: imgID,
             type: 'png',
             width: cWidth,
             height: cHeight,
@@ -229,7 +243,7 @@ function runTasksWhenIdle(deadline) {  // 添加物体
     if (currentIndex_obj < totalTasks) {
         requestIdleCallback(runTasksWhenIdle);
     } else {
-        console.log("所有 xxx 步已优雅地完成！");
+        // console.log("所有 xxx 步已优雅地完成！");
         // requestIdleCallback(runTasksWhenIdle000002);  // 物体添加完毕，开始添加纹理
     }
     if(currentIndex_obj % 100 === 0){  // 显示进度
@@ -364,13 +378,15 @@ const drawList = [
 //     });
 // })
 
+var groundPlanesize = 10000;
+
 k.addBox({  // 创建地面
     DPZ : 1,
     colliGroup: 1,
     tiling : 10,
     // isShadow: 1,
     name: 'groundPlane', X: 0, Y: -0.5, Z: 0,
-    mass: 0, width: 10000, depth: 10000, height: 2,
+    mass: 0, width: groundPlanesize, depth: groundPlanesize, height: 2,
     texture: marble, background: '#287A17', mixValue: 0.5,
 });
 
@@ -382,7 +398,7 @@ k.addBox({  // 创建一个参考1米的使用的辅助图片。它会拉低渲�
     shape: 'plane',
     isPhysical: false,
     name: 'groundPlaneAux', X: 0, Y: 0.6, Z: 0, rX: -90,
-    mass: 0, width: 10000, depth: 0, height: 10000,
+    mass: 0, width: groundPlanesize, depth: 0, height: groundPlanesize,
     texture: marble, background: '#171f7a14', mixValue: 0.71,
 });
 

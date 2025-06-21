@@ -124,6 +124,7 @@ export default {
     currentlyActiveIndices : new Set(),  // 当前激活状态的物体。也可保存本次的激活物体列表，供下一次使用
     activationQueue : new Array(),  // 激活任务队列
     isActivationScheduled : false,  // 是否已经安排了激活任务
+    isRealtimeAddBox : false,  // 是否实时添加物体
     dynaNodes_lab : function(){
         if(this.mainVPlayer === null || this.stopDynaNodes) {return ''};
         var mVP = this.mainVPlayer;
@@ -152,10 +153,15 @@ export default {
         }
         for (const index of newActiveIndices) {  // 执行激活动作
             if(!this.currentlyActiveIndices.has(index)){  // 上次被激活过，这次就不激活了
-                // const p_offset = index * 8;
-                // this.positionsStatus[p_offset + 7] = this.physicsProps[p_offset];  // 状态码（或 mass） 重新赋予
-                // this.activeTABox(index);
-                this.activationQueue.push(index);  // 将任务推入队列
+                if(this.isRealtimeAddBox && this.isActivationScheduled === false){
+                    const p_offset = index * 8;
+                    this.positionsStatus[p_offset + 7] = this.physicsProps[p_offset];  // 状态码（或 mass） 重新赋予
+                    this.activeTABox(index);
+                } else {
+                    this.activationQueue.push(index);  // 将任务推入队列(闲时、延迟执行)
+                }
+                
+                
             }
         }
         for(const index of indicesToHide){  // 执行隐藏动作
