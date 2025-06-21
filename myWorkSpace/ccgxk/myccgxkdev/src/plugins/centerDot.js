@@ -76,7 +76,7 @@ export default function(ccgxkObj) {
             if(W.makeFBOSucess !== true){ W.makeFBO() }
             drawCenterPoint(canvas, ccgxkObj);
             ccgxkObj.centerPointColorUpdatax = setInterval(() => { drawCenterPoint(canvas, ccgxkObj) }, 500);
-            ccgxkObj.mainCamera.pos = {x:0, y:1, z:0};
+            ccgxkObj.mainCamera.pos = {x:0, y:0.5, z:0};
         }
     });
 }

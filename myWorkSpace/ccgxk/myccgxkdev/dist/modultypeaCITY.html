@@ -44,7 +44,7 @@
 </div>
 <div id="someCtrl">
     <button id="xforward" style="width: 90px;">前</button>
-    <button id="xbackward">后</button>
+    <button id="xbackward">原点</button>
     <button id="xleft">左</button>
     <button id="xright">右</button>
     <button id="xjump">蹦</button>
@@ -131,6 +131,7 @@ for (let i = 0; i < numCubes; i++) {
 
 
 // 测试创造一个文字纹理和物体绑定
+k.initTextData = new Map();
 function makeTestObj(indexObj = 8074){
     const expRatio = 40;
     const indexOfArr = indexObj * 8;
@@ -143,6 +144,13 @@ function makeTestObj(indexObj = 8074){
     const cWidth = objWidth * expRatio;
     const cHeight = objHeight * expRatio;
     const imgID = 'T' + indexObj + 'N';
+
+
+    if(k.initTextData.size < 1){  // 初始化文字 map()
+        for (let indexFor = 0; indexFor < 20100; indexFor++) {
+            k.initTextData.set('T' + indexFor + 'N', '肉狗 ' + 'T' + indexFor + 'N' + ' ' + convertFiveDigitNumberToCommonChars(indexFor));
+        }
+    }
     
     k.addTABox({  // 创建一个 TA 平面试试
         DPZ : 1,
@@ -249,14 +257,16 @@ function runTasksWhenIdle000002(deadline) {  // 添加纹理
 
 
 // 尝试自定义纹理
-k.hooks.on('errorTexture_diy', function(ctx, width, height, index, _this){
-    const value = '肉狗 ' + index;
+k.hooks.on('errorTexture_diy', function(ctx, width, height, index, id, _this){
+    // const value = '肉狗 ' + id + ' ' + convertFiveDigitNumberToCommonChars(index);
+    const value = k.initTextData.get(id) || 'NO.' + index;
+    if(index === 12278){ console.log(value); }
     const typeObj = {};
     ctx.font = typeObj.font || "20px Arial";                  // 字体大小和类型
     ctx.fillStyle =  typeObj.fillStyle || "black";            // 填充颜色
     ctx.strokeStyle =  typeObj.strokeStyle || "blue";         // 描边颜色
-    ctx.textAlign =  typeObj.textAlign || "center";           // 水平对齐方式（left/center/right）
-    ctx.textBaseline =  typeObj.textBaseline ||"middle";      // 垂直对齐方式（top/middle/bottom）
+    ctx.textAlign =  typeObj.textAlign || "left";           // 水平对齐方式（left/center/right）
+    ctx.textBaseline =  typeObj.textBaseline ||"top";      // 垂直对齐方式（top/middle/bottom）
     const valueByLine = String(value).split('\n');
     const lineHeight = parseInt(ctx.font) || 30;
     ctx.clearRect(0, 0, width, height);
@@ -266,19 +276,19 @@ k.hooks.on('errorTexture_diy', function(ctx, width, height, index, _this){
 })
 
 
-// 写字
-function drawText(ctx, value = 'abc', typeObj = {}, cWidth, cHeight){
-    ctx.font = typeObj.font || "20px Arial";                  // 字体大小和类型
-    ctx.fillStyle =  typeObj.fillStyle || "black";            // 填充颜色
-    ctx.strokeStyle =  typeObj.strokeStyle || "blue";         // 描边颜色
-    ctx.textAlign =  typeObj.textAlign || "center";           // 水平对齐方式（left/center/right）
-    ctx.textBaseline =  typeObj.textBaseline ||"middle";      // 垂直对齐方式（top/middle/bottom）
-    const valueByLine = String(value).split('\n');
-    const lineHeight = parseInt(ctx.font) || 30;
-    valueByLine.forEach((line, i) => {  // 分行
-        ctx.fillText(line, 150, 50 + (i * lineHeight + 5));
-    });
-}
+// // 写字
+// function drawText(ctx, value = 'abc', typeObj = {}, cWidth, cHeight){
+//     ctx.font = typeObj.font || "20px Arial";                  // 字体大小和类型
+//     ctx.fillStyle =  typeObj.fillStyle || "black";            // 填充颜色
+//     ctx.strokeStyle =  typeObj.strokeStyle || "blue";         // 描边颜色
+//     ctx.textAlign =  typeObj.textAlign || "left";           // 水平对齐方式（left/center/right）
+//     ctx.textBaseline =  typeObj.textBaseline ||"middle";      // 垂直对齐方式（top/middle/bottom）
+//     const valueByLine = String(value).split('\n');
+//     const lineHeight = parseInt(ctx.font) || 30;
+//     valueByLine.forEach((line, i) => {  // 分行
+//         ctx.fillText(line, 150, 50 + (i * lineHeight + 5));
+//     });
+// }
 
 
 // // 尝试调试物理引擎
@@ -306,13 +316,17 @@ function drawText(ctx, value = 'abc', typeObj = {}, cWidth, cHeight){
 //     }
 // }
 
+var lastPos = getObjectCookie('lastPos_mvp');
+if(!lastPos){
+    lastPos = {x:33, y:5.00, z:498};
+}
 k.mainVPlayer = k.addBox({  // 创建一个立方体，并设置为主角
         name: 'mainPlayer', DPZ : 1,
         colliGroup: 1,
         isShadow: 'ok',
         // X:4.25, Y:1.00, Z:12.09,
         // X:-30.92, Y:1.00, Z:40.17,
-        X:33, Y:5.00, Z:498,
+        X:lastPos.x, Y:lastPos.y + 1, Z:lastPos.z,
         rX: 0, rY: 0, rZ: 0, size:1, mixValue:0.7,
         mass: 50,
         background : '#333',
@@ -338,17 +352,17 @@ k.addTABox({  // 创建一个 旋转测试 细长物理体
 const drawList = [
     {func:drawRandomNoise, id:'xnoise'},
     {func:drawjpflag, id:'jpflag', type: 'jpg'},
-    {func:drawText, id:'xjapangood', type: 'png'},
+    // {func:drawText, id:'xjapangood', type: 'png'},
 ];
 
-k.loadTexture(drawList).then(res => {
-    k.addBox({  // 创建一个立方体，测试我的纹理系统
-        DPZ : 1,
-        tiling : 1,
-        name: 'testTexture', X: 10, Y: 200, Z: 510,
-        mass: 100, size:20, texture: jpflag, mixValue: 0
-    });
-})
+// k.loadTexture(drawList).then(res => {
+//     k.addBox({  // 创建一个立方体，测试我的纹理系统
+//         DPZ : 1,
+//         tiling : 1,
+//         name: 'testTexture', X: 10, Y: 200, Z: 510,
+//         mass: 100, size:20, texture: jpflag, mixValue: 0
+//     });
+// })
 
 k.addBox({  // 创建地面
     DPZ : 1,
@@ -371,12 +385,6 @@ k.addBox({  // 创建一个参考1米的使用的辅助图片。它会拉低渲�
     mass: 0, width: 10000, depth: 0, height: 10000,
     texture: marble, background: '#171f7a14', mixValue: 0.71,
 });
-
-
-
-
-
-
 
 // 日本国旗
 function drawjpflag(ctx, w, h) {
@@ -443,11 +451,15 @@ xforward.addEventListener('mousedown', function(event) {
 
 // 后退
 xbackward.addEventListener('mousedown', function(event) {
-    if(k.keys.viewBackward === 1){
-        k.keys.viewBackward = 0;
-    } else {
-        k.keys.viewBackward = 1;
-    }
+    // if(k.keys.viewBackward === 1){
+    //     k.keys.viewBackward = 0;
+    // } else {
+    //     k.keys.viewBackward = 1;
+    // }
+    // k.mainVPlayer.body.x = ;
+    k.mainVPlayer.body.position.x = 69;
+    k.mainVPlayer.body.position.y = 1;
+    k.mainVPlayer.body.position.z = 544;
 });
 
 
@@ -507,6 +519,68 @@ document.addEventListener('keydown', function(event) {
     }
 });
 
+
+// 数字转汉字
+function convertFiveDigitNumberToCommonChars(inputNumber) {
+    // --- 1. 定义字符集范围 (使用常用汉字表) ---
+    // 这是《通用规范汉字表》一级字表的一个子集，包含了非常高频的汉字。
+    // 你可以根据需要扩展这个列表，完整的列表有3500个字。
+    const COMMON_CHARS = "的一是在不了有和人这中大为上个国我以要他时来用们生到作地于出就分对成会可主发年动同工也能下过子说产种面而方后多定行学法所民得经十三之进着等部度家电力里如水化高自二理起小物现实加量都两体制机当使点从业本去把性好应开它合还因由其些然前外天政四日那社义事平形相全表间样与关各重新线内数正心反你明看原又么利比或但质气第向道命此变条只没结解问意建月公无系军很情者最立代想已通并提直题党程展五果料象员革位入常文总次品式活设及管特件长求老头基资边流路级少图山统接知较将组见计别她手角期根论运农指几九区强放决西被干做必战先回すあいうえお";
+    
+    // 字符集的大小现在是字符串的长度
+    const rangeSize = COMMON_CHARS.length;
+
+    // --- 2. 验证和转换输入 (保持不变) ---
+    const num = parseInt(inputNumber, 10);
+    if (isNaN(num) || num < 0 || num > 99999) {
+        return "输入无效：请输入一个0到99999之间的五位数字。";
+    }
+
+    // --- 3. 计算第一个汉字的索引 (逻辑不变) ---
+    const index1 = num % rangeSize;
+
+    // --- 4. 计算第二个汉字的索引 (逻辑不变) ---
+    const scrambledNum = (num * 127 + 89); // 同样使用质数扰乱
+    const index2 = scrambledNum % rangeSize;
+
+    // --- 5. 根据索引从【常用字字符串】中获取汉字 ---
+    // 这是核心改动：不再使用 fromCharCode，而是直接从字符串中取字符
+    const char1 = COMMON_CHARS[index1];
+    const char2 = COMMON_CHARS[index2];
+
+    return char1 + char2;
+}
+
+
+// 一秒执行一次
+setInterval(() => {
+    const mainVPlayerBodyPos = k.mainVPlayer.body.position;  //+2 储存主角的位置到 COOKIE
+    setObjectCookie('lastPos_mvp', {x: mainVPlayerBodyPos.x, y: mainVPlayerBodyPos.y, z: mainVPlayerBodyPos.z}); // 存储对象到Cookie
+}, 1000)
+
+// 存储对象到Cookie
+function setObjectCookie(name, obj, days) {
+  const value = encodeURIComponent(JSON.stringify(obj));
+  let expires = "";
+  if (days) {
+    const date = new Date();
+    date.setTime(date.getTime() + (days*24*60*60*1000));
+    expires = "; expires=" + date.toUTCString();
+  }
+  document.cookie = `${name}=${value}${expires}; path=/`;
+}
+
+// 从Cookie读取对象
+function getObjectCookie(name) {
+  const cookieArr = document.cookie.split('; ');
+  for(let i = 0; i < cookieArr.length; i++) {
+    const cookiePair = cookieArr[i].split('=');
+    if(name === cookiePair[0]) {
+      return JSON.parse(decodeURIComponent(cookiePair[1]));
+    }
+  }
+  return null;
+}
 </script>
 
 

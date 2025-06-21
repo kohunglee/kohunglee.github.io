@@ -122,6 +122,8 @@ export default {
     // 新的 dynaNodes（适用于长宽 40 以内的物体）
     gridsize : 20,  // 单个区块面积大小
     currentlyActiveIndices : new Set(),  // 当前激活状态的物体。也可保存本次的激活物体列表，供下一次使用
+    activationQueue : new Array(),  // 激活任务队列
+    isActivationScheduled : false,  // 是否已经安排了激活任务
     dynaNodes_lab : function(){
         if(this.mainVPlayer === null || this.stopDynaNodes) {return ''};
         var mVP = this.mainVPlayer;
@@ -150,9 +152,10 @@ export default {
         }
         for (const index of newActiveIndices) {  // 执行激活动作
             if(!this.currentlyActiveIndices.has(index)){  // 上次被激活过，这次就不激活了
-                const p_offset = index * 8;
-                this.positionsStatus[p_offset + 7] = this.physicsProps[p_offset];  // 状态码（或 mass） 重新赋予
-                this.activeTABox(index);
+                // const p_offset = index * 8;
+                // this.positionsStatus[p_offset + 7] = this.physicsProps[p_offset];  // 状态码（或 mass） 重新赋予
+                // this.activeTABox(index);
+                this.activationQueue.push(index);  // 将任务推入队列
             }
         }
         for(const index of indicesToHide){  // 执行隐藏动作
@@ -161,6 +164,30 @@ export default {
             this.hiddenTABox(index);
         }
         this.currentlyActiveIndices = newActiveIndices;
+        if (this.activationQueue.length > 0 && !this.isActivationScheduled) {  // 如果有旧任务，且没有安排新任务
+            this.isActivationScheduled = true;
+            requestIdleCallback(this._processActivationQueue.bind(this));  // 处理
+        }
+
+    },
+
+    // 处理激活任务（闲时，可能会改善卡顿）
+    _processActivationQueue : function(deadline) {
+        // console.log(`开始处理激活队列，剩余任务: ${this.activationQueue.length}, 可用时间: ${deadline.timeRemaining().toFixed(2)}ms`);
+        while (this.activationQueue.length > 0 && deadline.timeRemaining() > 0) {
+            const index = this.activationQueue.shift();
+            const p_offset = index * 8;
+            this.positionsStatus[p_offset + 7] = this.physicsProps[p_offset];  // 状态码（或 mass） 重新赋予
+            this.activeTABox(index);
+        }
+        if (this.activationQueue.length > 0) {
+            requestIdleCallback(this._processActivationQueue.bind(this));
+        } else {
+            this.isActivationScheduled = false;
+            // console.log(`激活队列处理完毕。`);
+        }
+
+        
     },
     // ------------------------------------------------------
 

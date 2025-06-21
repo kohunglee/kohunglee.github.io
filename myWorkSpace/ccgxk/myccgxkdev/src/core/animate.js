@@ -15,7 +15,6 @@ export default {
                 var disten = Math.sqrt(dx*dx + dy*dy);  // 计算与自身上次的距离（必须大于 某个值 才能被可视化）
                 let quat = indexItem.body.quaternion;
                 let indexItemEuler = this.quaternionToEuler(quat);
-
                 indexItem.quat = quat;
                 indexItem.rX = indexItemEuler.rX;
                 indexItem.rY = indexItemEuler.rY;
@@ -42,11 +41,14 @@ export default {
         }
         /* -----------------------------[ 实验 TA 物理更新 ]--------------------------------------- */
         for (const index of this.currentlyActiveIndices) {  // 暂时选择遍历吧，反正也显示不了几个，也兼容后续的 mass 改变
+            // console.log(index);
             const p_offset = index * 8;
             if(this.positionsStatus[p_offset + 7] > 0){  // 选择 状态码/mass 大于 0 的物体
                 const gridKey_orige = `${Math.floor(this.positionsStatus[p_offset] / this.gridsize)}_${Math.floor(this.positionsStatus[p_offset + 2] / this.gridsize)}`;
                 const indexItem = this.indexToArgs.get(index);
                 const canBody = indexItem.cannonBody;
+                // console.log(this.positionsStatus[index * 8 + 7]);
+                if(!canBody) continue;
                 const disxX = canBody.position.x - this.positionsStatus[p_offset];
                 const disyY = canBody.position.y - this.positionsStatus[p_offset + 1];
                 const diszZ = canBody.position.z - this.positionsStatus[p_offset + 2];

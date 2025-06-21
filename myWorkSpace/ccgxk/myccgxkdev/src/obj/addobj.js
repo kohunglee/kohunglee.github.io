@@ -83,7 +83,7 @@ export default {
         const org_args = this.indexToArgs.get(index);  // 提取参数
         const args = {...this.defaultBoxArgs, ...org_args};  // 为节省内存，固不破坏源对象，使用新对象
         if(args.isPhysical){  // 添加物理体
-            const body = new CANNON.Body();  // 新 new 一个对象，性能不优化了，我不管了
+            const body = new CANNON.Body();  // 新 new 一个对象，不用对象池了，性能不优化了，我不管了
             body.mass = physicalProp[0];  // mass
             body.type = physicalProp[0] === 0 ? CANNON.Body.STATIC : CANNON.Body.DYNAMIC;
             var boxShape;
@@ -133,13 +133,17 @@ export default {
                 args.rZ = eulerQuat.z
             }
             if(typeof tiling === 'number'){ tiling = [tiling, tiling] }  // 处理平铺数
-            const utter = (args.isFictBody) ? 0.1 : 0; // 物理假体，仅在视觉上物体小一圈儿
+            const utter = (args.isFictBody) ? 0.1 : 0 // 物理假体，仅在视觉上物体小一圈儿
 
             var texture, textureError = false;
             if(typeof args.texture === 'string'){  // 处理纹理
+                if(index === 12278){ console.log('11' + args.texture); }
+                if(index === 12278){ console.log(window[args.texture]); }
                 if(window[args.texture] !== undefined){  // 纹理数据 能在全局找到（后续，改成从库里找吧，先使用 window）
+                    if(index === 12278){ console.log('22'); }
                     texture = window[args.texture];
                 } else {  // 找不到，需要换个默认纹理
+                    if(index === 12278){ console.log('33'); }
                     texture = null;
                     textureError = true;
                 }
@@ -157,6 +161,7 @@ export default {
             });
 
             if(textureError){  // 纹理加载失败，尝试换上警告纹理（id 还是原 id）
+                if(index === 12278){ console.log('44'); }
                 const expRatio = 40;  // 缩放比例
                 const cWidth = (physicalProp[1] - utter) * expRatio;
                 const cHeight = (physicalProp[2] - utter) * expRatio;
@@ -168,23 +173,22 @@ export default {
                     height: cHeight,
                     index: index,
                 }]).then(res => {
+                    if(index === 12278){ console.log('纹理');console.log(window[args.texture]); }
                     this.W[args.shape]({
                         n: 'T' + index,
-                        t: window[args.texture],
+                        t: this.textureMap.get(args.texture),
                         mix: args.mixValue,
                     });
                 });
             }
-
-    
-
         }
     },
 
     // 隐藏 TA 物体
     hiddenTABox : function(index){
         const org_args = this.indexToArgs.get(index);  // 提取参数
-        if(org_args.isPhysical !== false){
+        if(org_args.isPhysical !== false && org_args.cannonBody !== undefined){
+            // console.log(org_args.cannonBody);
             this.world.removeBody(org_args.cannonBody);
         }
         if(org_args.isVisualMode !== false){
