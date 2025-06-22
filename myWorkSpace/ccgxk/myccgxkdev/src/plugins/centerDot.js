@@ -130,16 +130,26 @@ function hotAction(thisObj){
 }
 
 // 一个修改文字的 DEMO
-function modTextDemo(indexID, content = '狗精，肉不正经！！', thisObj) {
-    if(!thisObj.indexToArgs.get(indexID).forObjID){ return 0 }
-    const forObjID = thisObj.indexToArgs.get(indexID).forObjID;
-    // console.log(forObjID + '能进来');
-    thisObj.initTextData.set(forObjID, content);  // 重新设置内容
-    thisObj.textureMap.delete(forObjID);
-    window[forObjID] = undefined;
-    thisObj.W.cube({
-        n: forObjID,
-        t: thisObj.textureMap.get(forObjID),
+function modTextDemo(indexID, content = '狗精，肉不正经！！', thisObj) {  // 待优雅化
+    const nID = 'T' + indexID;
+
+    if(!thisObj?.indexToArgs?.get(indexID)?.TGtoolText){ return 0 }  // 判断是否可编辑纹理
+
+    console.log(nID + '能进来');
+
+    thisObj.initTextData.set(nID, // 重新设置文本内容
+        content + Math.random().toFixed(5) + 
+        content + Math.random().toFixed(5) + 
+        content + Math.random().toFixed(5) + 
+        content + Math.random().toFixed(5)
+    );
+
+    thisObj.textureMap.delete(nID);  // 删除纹理库里的该纹理（可能没用？？）
+    window[nID] = undefined;  // 顺便删一下全局的该纹理
+    thisObj.W.plane({
+        n: 'T' + indexID,
+        t: nID,
     });
-    thisObj.currentlyActiveIndices.delete(indexID)
+    thisObj.indexToArgs.get(indexID).texture = nID;  // Obj 的 texture 属性重置
+    thisObj.currentlyActiveIndices.delete(indexID);  // 让 dynaNodes 重新添加一次
 }

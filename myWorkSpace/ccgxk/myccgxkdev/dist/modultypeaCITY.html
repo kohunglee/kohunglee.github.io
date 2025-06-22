@@ -90,7 +90,7 @@ for (let i = 0; i < numCubes; i++) {
     }
 }
 
-// 创建 n 个可以绘制许多立方体的实例立方体对象
+// 实例化物体可视化
 for (let index = 0; index < 1; index++) {
   k.W.cube({
     n: 'manyCubes' + index,
@@ -101,8 +101,7 @@ for (let index = 0; index < 1; index++) {
   });
 }
 
-
-// 尝试加上简单的物理引擎
+// 为实例化加上简单的物理引擎
 k.distanceDPZ[2].len = 35;  // 第四 DZP 级别的探测距离
 for (let i = 0; i < numCubes; i++) {
     for (let j = 0; j < numCubes; j++) {
@@ -121,7 +120,7 @@ for (let i = 0; i < numCubes; i++) {
             mixValue: 1,
             isShadow: false,
             isVisualMode: false,
-            // isFictBody: true,
+            isFictBody: true,
             texture: marble,
         });
     }
@@ -147,7 +146,7 @@ function makeTestObj(indexObj = 8074){
     const faceConfigs = [  // { 名字, 位置偏移, 旋转角度, 尺寸 }
         { name: '_forward', X: objPosX, Y: objPosY, Z: objPosZ + objDepth / 2 + nudge, rX: 0,   rY: 0,   width: objWidth, height: objHeight },
         { name: '_backward', X: objPosX, Y: objPosY, Z: objPosZ - objDepth / 2 - nudge, rX: 0,   rY: 180, width: objWidth, height: objHeight },
-        { name: '_top', X: objPosX, Y: objPosY + objHeight / 2 + nudge, Z: objPosZ, rX: -90,  rY: 0,   width: objWidth, height: objDepth },
+        { name: '_top', X: objPosX, Y: objPosY + objHeight / 2 + nudge, Z: objPosZ, rX: -90,  rY: 0,   width: objWidth, height: objDepth},
         { name: '_down', X: objPosX, Y: objPosY - objHeight / 2 - nudge, Z: objPosZ, rX: 90,   rY: 0,   width: objWidth, height: objDepth },
         { name: '_right', X: objPosX + objWidth / 2 + nudge, Y: objPosY, Z: objPosZ, rX: 0,   rY: 90,  width: objDepth, height: objHeight },
         { name: '_left', X: objPosX - objWidth / 2 - nudge, Y: objPosY, Z: objPosZ, rX: 0,   rY: -90,   width: objDepth, height: objHeight },
@@ -160,34 +159,211 @@ function makeTestObj(indexObj = 8074){
             isPhysical: false,
             // isVisualMode: false,
             X: face.X, Y: face.Y, Z: face.Z, rX: face.rX, rY: face.rY, rZ: 0,
-            mass: 0, width: objWidth, depth: 0, height: objHeight,
-            texture: imgID + face.name, background:'#00000000', mixValue: 0,
-            forObjID: imgID + face.name,  // 相当于备份宿主的编号，因为后续 texture 属性可能会被修改
+            mass: 0, width: face.width, depth: 0, height: face.height,
+            texture: null, 
+            background:'#00000000', mixValue: 0,  // 设置成透明，防止闪烁
+            TGtoolText: true,  // 贴逛使用的参数，如果为 true，则表示可以编辑纹理（文字）
         });
     })
     
-    // k.addTABox({  // 创建一个 TA 平面试试
-    //     DPZ : 1,
-    //     shape: 'plane',
-    //     isPhysical: false,
-    //     // isVisualMode: false,
-    //     X: objPosX, Y: objPosY, Z: objPosZ, rX: 0,
-    //     mass: 0, width: objWidth, depth: 0, height: objHeight,
-    //     texture: imgID, background:'#00000000', mixValue: 0,
-    //     forObjID: imgID,  // 可得到宿主的编号
-    // });
+}
 
-    if(k.initTextData.size < 1){  // 初始化文字 map()
-        for (let indexFor = 0; indexFor < 90100; indexFor++) {
-            k.initTextData.set('T' + indexFor + 'N' + '_forward', '肉狗 ' + 'T' + indexFor + 'N' + ' forward' + ' ' + convertFiveDigitNumberToCommonChars(indexFor));
-            k.initTextData.set('T' + indexFor + 'N' + '_backward', '肉狗 ' + 'T' + indexFor + 'N' + 'back' + convertFiveDigitNumberToCommonChars(indexFor));
-            k.initTextData.set('T' + indexFor + 'N' + '_top', '肉狗 ' + 'T' + indexFor + 'N' + ' top ' + convertFiveDigitNumberToCommonChars(indexFor));
-            k.initTextData.set('T' + indexFor + 'N' + '_down', '肉狗 ' + 'T' + indexFor + 'N' + ' down ' + convertFiveDigitNumberToCommonChars(indexFor));
-            k.initTextData.set('T' + indexFor + 'N' + '_right', '肉狗 ' + 'T' + indexFor + 'N' + ' right ' + convertFiveDigitNumberToCommonChars(indexFor));
-            k.initTextData.set('T' + indexFor + 'N' + '_left', '肉狗 ' + 'T' + indexFor + 'N' + ' left ' + convertFiveDigitNumberToCommonChars(indexFor));
-        }
+
+// 向内存里添加 plane 文字板物体
+let currentIndex_obj = 0;
+const totalTasks = 10000;
+function addPlaneObj2Memory(deadline) {  // 添加物体
+    while (deadline.timeRemaining() > 0 && currentIndex_obj < totalTasks) {
+        makeTestObj(currentIndex_obj);  // 执行任务
+        currentIndex_obj++;
+    }
+    if (currentIndex_obj < totalTasks) {
+        requestIdleCallback(addPlaneObj2Memory);
+    } else {
+        console.log("所有 add obj 步已优雅地完成！");
+    }
+    if(currentIndex_obj % 100 === 0){  // 显示进度
+        xforward.innerHTML = 'obj ' + currentIndex_obj;
     }
 }
+requestIdleCallback(addPlaneObj2Memory);
+
+
+
+
+// 利用钩子来自定义纹理
+k.hooks.on('errorTexture_diy', function(ctx, width, height, index/* OBJ索引 */, id/* 图片ID */, _this){
+    if('T' + index !== id) return;  // 只支持 T1234 这种格式的图片名
+    const value = k.initTextData.get(id) || 'NO.' + index;  // 使用文字库 initTextData 里的文字
+    const typeObj = {};
+    ctx.font = typeObj.font || "20px serif";                  // 字体大小和类型
+    ctx.fillStyle =  typeObj.fillStyle || "black";            // 填充颜色
+    // ctx.strokeStyle =  typeObj.strokeStyle || "blue";         // 描边颜色
+    ctx.textAlign =  typeObj.textAlign || "left";             // 水平对齐方式（left/center/right）
+    ctx.textBaseline =  typeObj.textBaseline ||"top";         // 垂直对齐方式（top/middle/bottom）
+    var lineHeight = parseInt(ctx.font) || 30;
+    const margin = 10;  // 边距
+    const marginLeft = 10;  // 边距
+    const marginRight = 10;
+    ctx.clearRect(0, 0, width, height);  // 透明色
+    ctx.fillStyle = 'black';
+    
+    // 简单排版函数
+    function wrapText(_ctx, text, x, y, maxWidth, lineHeight) {
+        const words = text.split(''); // 按单个字符来拆分，保证中英文都能换行
+        let line = ''; // 当前正在排版的行内容
+        for(let n = 0; n < words.length; n++) {
+            if (words[n] === '\n') {  //+ 处理 \n 来换行的逻辑
+                _ctx.fillText(line, x, y);
+                y += lineHeight; line = '';
+                continue;
+            }
+            if(words[n] === '@'){  // 本行内有 @, 则本行颜色为蓝色
+                ctx.fillStyle = 'blue';
+                ctx.font = "25px Arial";
+                lineHeight = 25;
+                words[n] = '';
+            }
+            if(words[n] === '%'){  // 本行内有 @, 则本行颜色为红色
+                ctx.fillStyle = 'red';
+                ctx.font = "23px Arial";
+                lineHeight = 25;
+                words[n] = '';
+            }
+            if(words[n] === '#'){  // 本行内有 #, 则本行格式为默认
+                ctx.fillStyle = 'black';
+                ctx.font = typeObj.font || "20px serif"
+                words[n] = '';
+            }
+            const testLine = line + words[n];  //+ 长度够了，换行的逻辑
+            const metrics = _ctx.measureText(testLine);  // 计算长度
+            const testWidth = metrics.width;
+            if (testWidth > maxWidth && n > 0) {  // 超长了
+                _ctx.fillText(line, x, y);
+                line = words[n];  // 另起一行
+                y += lineHeight;
+            } else {
+                line = testLine;
+            }
+        }
+        _ctx.fillText(line, x, y);  // 最后剩下的一行
+    }
+
+    var testValue = '@《青玉案·元夕》\n#东风夜放花千树。更吹落、星如雨。宝马雕车香满路。凤箫声动，玉壶光转，一夜鱼龙舞。' +
+                    '蛾儿雪柳黄金缕。笑语盈盈暗香去。众里寻他千百度。蓦然回首，那人却在，灯火阑珊处。\n\n@《一剪梅·红藕香残玉簟秋》' +
+                    '\n#红藕香残玉簟秋。轻解罗裳，独上兰舟。云中谁寄锦书来？雁字回时，月满西楼。花自飘零水自流。一种相思，两处闲愁。' +
+                    '此情无计可消除，才下眉头，却上心头。' +
+                    '\n\n@《蝶恋花·伫倚危楼风细细》\n#伫倚危楼风细细。望极春愁，黯黯生天际。草色烟光残照里，无言谁会凭阑意。' +
+                    '\n拟把疏狂图一醉。对酒当歌，强乐还无味。衣带渐宽终不悔，为伊消得人憔悴。\n\n@《浣溪沙·一曲新词酒一杯》' +
+                    '\n#一曲新词酒一杯。去年天气旧亭台。夕阳西下几时回？无可奈何花落去，似曾相识燕归来。小园香径独徘徊。';
+
+    wrapText(ctx, testValue, marginLeft, marginRight, width - margin * 2, lineHeight);
+})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// *---[ 少用物的储物柜 ↓ ]--------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+// 从 COOKIE 里取出上一次的位置
+var lastPos = getObjectCookie('lastPos_mvp');
+if(!lastPos){
+    lastPos = {x:33, y:5.00, z:498};
+}
+k.mainVPlayer = k.addBox({  // 创建一个立方体，并设置为主角
+        name: 'mainPlayer', DPZ : 1,
+        colliGroup: 1,
+        isShadow: 'ok',
+        // X:4.25, Y:1.00, Z:12.09,
+        // X:-30.92, Y:1.00, Z:40.17,
+        X:lastPos.x, Y:lastPos.y + 1, Z:lastPos.z,
+        rX: 0, rY: 0, rZ: 0, size:1, mixValue:0.7,
+        mass: 50,
+        background : '#333',
+        texture: marble
+    });
+k.W.next['mainPlayer'].h = 0.8;  // 防止穿模，因为纹理和地面的问题.....  后续再想好办法
+
+k.addTABox({  // 创建一个 旋转测试 细长物理体
+    DPZ : 2,
+    colliGroup: 1,
+    name: 'longThin', X: 29, Y: 10, Z: 496,
+    mass: 1, width: 3, depth: 2, height: 2, texture: 'marble'
+});
+
+k.addTABox({  // 创建一个 旋转测试 细长物理体
+    DPZ : 1,
+    colliGroup: 2,
+    name: 'longThin02', X: 20, Y: 10, Z: 546,
+    mass: 10, width: 40, depth: 2, height: 2, background: '#333',
+    texture: 'gourou',
+});
+
+// k.addTABox({  // 创建一个 TA 平面试试
+//     DPZ : 1,
+//     shape: 'plane',
+//     isPhysical: false,
+//     // isVisualMode: false,
+//     X: objPosX, Y: objPosY, Z: objPosZ, rX: 0,
+//     mass: 0, width: objWidth, depth: 0, height: objHeight,
+//     texture: imgID, background:'#00000000', mixValue: 0,
+//     forObjID: imgID,  // 可得到宿主的编号
+// });
+
+// if(k.initTextData.size < 1){  // 初始化文字 map()
+//     for (let indexFor = 0; indexFor < 90100; indexFor++) {
+//         k.initTextData.set('T' + indexFor + 'N' + '_forward', '肉狗 ' + 'T' + indexFor + 'N' + ' forward' + ' ' + convertFiveDigitNumberToCommonChars(indexFor));
+//         k.initTextData.set('T' + indexFor + 'N' + '_backward', '肉狗 ' + 'T' + indexFor + 'N' + 'back' + convertFiveDigitNumberToCommonChars(indexFor));
+//         k.initTextData.set('T' + indexFor + 'N' + '_top', '肉狗 ' + 'T' + indexFor + 'N' + ' top ' + convertFiveDigitNumberToCommonChars(indexFor));
+//         k.initTextData.set('T' + indexFor + 'N' + '_down', '肉狗 ' + 'T' + indexFor + 'N' + ' down ' + convertFiveDigitNumberToCommonChars(indexFor));
+//         k.initTextData.set('T' + indexFor + 'N' + '_right', '肉狗 ' + 'T' + indexFor + 'N' + ' right ' + convertFiveDigitNumberToCommonChars(indexFor));
+//         k.initTextData.set('T' + indexFor + 'N' + '_left', '肉狗 ' + 'T' + indexFor + 'N' + ' left ' + convertFiveDigitNumberToCommonChars(indexFor));
+//     }
+// }
 
 
 // // 测试创造一个文字纹理和物体绑定
@@ -266,27 +442,6 @@ function makeTestObj(indexObj = 8074){
 // }
 
 
-// 向内存里添加 plane 文字板物体
-let currentIndex_obj = 0;
-const totalTasks = 10000;
-function addPlaneObj2Memory(deadline) {  // 添加物体
-    while (deadline.timeRemaining() > 0 && currentIndex_obj < totalTasks) {
-        makeTestObj(currentIndex_obj);  // 执行任务
-        currentIndex_obj++;
-    }
-    if (currentIndex_obj < totalTasks) {
-        requestIdleCallback(addPlaneObj2Memory);
-    } else {
-        console.log("所有 add obj 步已优雅地完成！");
-        // requestIdleCallback(addNearbyTexture);  // 物体添加完毕，开始添加纹理（通用语句）
-    }
-    if(currentIndex_obj % 100 === 0){  // 显示进度
-        xforward.innerHTML = 'obj ' + currentIndex_obj;
-    }
-}
-requestIdleCallback(addPlaneObj2Memory);
-
-
 // // 添加附近的纹理
 // let currentIndex_texture = 0;
 // k.preRanderTextTotalTask = 100_0000;
@@ -311,27 +466,6 @@ requestIdleCallback(addPlaneObj2Memory);
 //     }
 // }
 
-
-
-// 尝试自定义纹理
-k.hooks.on('errorTexture_diy', function(ctx, width, height, index, id, _this){
-    // return
-    // const value = '肉狗 ' + id + ' ' + convertFiveDigitNumberToCommonChars(index);
-    const value = k.initTextData.get(id) || 'NO.' + index;
-    if(index === 12278){ console.log(value); }
-    const typeObj = {};
-    ctx.font = typeObj.font || "20px Arial";                  // 字体大小和类型
-    ctx.fillStyle =  typeObj.fillStyle || "black";            // 填充颜色
-    ctx.strokeStyle =  typeObj.strokeStyle || "blue";         // 描边颜色
-    ctx.textAlign =  typeObj.textAlign || "left";           // 水平对齐方式（left/center/right）
-    ctx.textBaseline =  typeObj.textBaseline ||"top";      // 垂直对齐方式（top/middle/bottom）
-    const valueByLine = String(value).split('\n');
-    const lineHeight = parseInt(ctx.font) || 30;
-    ctx.clearRect(0, 0, width, height);
-    valueByLine.forEach((line, i) => {  // 分行
-        ctx.fillText(line, 50, 50 + ((i) * lineHeight));
-    });
-})
 
 
 // // 写字
@@ -388,38 +522,7 @@ k.hooks.on('errorTexture_diy', function(ctx, width, height, index, id, _this){
 //     k.currentlyActiveIndices.delete(indexID)
 // }
 
-// 从 COOKIE 里取出上一次的位置
-var lastPos = getObjectCookie('lastPos_mvp');
-if(!lastPos){
-    lastPos = {x:33, y:5.00, z:498};
-}
-k.mainVPlayer = k.addBox({  // 创建一个立方体，并设置为主角
-        name: 'mainPlayer', DPZ : 1,
-        colliGroup: 1,
-        isShadow: 'ok',
-        // X:4.25, Y:1.00, Z:12.09,
-        // X:-30.92, Y:1.00, Z:40.17,
-        X:lastPos.x, Y:lastPos.y + 1, Z:lastPos.z,
-        rX: 0, rY: 0, rZ: 0, size:1, mixValue:0.7,
-        mass: 50,
-        background : '#333',
-        texture: marble
-    });
 
-k.addTABox({  // 创建一个 旋转测试 细长物理体
-    DPZ : 2,
-    colliGroup: 1,
-    name: 'longThin', X: 29, Y: 10, Z: 496,
-    mass: 1, width: 3, depth: 2, height: 2, texture: 'marble'
-});
-
-k.addTABox({  // 创建一个 旋转测试 细长物理体
-    DPZ : 1,
-    colliGroup: 2,
-    name: 'longThin02', X: 20, Y: 10, Z: 546,
-    mass: 10, width: 40, depth: 2, height: 2, background: '#333',
-    texture: 'gourou',
-});
 
 // 纹理列表
 const drawList = [
@@ -436,6 +539,8 @@ const drawList = [
 //         mass: 100, size:20, texture: jpflag, mixValue: 0
 //     });
 // })
+
+
 
 var groundPlanesize = 10000;
 
@@ -461,6 +566,7 @@ k.addBox({  // 创建一个参考1米的使用的辅助图片。它会拉低渲�
     texture: marble, background: '#171f7a14', mixValue: 0.71,
 });
 
+
 // 日本国旗
 function drawjpflag(ctx, w, h) {
     ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h);
@@ -485,8 +591,6 @@ function drawRandomNoise(ctx, w, h) {
 }
 
 
-
-// *-----------------------------------------------------------------------------------------------------------------------------------------------------
 
 // 一个能跑起来的计算角度的函数，凑合用吧
 function calculateNorthAngle(t,a,h){var t=-t*Math.PI/180,a=-a*Math.PI/180,h=h*Math.PI/180,M=Math.cos(t),
