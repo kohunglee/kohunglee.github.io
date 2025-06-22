@@ -4,8 +4,11 @@
  * 可以在屏幕中显示中心点儿，以颜色法，选中物体（最多支持 16777215 个物体）
  */
 
+const globalVar = {};  // 用于指向 ccgxkObj
+
 // 插件入口
 export default function(ccgxkObj) {
+    globalVar.ccgxkObj = ccgxkObj;
     const W = ccgxkObj.W;
     W.tempColor = new Uint8Array(4);  // 临时储存颜色，供本插件使用
     const canvas = document.getElementById('centerPoint');  // 画板
@@ -126,21 +129,42 @@ function drawCenterPoint(canvas, thisObj, isClear){
 // 单击热点后的事件
 function hotAction(thisObj){
     console.log(thisObj.hotPoint);
-    modTextDemo(thisObj.hotPoint, '狗太憨了，肉都气刀！！！',thisObj);
+    unlockPointer();  // 解锁鼠标
+    myHUDModal.hidden = false;  // 显示模态框
+    const textureEditorTG = document.getElementById('textureEditorTG');
+    textureEditorTG.value = thisObj.initTextData.get('T' + thisObj.hotPoint) || '';  // 填充编辑框
 }
+
+
+
+// 用户操作完，然后单击 OK 按钮后
+document.getElementById('textureEditorSave').addEventListener('click', function(){
+    myHUDModal.hidden = true;  // 隐藏模态框
+    lockPointer();  // 锁定鼠标
+    const textureEditorTG = document.getElementById('textureEditorTG');
+    const canvas = document.getElementById('centerPoint');  // 画板
+    modTextDemo(globalVar.ccgxkObj.hotPoint, textureEditorTG.value, globalVar.ccgxkObj);  // 修改文字
+    drawCenterPoint(canvas, globalVar.ccgxkObj, true);  //+4 关闭小点
+    clearInterval(globalVar.ccgxkObj.centerPointColorUpdatax);
+    globalVar.ccgxkObj.centerPointColorUpdatax = null;
+    globalVar.ccgxkObj.mainCamera.pos = {x: 0, y: 2, z: 4};
+})
+
+
+
+
 
 // 一个修改文字的 DEMO
 function modTextDemo(indexID, content = '狗精，肉不正经！！', thisObj) {  // 待优雅化
     const nID = 'T' + indexID;
+
+    console.log(content, indexID, nID);
 
     if(!thisObj?.indexToArgs?.get(indexID)?.TGtoolText){ return 0 }  // 判断是否可编辑纹理
 
     console.log(nID + '能进来');
 
     thisObj.initTextData.set(nID, // 重新设置文本内容
-        content + Math.random().toFixed(5) + 
-        content + Math.random().toFixed(5) + 
-        content + Math.random().toFixed(5) + 
         content + Math.random().toFixed(5)
     );
 
@@ -152,4 +176,25 @@ function modTextDemo(indexID, content = '狗精，肉不正经！！', thisObj) 
     });
     thisObj.indexToArgs.get(indexID).texture = nID;  // Obj 的 texture 属性重置
     thisObj.currentlyActiveIndices.delete(indexID);  // 让 dynaNodes 重新添加一次
+}
+
+// 解锁鼠标
+function unlockPointer() {
+  if ('pointerLockElement' in document || 
+      'mozPointerLockElement' in document || 
+      'webkitPointerLockElement' in document) {
+    const exitLock = document.exitPointerLock || 
+                    document.mozExitPointerLock || 
+                    document.webkitExitPointerLock;
+    if (exitLock) {
+      exitLock.call(document);
+    }
+  }
+}
+
+// 锁定鼠标
+function lockPointer(){
+    const canvas = document.getElementById('c');
+    canvas.requestPointerLock = canvas.requestPointerLock || canvas.mozRequestPointerLock || canvas.webkitRequestPointerLock;
+    canvas.requestPointerLock();
 }

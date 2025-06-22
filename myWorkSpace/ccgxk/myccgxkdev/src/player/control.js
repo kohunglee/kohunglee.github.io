@@ -40,6 +40,11 @@ export default {
     // 是否按下了 shift 键
     isShiftPress : 0,
 
+    // 判断当前是否是鼠标锁定状态
+    isPointerLock : function(){
+        return document.pointerLockElement === this.canvas || document.mozPointerLockElement === this.canvas || document.webkitPointerLockElement === this.canvas;
+    },
+
     // 事件监听
     eventListener : function(){
         var _this = this;
@@ -60,22 +65,21 @@ export default {
             this.canvas.requestPointerLock = this.canvas.requestPointerLock || this.canvas.mozRequestPointerLock || this.canvas.webkitRequestPointerLock;
             this.canvas.requestPointerLock();
             isMouseMove = true;
-            // console.log(document.pointerLockElement);
             if(document.pointerLockElement){
                 _this.hooks.emitSync('pointer_lock_click', _this, e);  // 钩子：虚拟鼠标下的单击事件 ()
             }
             
         });
-        document.addEventListener('pointerlockchange', lockChangeAlert, false);
-        document.addEventListener('mozpointerlockchange', lockChangeAlert, false);
-        document.addEventListener('webkitpointerlockchange', lockChangeAlert, false);
-        function lockChangeAlert() {  // 单击 ESC 键后
+        this.lockChangeAlert = function() {  // 单击 ESC 键后
             if (document.pointerLockElement === c || document.mozPointerLockElement === c || document.webkitPointerLockElement === c) {
                 isMouseMove = true;
             } else {
                 isMouseMove = false;
             }
         }
+        document.addEventListener('pointerlockchange', this.lockChangeAlert, false);
+        document.addEventListener('mozpointerlockchange', this.lockChangeAlert, false);
+        document.addEventListener('webkitpointerlockchange', this.lockChangeAlert, false);
         window.addEventListener('resize', () => {  // 重置窗口大小
             this.canvas.width = window.innerWidth;
             this.canvas.height = window.innerHeight;
@@ -86,6 +90,7 @@ export default {
 
     // 键盘事件处理逻辑
     _handleKey : function(e, value) {
+        if(!this.isPointerLock()) { return }
         var action = this.keyMap[e.key.toLowerCase()];
         if (action) { this.keys[action] = value; }
         if ((e.keyCode === 32 || e.key.toLowerCase() === 'e') && this.mainVPlayer !== null) {  // e 或 空格键，飞翔
