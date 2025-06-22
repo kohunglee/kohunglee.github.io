@@ -133,7 +133,7 @@ function hotAction(thisObj){
 function modTextDemo(indexID, content = '狗精，肉不正经！！', thisObj) {
     if(!thisObj.indexToArgs.get(indexID).forObjID){ return 0 }
     const forObjID = thisObj.indexToArgs.get(indexID).forObjID;
-    console.log(forObjID + '能进来');
+    // console.log(forObjID + '能进来');
     thisObj.initTextData.set(forObjID, content);  // 重新设置内容
     thisObj.textureMap.delete(forObjID);
     window[forObjID] = undefined;

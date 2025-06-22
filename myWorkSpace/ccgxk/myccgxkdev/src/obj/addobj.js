@@ -139,11 +139,17 @@ export default {
             if(typeof args.texture === 'string'){  // 处理纹理
                 // if(index === 12278){ console.log('11' + args.texture); }
                 // if(index === 12278){ console.log(window[args.texture]); }
-                if(window[args.texture] !== undefined){  // 纹理数据 能在全局找到（后续，改成从库里找吧，先使用 window）
+                if(window[args.texture] !== undefined || this.textureMap.has(args.texture)){  // 纹理数据 能在全局找到（后续，改成从库里找吧，先使用 window）
                     // if(index === 12278){ console.log('22'); }
-                    console.log('狗能找住了！汪！');
-                    texture = window[args.texture];
+                    // console.log('狗能找住了！汪！');
+                    
+                    if(this.textureMap.has(args.texture)){  // 纹理数据 在库中找到
+                        texture = this.textureMap.get(args.texture);
+                    } else {  // 纹理数据 在全局找到
+                        texture = window[args.texture];
+                    }
                 } else {  // 找不到，需要换个默认纹理
+                    // console.log('狗找不到！汪！' + args.texture);
                     if(index === 12278){ console.log('33'); }
                     texture = null;
                     textureError = true;

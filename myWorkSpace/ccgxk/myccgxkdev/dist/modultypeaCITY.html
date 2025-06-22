@@ -53,7 +53,7 @@
     <button id="xShadow">影</button>
     <button id="xVIEW1">视1</button>
     <button id="xVIEW2">视3</button>
-    <button id="xStopDY">小点</button>
+    <button id="xStopDY"  style="width: 90px;">小点</button>
 </div>
 <script type="module">
 import ccgxkApp from '../src/ccgxk.js';
@@ -190,107 +190,126 @@ function makeTestObj(indexObj = 8074){
 }
 
 
-// 测试创造一个文字纹理和物体绑定
-function makeTestTexture(indexObj = 8074){
-    const expRatio = 40;
-    const indexOfArr = indexObj * 8;
-    const objWidth  = k.physicsProps[indexOfArr + 1];  // 这样排列写，性能好一点
-    const objHeight = k.physicsProps[indexOfArr + 2];
-    const objDepth  = k.physicsProps[indexOfArr + 3];
-    const objPosX = k.positionsStatus[indexOfArr];
-    const objPosY = k.positionsStatus[indexOfArr + 1] ;
-    const objPosZ = k.positionsStatus[indexOfArr + 2] + objDepth / 2 + 0.1;
-    const cWidth = objWidth * expRatio;
-    const cHeight = objHeight * expRatio;
-    const imgID = 'T' + indexObj + 'N';
+// // 测试创造一个文字纹理和物体绑定
+// function makeTestTexture(indexObj = 8074){
+//     const expRatio = 40;
+//     const indexOfArr = indexObj * 8;
+//     const objWidth  = k.physicsProps[indexOfArr + 1];  // 这样排列写，性能好一点
+//     const objHeight = k.physicsProps[indexOfArr + 2];
+//     const objDepth  = k.physicsProps[indexOfArr + 3];
+//     const objPosX = k.positionsStatus[indexOfArr];
+//     const objPosY = k.positionsStatus[indexOfArr + 1] ;
+//     const objPosZ = k.positionsStatus[indexOfArr + 2] + objDepth / 2 + 0.1;
+//     const cWidth = objWidth * expRatio;
+//     const cHeight = objHeight * expRatio;
+//     const imgID = 'T' + indexObj + 'N';
 
-    const faceSuffix = ['_forward', '_backward', '_top', '_down', '_right', '_left'];  // 后缀名
-    for (let index = 0; index < faceSuffix.length; index++) {
-        const faceSuffixName = faceSuffix[index];
-        k.loadTexture([ {
-            func: k.errorTexture,
-            id: imgID + faceSuffixName,
-            type: 'png',
-            width: cWidth,
-            height: cHeight,
-            index: indexObj,
-        }]).then(res => {});
-    }
-}
+//     const faceSuffix = ['_forward', '_backward', '_top', '_down', '_right', '_left'];  // 后缀名
+//     for (let index = 0; index < faceSuffix.length; index++) {
+//         const faceSuffixName = faceSuffix[index];
+//         k.loadTexture([ {
+//             func: k.errorTexture,
+//             id: imgID + faceSuffixName,
+//             type: 'png',
+//             width: cWidth,
+//             height: cHeight,
+//             index: indexObj,
+//         }]).then(res => {});
+//     }
+// }
 
 
 
-// 预先获取要绘制的方块 index
-k.preRanderTexture = () => {
-    const gridsize = 20;
-    const mVP = k.mainVPlayer;
+// // 预先获取要绘制的方块 index
+// k.preRanderTextureIndexArr = [];
+// k.preRanderTexture = (analyArea = 1) => {
 
-    //  先算开要预渲染的坐标
-    const playerGridX = Math.floor(mVP.X / gridsize);  //+8 计算主角周围 9 个格子的区块
-    const playerGridZ = Math.floor(mVP.Z / gridsize);
-    const activeGridKeys = [];  // 装 9 个格子的区块号
-    for (let i = -1; i <= 1; i++) {
-        for (let j = -1; j <= 1; j++) {
-            activeGridKeys.push(`${playerGridX + i}_${playerGridZ + j}`);
-        }
-    }
 
-    // 根据映射和坐标把物体给算进来
-    const newActiveIndices = new Set();  // 待做出隐藏动作的物体的 index 列表    
-    for(const key of activeGridKeys){
-        const indicesInGrid = k.spatialGrid.get(key);  // 取物体使用（spatialGrid，俗称战地成员列表）
-        if (indicesInGrid) {
-            for (const index of indicesInGrid) {
-                    newActiveIndices.add(index);
-            }
-        }
-    }
+//     const gridsize = 20;
+//     const mVP = k.mainVPlayer;
+//     //  先算开要预渲染的坐标
+//     const playerGridX = Math.floor(mVP.X / gridsize);  //+8 计算主角周围 9 个格子的区块
+//     const playerGridZ = Math.floor(mVP.Z / gridsize);
+//     const activeGridKeys = [];  // 装 9 个格子的区块号
 
-    // 重新定义任务总量
-    preRanderTextTotalTask = newActiveIndices.size;
+//     for (let i = -analyArea; i <= analyArea; i++) {
+//         for (let j = -analyArea; j <= analyArea; j++) {
+//             activeGridKeys.push(`${playerGridX + i}_${playerGridZ + j}`);
+//         }
+//     }
 
-    // 遍历预渲染任务
-    for (const index of newActiveIndices) {
-        makeTestTexture(index);
-    }
-}
+//     // 根据映射和坐标把物体给算进来
+//     const newActiveIndices = new Set();  // 待做出隐藏动作的物体的 index 列表    
+//     for(const key of activeGridKeys){
+//         const indicesInGrid = k.spatialGrid.get(key);  // 取物体使用（spatialGrid，俗称战地成员列表）
+//         if (indicesInGrid) {
+//             for (const index of indicesInGrid) {
+//                 if(index < 10001){  // 一个懒惰的做法，之后再想办法改进
+//                     if(Math.abs(k.positionsStatus[index * 8 + 1] - mVP.Y) < k.gridsize){  // 高度距离（Y）要接近
+//                         newActiveIndices.add(index);
+//                     }
+//                 }
+                
+//             }
+//         }
+//     }
 
+//     // 重新定义任务总量
+//     k.preRanderTextTotalTask = newActiveIndices.size;
+//     console.log('已重新定义总量' + k.preRanderTextTotalTask);
+
+//     // 遍历预渲染任务
+//     for (const index of newActiveIndices) {
+//         // makeTestTexture(index);
+//         k.preRanderTextureIndexArr.push(index);
+//     }
+// }
+
+
+// 向内存里添加 plane 文字板物体
 let currentIndex_obj = 0;
-
 const totalTasks = 10000;
-function runTasksWhenIdle(deadline) {  // 添加物体
+function addPlaneObj2Memory(deadline) {  // 添加物体
     while (deadline.timeRemaining() > 0 && currentIndex_obj < totalTasks) {
         makeTestObj(currentIndex_obj);  // 执行任务
         currentIndex_obj++;
     }
     if (currentIndex_obj < totalTasks) {
-        requestIdleCallback(runTasksWhenIdle);
+        requestIdleCallback(addPlaneObj2Memory);
     } else {
         console.log("所有 add obj 步已优雅地完成！");
-        // requestIdleCallback(runTasksWhenIdle000002);  // 物体添加完毕，开始添加纹理
+        // requestIdleCallback(addNearbyTexture);  // 物体添加完毕，开始添加纹理（通用语句）
     }
     if(currentIndex_obj % 100 === 0){  // 显示进度
         xforward.innerHTML = 'obj ' + currentIndex_obj;
     }
 }
-requestIdleCallback(runTasksWhenIdle);
+requestIdleCallback(addPlaneObj2Memory);
 
-let currentIndex_texture = 0;
-let preRanderTextTotalTask = 100_0000;
-function runTasksWhenIdle000002(deadline) {  // 添加纹理
-    while (deadline.timeRemaining() > 0 && currentIndex_texture < preRanderTextTotalTask) {
-        // makeTestTexture(currentIndex_texture);  // 执行任务
-        currentIndex_texture++;
-    }
-    if (currentIndex_texture < preRanderTextTotalTask) {
-        requestIdleCallback(runTasksWhenIdle000002);
-    } else {
-        console.log("texture 所有 add texture 步已优雅地完成！");
-    }
-    if(currentIndex_texture % 100 === 0){  // 显示进度
-        xforward.innerHTML = 'texture ' + currentIndex_texture;
-    }
-}
+
+// // 添加附近的纹理
+// let currentIndex_texture = 0;
+// k.preRanderTextTotalTask = 100_0000;
+// function addNearbyTexture(deadline) {  // 添加纹理
+//     while (deadline.timeRemaining() > 0 && currentIndex_texture < k.preRanderTextTotalTask) {
+//         if(k.preRanderTextureIndexArr.length > 0){  // 判断有没有初始化
+//             makeTestTexture(k.preRanderTextureIndexArr[currentIndex_texture]);
+//         } else {
+//             k.preRanderTexture(5);  // 初始化
+//         }
+//         currentIndex_texture++;
+//     }
+//     if (currentIndex_texture < k.preRanderTextTotalTask) {
+//         requestIdleCallback(addNearbyTexture);
+//     } else {
+//         console.log("texture 所有 add texture 步已优雅地完成！" + Math.random().toFixed(3));
+//         k.preRanderTextureIndexArr.length = 0;
+//         k.preRanderTextTotalTask = 100_0000;
+//     }
+//     if(currentIndex_texture % 10 === 0){  // 显示进度
+//         xforward.innerHTML = 'texture ' + currentIndex_texture + '/ ' + k.preRanderTextureIndexArr.length;
+//     }
+// }
 
 
 
@@ -578,40 +597,29 @@ document.addEventListener('keydown', function(event) {
 
 // 数字转汉字
 function convertFiveDigitNumberToCommonChars(inputNumber) {
-    // --- 1. 定义字符集范围 (使用常用汉字表) ---
-    // 这是《通用规范汉字表》一级字表的一个子集，包含了非常高频的汉字。
-    // 你可以根据需要扩展这个列表，完整的列表有3500个字。
     const COMMON_CHARS = "的一是在不了有和人这中大为上个国我以要他时来用们生到作地于出就分对成会可主发年动同工也能下过子说产种面而方后多定行学法所民得经十三之进着等部度家电力里如水化高自二理起小物现实加量都两体制机当使点从业本去把性好应开它合还因由其些然前外天政四日那社义事平形相全表间样与关各重新线内数正心反你明看原又么利比或但质气第向道命此变条只没结解问意建月公无系军很情者最立代想已通并提直题党程展五果料象员革位入常文总次品式活设及管特件长求老头基资边流路级少图山统接知较将组见计别她手角期根论运农指几九区强放决西被干做必战先回すあいうえお";
-    
-    // 字符集的大小现在是字符串的长度
     const rangeSize = COMMON_CHARS.length;
-
-    // --- 2. 验证和转换输入 (保持不变) ---
     const num = parseInt(inputNumber, 10);
     if (isNaN(num) || num < 0 || num > 99999) {
         return "输入无效：请输入一个0到99999之间的五位数字。";
     }
-
-    // --- 3. 计算第一个汉字的索引 (逻辑不变) ---
     const index1 = num % rangeSize;
-
-    // --- 4. 计算第二个汉字的索引 (逻辑不变) ---
-    const scrambledNum = (num * 127 + 89); // 同样使用质数扰乱
+    const scrambledNum = (num * 127 + 89);
     const index2 = scrambledNum % rangeSize;
-
-    // --- 5. 根据索引从【常用字字符串】中获取汉字 ---
-    // 这是核心改动：不再使用 fromCharCode，而是直接从字符串中取字符
     const char1 = COMMON_CHARS[index1];
     const char2 = COMMON_CHARS[index2];
-
     return char1 + char2;
 }
 
 
 // 一秒执行一次
 setInterval(() => {
+    // cookie 储存位置
     const mainVPlayerBodyPos = k.mainVPlayer.body.position;  //+2 储存主角的位置到 COOKIE
     setObjectCookie('lastPos_mvp', {x: mainVPlayerBodyPos.x, y: mainVPlayerBodyPos.y, z: mainVPlayerBodyPos.z}); // 存储对象到Cookie
+
+    // // 定时预加载附近的纹理
+    // requestIdleCallback(addNearbyTexture);
 }, 1000)
 
 // 存储对象到Cookie
