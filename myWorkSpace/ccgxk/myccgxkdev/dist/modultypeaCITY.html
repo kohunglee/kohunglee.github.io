@@ -45,6 +45,18 @@
     padding: 32px;
 }
 
+.texture-editorBtn-lab {
+    display: inline-block;
+    background: rgb(32 32 32);
+    color: rgb(255, 255, 255);
+    padding: 5px 5px;
+    border: none;
+    cursor: pointer;
+    margin: 5px;
+    font-size: 14;
+    color: #bbbbbb;
+}
+
 </style>
 <!-- <script src="cannon.min.js"></script> -->
 <!-- <script src="../src/cannon/cannon-x-dev.js"></script> -->
@@ -65,8 +77,27 @@
 </div>
 <div id="myHUDModal" class="myHUD-modal" hidden>
     <div class="myHUD-modalPos">
-        <textarea rows="10" cols="50" class="tgeditor-texture" id="textureEditorTG">123</textarea>
-        <button class="texture-editorSave" id="textureEditorSave">OK</button>
+        <div>
+            X <input type="number" id="textureEditorOffsetX" name="offsetX" min="0" max="1" step="0.01">
+            &nbsp;&nbsp;&nbsp;&nbsp;
+            Y <input type="number" id="textureEditorOffsetY" name="offsetY" min="0" max="1" step="0.01">
+            （偏移量，0 ~ 1）
+        </div>
+        <textarea rows="10" cols="50" class="tgeditor-texture" id="textureEditorTG"></textarea>
+        <div><br>
+            <div>
+                <span id="textureEditorInfo"></span><br>
+            </div>
+            <button class="texture-editorBtn" id="textureEditorSave">写入</button>
+            <button class="texture-editorBtn" id="textureEditorCancel">取消</button>
+            <button class="texture-editorBtn" id="textureEditorDownload">下载存档</button>
+            <!-- <button class="texture-editorBtn" id="textureEditorReadfile">读取存档</button> -->
+            <label for="textureEditorReadfile" class="texture-editorBtn-lab">读取存档 </label>
+            <input  type="file" id="textureEditorReadfile" accept=".json" hidden>
+            <hr>
+            
+            <button class="texture-editorBtn" id="textureEditorRcover">从浏览器恢复</button>
+        </div>
     </div>
     
 </div>
@@ -154,7 +185,7 @@ for (let i = 0; i < numCubes; i++) {
 
 
 // 测试创造一个文字纹理和物体绑定
-k.initTextData = new Map();
+k.currTextData = new Map();
 function makeTestObj(indexObj = 8074){
     const expRatio = 40;
     const indexOfArr = indexObj * 8;
@@ -212,24 +243,37 @@ function addPlaneObj2Memory(deadline) {  // 添加物体
         xforward.innerHTML = 'obj ' + currentIndex_obj;
     }
 }
-requestIdleCallback(addPlaneObj2Memory);
+if(window.requestIdleCallback === undefined){  // safari bug
+    for (let i = 0; i < totalTasks; i++) {
+        makeTestObj(i);
+    }
+} else {
+    requestIdleCallback(addPlaneObj2Memory);
+}
+
 
 
 
 
 // 利用钩子来自定义纹理
-k.hooks.on('errorTexture_diy', function(ctx, width, height, index/* OBJ索引 */, id/* 图片ID */, _this){
+k.hooks.on('errorTexture_diy', function(ctx, width, height, drawItem, _this){
+    const index = drawItem.index;
+    const id = drawItem.id;
     if('T' + index !== id) return;  // 只支持 T1234 这种格式的图片名
-    const value = k.initTextData.get(id) || 'NO.' + index;  // 使用文字库 initTextData 里的文字
+    const value = k.currTextData.get(id).content || '';  //+3 使用文字库 currTextData 里的文字，偏移量
+    const offsetX = k.currTextData.get(id).offsetX || 0;
+    const offsetY = k.currTextData.get(id).offsetY || 0;
     const typeObj = {};
-    ctx.font = typeObj.font || "20px serif";                  // 字体大小和类型
+    ctx.font = typeObj.font || "25px Arial";                  // 字体大小和类型
     ctx.fillStyle =  typeObj.fillStyle || "black";            // 填充颜色
+    ctx.strokeStyle =  typeObj.strokeStyle || "black";        // 描边颜色
     ctx.textAlign =  typeObj.textAlign || "left";             // 水平对齐方式（left/center/right）
+
     ctx.textBaseline =  typeObj.textBaseline ||"top";         // 垂直对齐方式（top/middle/bottom）
     var lineHeight = parseInt(ctx.font) || 30;
     const margin = 10;  // 边距
     const marginLeft = 10;  // 边距
-    const marginRight = 10;
+    const marginTop = 10;
     ctx.clearRect(0, 0, width, height);  // 透明色
     ctx.fillStyle = 'black';
     
@@ -243,21 +287,22 @@ k.hooks.on('errorTexture_diy', function(ctx, width, height, index/* OBJ索引 */
                 y += lineHeight; line = '';
                 continue;
             }
-            if(words[n] === '@'){  // 本行内有 @, 则本行颜色为蓝色
+            if(words[n] === '#'){  // 本行内有 @, 则本行颜色为蓝色
                 ctx.fillStyle = 'blue';
-                ctx.font = "25px Arial";
-                lineHeight = 25;
+                ctx.font = "40px serif";
+                lineHeight = 43;
                 words[n] = '';
             }
             if(words[n] === '%'){  // 本行内有 @, 则本行颜色为红色
                 ctx.fillStyle = 'red';
-                ctx.font = "23px Arial";
-                lineHeight = 25;
+                ctx.font = "40px serif";
+                lineHeight = 43;
                 words[n] = '';
             }
-            if(words[n] === '#'){  // 本行内有 #, 则本行格式为默认
+            if(words[n] === '@'){  // 本行内有 #, 则本行格式为默认
                 ctx.fillStyle = 'black';
-                ctx.font = typeObj.font || "20px serif"
+                ctx.font = typeObj.font || "25px Arial";
+                lineHeight = 25;
                 words[n] = '';
             }
             const testLine = line + words[n];  //+ 长度够了，换行的逻辑
@@ -278,11 +323,11 @@ k.hooks.on('errorTexture_diy', function(ctx, width, height, index/* OBJ索引 */
     //                 '蛾儿雪柳黄金缕。笑语盈盈暗香去。众里寻他千百度。蓦然回首，那人却在，灯火阑珊处。\n\n@《一剪梅·红藕香残玉簟秋》' +
     //                 '\n#红藕香残玉簟秋。轻解罗裳，独上兰舟。云中谁寄锦书来？雁字回时，月满西楼。花自飘零水自流。一种相思，两处闲愁。' +
     //                 '此情无计可消除，才下眉头，却上心头。' +
-    //                 '\n\n@《蝶恋花·伫倚危楼风细细》\n#伫倚危楼风细细。望极春愁，黯黯生天际。草色烟光残照里，无言谁会凭阑意。' +
+    //                 '\n\n%《蝶恋花·伫倚危楼风细细》\n#伫倚危楼风细细。望极春愁，黯黯生天际。草色烟光残照里，无言谁会凭阑意。' +
     //                 '\n拟把疏狂图一醉。对酒当歌，强乐还无味。衣带渐宽终不悔，为伊消得人憔悴。\n\n@《浣溪沙·一曲新词酒一杯》' +
     //                 '\n#一曲新词酒一杯。去年天气旧亭台。夕阳西下几时回？无可奈何花落去，似曾相识燕归来。小园香径独徘徊。';
 
-    wrapText(ctx, value, marginLeft, marginRight, width - margin * 2, lineHeight);
+    wrapText(ctx, value, marginLeft + width * offsetX, marginTop + height * offsetY, width - margin * 2, lineHeight);
 })
 
 
@@ -379,14 +424,14 @@ k.addTABox({  // 创建一个 旋转测试 细长物理体
 //     forObjID: imgID,  // 可得到宿主的编号
 // });
 
-// if(k.initTextData.size < 1){  // 初始化文字 map()
+// if(k.currTextData.size < 1){  // 初始化文字 map()
 //     for (let indexFor = 0; indexFor < 90100; indexFor++) {
-//         k.initTextData.set('T' + indexFor + 'N' + '_forward', '肉狗 ' + 'T' + indexFor + 'N' + ' forward' + ' ' + convertFiveDigitNumberToCommonChars(indexFor));
-//         k.initTextData.set('T' + indexFor + 'N' + '_backward', '肉狗 ' + 'T' + indexFor + 'N' + 'back' + convertFiveDigitNumberToCommonChars(indexFor));
-//         k.initTextData.set('T' + indexFor + 'N' + '_top', '肉狗 ' + 'T' + indexFor + 'N' + ' top ' + convertFiveDigitNumberToCommonChars(indexFor));
-//         k.initTextData.set('T' + indexFor + 'N' + '_down', '肉狗 ' + 'T' + indexFor + 'N' + ' down ' + convertFiveDigitNumberToCommonChars(indexFor));
-//         k.initTextData.set('T' + indexFor + 'N' + '_right', '肉狗 ' + 'T' + indexFor + 'N' + ' right ' + convertFiveDigitNumberToCommonChars(indexFor));
-//         k.initTextData.set('T' + indexFor + 'N' + '_left', '肉狗 ' + 'T' + indexFor + 'N' + ' left ' + convertFiveDigitNumberToCommonChars(indexFor));
+//         k.currTextData.set('T' + indexFor + 'N' + '_forward', '肉狗 ' + 'T' + indexFor + 'N' + ' forward' + ' ' + convertFiveDigitNumberToCommonChars(indexFor));
+//         k.currTextData.set('T' + indexFor + 'N' + '_backward', '肉狗 ' + 'T' + indexFor + 'N' + 'back' + convertFiveDigitNumberToCommonChars(indexFor));
+//         k.currTextData.set('T' + indexFor + 'N' + '_top', '肉狗 ' + 'T' + indexFor + 'N' + ' top ' + convertFiveDigitNumberToCommonChars(indexFor));
+//         k.currTextData.set('T' + indexFor + 'N' + '_down', '肉狗 ' + 'T' + indexFor + 'N' + ' down ' + convertFiveDigitNumberToCommonChars(indexFor));
+//         k.currTextData.set('T' + indexFor + 'N' + '_right', '肉狗 ' + 'T' + indexFor + 'N' + ' right ' + convertFiveDigitNumberToCommonChars(indexFor));
+//         k.currTextData.set('T' + indexFor + 'N' + '_left', '肉狗 ' + 'T' + indexFor + 'N' + ' left ' + convertFiveDigitNumberToCommonChars(indexFor));
 //     }
 // }
 
@@ -537,7 +582,7 @@ k.addTABox({  // 创建一个 旋转测试 细长物理体
 // // 一个修改文字的 DEMO
 // k.modTextDemo = (indexID) =>{
 //     const forObjID = k.indexToArgs.get(indexID).forObjID || -1;
-//     k.initTextData.set(forObjID, '狗精，肉不正经！！');
+//     k.currTextData.set(forObjID, '狗精，肉不正经！！');
 //     k.textureMap.delete(forObjID);
 //     window[forObjID] = undefined;
 //     k.W.cube({

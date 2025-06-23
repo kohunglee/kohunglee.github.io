@@ -65,6 +65,7 @@ export default function(ccgxkObj) {
         W.clearColor(ccgxkObj.colorClear); // 恢复主画布的背景色
         W.tempColor = pixels;
     }
+    ccgxkObj.isWarningRecovery = false;
     ccgxkObj.hooks.on('pointer_lock_click', function(obj, e){
         if(ccgxkObj.centerPointColorUpdatax || e.button === 2){  
             if(ccgxkObj.hotPoint && e.button !== 2) {  // 如果有热点，单击热点后
@@ -80,6 +81,7 @@ export default function(ccgxkObj) {
             drawCenterPoint(canvas, ccgxkObj);
             ccgxkObj.centerPointColorUpdatax = setInterval(() => { drawCenterPoint(canvas, ccgxkObj) }, 500);
             ccgxkObj.mainCamera.pos = {x:0, y:0.5, z:0};
+            
         }
     });
 }
@@ -128,45 +130,173 @@ function drawCenterPoint(canvas, thisObj, isClear){
 
 // 单击热点后的事件
 function hotAction(thisObj){
-    console.log(thisObj.hotPoint);
+    // console.log(thisObj.hotPoint);
+    globalVar.indexHotCurr = thisObj.hotPoint + 0;  // 将 index 数字定格，防止被更改
     unlockPointer();  // 解锁鼠标
     myHUDModal.hidden = false;  // 显示模态框
+    if(thisObj.currTextData.size === 0 && localStorage.getItem('TGTOOL-backup') !== null){
+        document.getElementById('textureEditorInfo').innerText = '浏览器里有上次的备份存档，推荐您【从浏览器恢复】！（数据无价）';
+    }
     const textureEditorTG = document.getElementById('textureEditorTG');
-    textureEditorTG.value = thisObj.initTextData.get('T' + thisObj.hotPoint) || '';  // 填充编辑框
+    const textureEditorOffsetX = document.getElementById('textureEditorOffsetX');
+    const textureEditorOffsetY = document.getElementById('textureEditorOffsetY');
+    textureEditorTG.value = thisObj.currTextData.get('T' + globalVar.indexHotCurr)?.content || '';  //+3 填充编辑框
+    textureEditorOffsetX.value = thisObj.currTextData.get('T' + globalVar.indexHotCurr)?.offsetX || 0;
+    textureEditorOffsetY.value = thisObj.currTextData.get('T' + globalVar.indexHotCurr)?.offsetY || 0;
 }
 
-
-
-// 用户操作完，然后单击 OK 按钮后
+// 用户操作完，然后单击 确认（写入） 按钮后
 document.getElementById('textureEditorSave').addEventListener('click', function(){
     myHUDModal.hidden = true;  // 隐藏模态框
     lockPointer();  // 锁定鼠标
     const textureEditorTG = document.getElementById('textureEditorTG');
+    const textureEditorOffsetX = document.getElementById('textureEditorOffsetX');
+    const textureEditorOffsetY = document.getElementById('textureEditorOffsetY');
     const canvas = document.getElementById('centerPoint');  // 画板
-    modTextDemo(globalVar.ccgxkObj.hotPoint, textureEditorTG.value, globalVar.ccgxkObj);  // 修改文字
+    const modValue = {
+        content: textureEditorTG.value,
+        offsetX: Number(textureEditorOffsetX.value),
+        offsetY: Number(textureEditorOffsetY.value),
+    }
+    modTextDemo(globalVar.indexHotCurr, modValue, globalVar.ccgxkObj);  // 修改文字
+    textureEditorTG.value = '';  // 清空编辑框
+    textureEditorOffsetX.value = 0;
+    textureEditorOffsetY.value = 0;
+    document.getElementById('textureEditorInfo').innerText = '';
+    globalVar.indexHotCurr = -1;
     drawCenterPoint(canvas, globalVar.ccgxkObj, true);  //+4 关闭小点
     clearInterval(globalVar.ccgxkObj.centerPointColorUpdatax);
     globalVar.ccgxkObj.centerPointColorUpdatax = null;
     globalVar.ccgxkObj.mainCamera.pos = {x: 0, y: 2, z: 4};
+    const bookAsArray = [...globalVar.ccgxkObj.currTextData.entries()];  //+ 写入到浏览器的 localStorage 里
+    const jsonScroll = JSON.stringify(bookAsArray, null, 2);
+    localStorage.setItem('TGTOOL-backup', jsonScroll);
 })
 
+// 单击 CANCEL (取消)按钮后
+document.getElementById('textureEditorCancel').addEventListener('click', function(){
+    myHUDModal.hidden = true;  // 隐藏模态框
+    lockPointer();  // 锁定鼠标
+    const textureEditorTG = document.getElementById('textureEditorTG');
+    const canvas = document.getElementById('centerPoint');
+    textureEditorTG.value = '';  // 清空编辑框
+    textureEditorOffsetX.value = 0;
+    textureEditorOffsetY.value = 0;
+    globalVar.indexHotCurr = -1;
+    drawCenterPoint(canvas, globalVar.ccgxkObj, true);  //+4 关闭小点
+    clearInterval(globalVar.ccgxkObj.centerPointColorUpdatax);
+    globalVar.ccgxkObj.centerPointColorUpdatax = null;
+    globalVar.ccgxkObj.mainCamera.pos = {x: 0, y: 2, z: 4};
 
+});
 
+// 单击 下载存档 按钮后
+document.getElementById('textureEditorDownload').addEventListener('click', function(){
+    // console.log('下载存档');
+    const bookAsArray = [...globalVar.ccgxkObj.currTextData.entries()];
+    const jsonScroll = JSON.stringify(bookAsArray, null, 2);
+    const blob = new Blob([jsonScroll], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `TGTool-backup-${new Date(Date.now()).toLocaleString('sv-SE').replace(/[-:T\s]/g, '')}.json`; // 给卷轴起个带时间戳的名字
+    link.click();
+    URL.revokeObjectURL(url); // 释放这个临时URL
+});
 
+// 单击 读取存档 按钮后
+document.getElementById('textureEditorReadfile').addEventListener('change', function(event){
+    // console.log('读取存档');
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const bookAsArray = JSON.parse(e.target.result);
+            if (Array.isArray(bookAsArray)) {
+                globalVar.ccgxkObj.currTextData = new Map(bookAsArray);
+                // console.log(globalVar.ccgxkObj.currTextData);
+                for (const item of globalVar.ccgxkObj.currTextData) {  // 改变所有已有数据的 Obj 的 texture 属性
+                    // console.log(item[0]);
+                    // console.log(item[0].substring(1));
+                    globalVar.ccgxkObj.indexToArgs.get(Number(item[0].substring(1))).texture = item[0];
+                }
+                for (const item of globalVar.ccgxkObj.currentlyActiveIndices) {  // 遍历当前激活物体的 set 集合
+                    const indexID = 'T' + item;  // 前面加上 'T'
+                    if(globalVar.ccgxkObj.currTextData.has(indexID)){
+                        globalVar.ccgxkObj.currentlyActiveIndices.delete(item);  // 让 dynaNodes 重新添加一次当前显示的物体
+                        // console.log('更新' + indexID);
+                    }
+                }
+                myHUDModal.hidden = true;  // 隐藏模态框
+                lockPointer();  // 锁定鼠标
+                const textureEditorTG = document.getElementById('textureEditorTG');
+                textureEditorTG.value = '';  // 清空编辑框
+                textureEditorOffsetX.value = 0;
+                textureEditorOffsetY.value = 0;
+                globalVar.indexHotCurr = -1;
+                alert('读取完成！');
+            } else {
+                throw new Error('卷轴格式不正确。');
+            }
+        } catch (error) {
+            alert('研读失败！这可能是一份损坏或格式错误的卷轴。\n' + error.message);
+        }
+    };
+    reader.readAsText(file); // “阅读精灵”开始逐字阅读卷轴内容
+    event.target.value = ''; // 清空选择，以便下次能上传同一个文件
+});
+
+// 从浏览器的 localStorage 里读取备份
+document.getElementById('textureEditorRcover').addEventListener('click', function(){
+    // console.log('从浏览器的 localStorage 里读取备份');
+    const jsonScroll = localStorage.getItem('TGTOOL-backup');
+    if (jsonScroll) {
+        try {
+            const bookAsArray = JSON.parse(jsonScroll);
+            if (Array.isArray(bookAsArray)) {
+                globalVar.ccgxkObj.currTextData = new Map(bookAsArray);
+                // console.log(globalVar.ccgxkObj.currTextData);
+                for (const item of globalVar.ccgxkObj.currTextData) {  // 改变所有已有数据的 Obj 的 texture 属性
+                    // console.log(item[0]);
+                    // console.log(item[0].substring(1));
+                    globalVar.ccgxkObj.indexToArgs.get(Number(item[0].substring(1))).texture = item[0];
+                }
+                for (const item of globalVar.ccgxkObj.currentlyActiveIndices) {  // 遍历当前激活物体的 set 集合
+                    const indexID = 'T' + item;  // 前面加上 'T'
+                    if(globalVar.ccgxkObj.currTextData.has(indexID)){
+                        globalVar.ccgxkObj.currentlyActiveIndices.delete(item);  // 让 dynaNodes 重新添加一次当前显示的物体
+                        // console.log('更新' + indexID);
+                    }
+                }
+                myHUDModal.hidden = true;  // 隐藏模态框
+                lockPointer();  // 锁定鼠标
+                const textureEditorTG = document.getElementById('textureEditorTG');
+                textureEditorTG.value = '';  // 清空编辑框
+                textureEditorOffsetX.value = 0;
+                textureEditorOffsetY.value = 0;
+                globalVar.indexHotCurr = -1;
+                document.getElementById('textureEditorInfo').innerText = '';
+                alert('恢复完成！');
+            }
+        } catch (error) {
+            alert('研读失败！这可能是一份损坏或格式错误的卷轴。\n' + error.message);
+        }
+    }
+});
 
 // 一个修改文字的 DEMO
-function modTextDemo(indexID, content = '狗精，肉不正经！！', thisObj) {  // 待优雅化
+function modTextDemo(indexID, value = {}, thisObj) {  // 待优雅化
     const nID = 'T' + indexID;
-
-    console.log(content, indexID, nID);
 
     if(!thisObj?.indexToArgs?.get(indexID)?.TGtoolText){ return 0 }  // 判断是否可编辑纹理
 
-    console.log(nID + '能进来');
-
-    thisObj.initTextData.set(nID, // 重新设置文本内容
-        content + Math.random().toFixed(5)
-    );
+    thisObj.currTextData.set(nID, {
+        content: value?.content || '',
+        offsetX: value?.offsetX || 0,
+        offsetY: value?.offsetY || 0,
+    });  // 重新设置文本内容
 
     thisObj.textureMap.delete(nID);  // 删除纹理库里的该纹理（可能没用？？）
     window[nID] = undefined;  // 顺便删一下全局的该纹理

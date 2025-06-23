@@ -18,10 +18,8 @@ export default {
                     allExist = false;
                     const img = new Image();
                     img.onload = () => resolve(img);  // 或许可以直接传入 wjs，以后优化吧
-                    // const randomID = (Math.random() * 100000).toFixed(0);
                     img.id = drawFunclist[i].id + '-' + this.loadTextureIndex;
                     img.src = this.dToBase64(drawFunclist[i]);
-                    // window[img.id] = img;
                     this.textureMap.set(drawFunclist[i].id, img);
                     this.loadTextureIndex++;
                 }
@@ -39,19 +37,19 @@ export default {
         canvas.height = drawItem.height || 400;
         const ctx = canvas.getContext('2d')
         if(drawItem.type === 'png'){  // 为透明化作铺垫
-            drawItem.func(ctx, canvas.width, canvas.height, drawItem.index, drawItem.id, this);
+            drawItem.func(ctx, canvas.width, canvas.height, drawItem, this);
             return canvas.toDataURL('image/png');
         } else {
             ctx.fillStyle = 'white';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-            drawItem.func(ctx, canvas.width, canvas.height, drawItem.index, drawItem.id, this);
+            drawItem.func(ctx, canvas.width, canvas.height, drawItem, this);
             var quality = drawItem.quality || 0.7;
             return canvas.toDataURL('image/jpeg', quality);
         }
     },
 
     // 默认纹理（字符串声明的纹理不存在）
-    errorTexture : function(ctx, width, height, index = -1, id = -1, _this) {
-        _this.hooks.emitSync('errorTexture_diy', ctx, width, height, index, id, _this);  // 钩子：'自定义错误纹理' (后续再修改值，记得清除 textureMap)
+    errorTexture : function(ctx, width, height, drawItem, _this) {
+        _this.hooks.emitSync('errorTexture_diy', ctx, width, height, drawItem, _this);  // 钩子：'自定义错误纹理' (后续再修改值，记得清除 textureMap)
     },
 };

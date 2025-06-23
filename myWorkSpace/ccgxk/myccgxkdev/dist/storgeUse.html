@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>知识守护者工具</title>
+    <style>
+        /* 一点点样式，让界面更像一个魔法操作台 */
+        body { font-family: sans-serif; background: #f0f2f5; padding: 20px; }
+        .panel { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        button, label { display: inline-block; background: #007bff; color: white; padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; margin: 5px; }
+        label { background: #28a745; } /* 上传按钮用绿色 */
+        input[type="file"] { display: none; } /* 隐藏原始的文件选择框 */
+        #knowledgeDisplay { white-space: pre-wrap; background: #e9ecef; padding: 15px; border-radius: 5px; min-height: 100px; }
+    </style>
+</head>
+<body>
+
+    <div class="panel">
+        <h2>魔法之书的内容：</h2>
+        <div id="knowledgeDisplay"></div>
+    </div>
+
+    <div class="panel">
+        <!-- “个人书架”操作台 -->
+        <button id="saveToShelfBtn">拓印到个人书架 (LocalStorage)</button>
+        <button id="loadFromShelfBtn">从书架复原</button>
+        <hr style="border: none; border-top: 1px solid #eee; margin: 15px 0;">
+        <!-- “传世卷轴”操作台 -->
+        <button id="downloadBtn">制作传世卷轴 (下载.json)</button>
+        <label for="uploadInput">接收并研读卷轴 (上传.json)</label>
+        <input type="file" id="uploadInput" accept=".json">
+    </div>
+
+<script>
+    // --- 准备工作：召唤我们的“知识守护者”和“魔法之书” ---
+    const k = {};
+    // 为了演示，我们先给魔法之书里写上几笔初始知识。
+    k.initTextData = new Map([
+        ['T1', '第一条咒语：火焰术'],
+        ['T8074', '第八千零七十四条知识：关于肉狗的秘密'],
+        ['key_secret', { info: '这是一个复杂的知识结构', value: 100 }],
+    ]);
+
+    // 获取操作台上的各个按钮和显示区域
+    const saveToShelfBtn = document.getElementById('saveToShelfBtn');
+    const loadFromShelfBtn = document.getElementById('loadFromShelfBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const uploadInput = document.getElementById('uploadInput');
+    const display = document.getElementById('knowledgeDisplay');
+
+    // “书写术”：一个能将魔法之书内容清晰展示在显示区的方法
+    function displayMap() {
+        // Map 不能直接转为漂亮的 JSON，需要先变成数组。
+        const contentArray = [...k.initTextData.entries()];
+        display.textContent = JSON.stringify(contentArray, null, 2); // null, 2 是为了格式化输出
+    }
+
+    // --- 守护者的四大核心能力 ---
+
+    // 1. “拓印术”：将知识之书的内容，拓印一份存到贴身的书架（LocalStorage）上。
+    saveToShelfBtn.onclick = () => {
+        // Map 无法直接存入，需先转换为数组，再变成 JSON 字符串。
+        const bookAsArray = [...k.initTextData.entries()];
+        localStorage.setItem('knowledgeBook', JSON.stringify(bookAsArray));
+        alert('已将当前知识成功存入个人书架！');
+    };
+
+    // 2. “复原术”：从个人书架上取回上次存放的拓本，复原知识之书。
+    loadFromShelfBtn.onclick = () => {
+        const savedBook = localStorage.getItem('knowledgeBook');
+        if (savedBook) {
+            const bookAsArray = JSON.parse(savedBook);
+            k.initTextData = new Map(bookAsArray); // 从数组轻松变回 Map
+            alert('已从个人书架成功复原知识！');
+            displayMap(); // 别忘了更新显示
+        } else {
+            alert('个人书架是空的，无知识可复原。');
+        }
+    };
+
+    // 3. “制卷术”：将知识之书精心打包，制作成一份可以传世的卷轴（JSON文件）。
+    downloadBtn.onclick = () => {
+        const bookAsArray = [...k.initTextData.entries()];
+        const jsonScroll = JSON.stringify(bookAsArray, null, 2);
+        const blob = new Blob([jsonScroll], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a'); // 凭空创造一个下载链接
+        link.href = url;
+        link.download = `knowledge-backup-${Date.now()}.json`; // 给卷轴起个带时间戳的名字
+        link.click(); // 模拟点击，触发下载
+        URL.revokeObjectURL(url); // 下载后，释放这个临时URL，保持整洁
+    };
+
+    // 4. “研读术”：接收一份来自远方的卷轴，并将其中的知识誊抄到我们的书中。
+    uploadInput.onchange = (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader(); // 召唤“阅读精灵”
+        reader.onload = (e) => {
+            try {
+                const bookAsArray = JSON.parse(e.target.result);
+                // 严谨的守护者会检查这到底是不是一个“书卷”（数组格式）
+                if (Array.isArray(bookAsArray)) {
+                    k.initTextData = new Map(bookAsArray);
+                    alert('卷轴研读完毕，新知识已融入书中！');
+                    displayMap();
+                } else {
+                    throw new Error('卷轴格式不正确。');
+                }
+            } catch (error) {
+                alert('研读失败！这可能是一份损坏或格式错误的卷轴。\n' + error.message);
+            }
+        };
+        reader.readAsText(file); // “阅读精灵”开始逐字阅读卷轴内容
+        event.target.value = ''; // 清空选择，以便下次能上传同一个文件
+    };
+
+    // --- 启动！ ---
+    // 守护者一就位，就立刻展示魔法之书的初始内容。
+    displayMap();
+
+</script>
+
+</body>
+</html>
