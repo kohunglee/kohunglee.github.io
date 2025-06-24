@@ -56,7 +56,11 @@
     font-size: 14;
     color: #bbbbbb;
 }
-
+canvas {
+  /* 针对苹果系统下的火狐和 Chrome/Safari */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
 </style>
 <!-- <script src="cannon.min.js"></script> -->
 <!-- <script src="../src/cannon/cannon-x-dev.js"></script> -->
@@ -78,9 +82,9 @@
 <div id="myHUDModal" class="myHUD-modal" hidden>
     <div class="myHUD-modalPos">
         <div>
-            X <input type="number" id="textureEditorOffsetX" name="offsetX" min="0" max="1" step="0.01">
+            右 <input type="number" id="textureEditorOffsetX" name="offsetX" min="0" max="1" step="0.01">
             &nbsp;&nbsp;&nbsp;&nbsp;
-            Y <input type="number" id="textureEditorOffsetY" name="offsetY" min="0" max="1" step="0.01">
+            下 <input type="number" id="textureEditorOffsetY" name="offsetY" min="0" max="1" step="0.01">
             （偏移量，0 ~ 1）
         </div>
         <textarea rows="10" cols="50" class="tgeditor-texture" id="textureEditorTG"></textarea>
@@ -104,7 +108,7 @@
 <div id="someCtrl">
     <button id="xforward" style="width: 90px;">前</button>
     <button id="xbackward">原点</button>
-    <button id="xleft">左</button>
+    <button id="xleft" style="width: 90px;">防眩晕</button>
     <button id="xright">右</button>
     <button id="xjump">蹦</button>
     <button id="xShadow">影</button>
@@ -266,7 +270,7 @@ k.hooks.on('errorTexture_diy', function(ctx, width, height, drawItem, _this){
     const typeObj = {};
     ctx.font = typeObj.font || "25px Arial";                  // 字体大小和类型
     ctx.fillStyle =  typeObj.fillStyle || "black";            // 填充颜色
-    ctx.strokeStyle =  typeObj.strokeStyle || "black";        // 描边颜色
+    ctx.strokeStyle = 'transparent';                          // 好像没用（描边颜色）
     ctx.textAlign =  typeObj.textAlign || "left";             // 水平对齐方式（left/center/right）
 
     ctx.textBaseline =  typeObj.textBaseline ||"top";         // 垂直对齐方式（top/middle/bottom）
@@ -286,6 +290,12 @@ k.hooks.on('errorTexture_diy', function(ctx, width, height, drawItem, _this){
                 _ctx.fillText(line, x, y);
                 y += lineHeight; line = '';
                 continue;
+            }
+            if(words[n] === '&'){  // 本行内有 &, 则本行颜色为透明
+                ctx.fillStyle = 'transparent';
+                ctx.font = "25px Arial";
+                lineHeight = 25;
+                words[n] = '';
             }
             if(words[n] === '#'){  // 本行内有 @, 则本行颜色为蓝色
                 ctx.fillStyle = 'blue';
@@ -318,16 +328,7 @@ k.hooks.on('errorTexture_diy', function(ctx, width, height, drawItem, _this){
         }
         _ctx.fillText(line, x, y);  // 最后剩下的一行
     }
-
-    // var testValue = '@《青玉案·元夕》\n#东风夜放花千树。更吹落、星如雨。宝马雕车香满路。凤箫声动，玉壶光转，一夜鱼龙舞。' +
-    //                 '蛾儿雪柳黄金缕。笑语盈盈暗香去。众里寻他千百度。蓦然回首，那人却在，灯火阑珊处。\n\n@《一剪梅·红藕香残玉簟秋》' +
-    //                 '\n#红藕香残玉簟秋。轻解罗裳，独上兰舟。云中谁寄锦书来？雁字回时，月满西楼。花自飘零水自流。一种相思，两处闲愁。' +
-    //                 '此情无计可消除，才下眉头，却上心头。' +
-    //                 '\n\n%《蝶恋花·伫倚危楼风细细》\n#伫倚危楼风细细。望极春愁，黯黯生天际。草色烟光残照里，无言谁会凭阑意。' +
-    //                 '\n拟把疏狂图一醉。对酒当歌，强乐还无味。衣带渐宽终不悔，为伊消得人憔悴。\n\n@《浣溪沙·一曲新词酒一杯》' +
-    //                 '\n#一曲新词酒一杯。去年天气旧亭台。夕阳西下几时回？无可奈何花落去，似曾相识燕归来。小园香径独徘徊。';
-
-    wrapText(ctx, value, marginLeft + width * offsetX, marginTop + height * offsetY, width - margin * 2, lineHeight);
+    wrapText(ctx, value, marginLeft + width * offsetX, marginTop + height * offsetY, (width - margin * 2) * (1 - offsetX), lineHeight);
 })
 
 
@@ -718,19 +719,20 @@ xbackward.addEventListener('mousedown', function(event) {
     //     k.keys.viewBackward = 1;
     // }
     // k.mainVPlayer.body.x = ;
-    k.mainVPlayer.body.position.x = 69;
+    k.mainVPlayer.body.position.x = 113;
     k.mainVPlayer.body.position.y = 1;
-    k.mainVPlayer.body.position.z = 544;
+    k.mainVPlayer.body.position.z = 495;
 });
 
 
 // 左转
 xleft.addEventListener('mousedown', function(event) {
-    if(k.keys.turnLeft === 1){
-        k.keys.turnLeft = 0;
-    } else {
-        k.keys.turnLeft = 1;
-    }
+    // if(k.keys.turnLeft === 1){
+    //     k.keys.turnLeft = 0;
+    // } else {
+    //     k.keys.turnLeft = 1;
+    // }
+    k.antiDizzyMode = !k.antiDizzyMode;
 });
 
 

@@ -81,7 +81,6 @@ export default function(ccgxkObj) {
             drawCenterPoint(canvas, ccgxkObj);
             ccgxkObj.centerPointColorUpdatax = setInterval(() => { drawCenterPoint(canvas, ccgxkObj) }, 500);
             ccgxkObj.mainCamera.pos = {x:0, y:0.5, z:0};
-            
         }
     });
 }
@@ -134,12 +133,14 @@ function hotAction(thisObj){
     globalVar.indexHotCurr = thisObj.hotPoint + 0;  // 将 index 数字定格，防止被更改
     unlockPointer();  // 解锁鼠标
     myHUDModal.hidden = false;  // 显示模态框
-    if(thisObj.currTextData.size === 0 && localStorage.getItem('TGTOOL-backup') !== null){
-        document.getElementById('textureEditorInfo').innerText = '浏览器里有上次的备份存档，推荐您【从浏览器恢复】！（数据无价）';
-    }
     const textureEditorTG = document.getElementById('textureEditorTG');
     const textureEditorOffsetX = document.getElementById('textureEditorOffsetX');
     const textureEditorOffsetY = document.getElementById('textureEditorOffsetY');
+    if(thisObj.currTextData.size === 0 && localStorage.getItem('TGTOOL-backup') !== null){
+        const warnInfo = '浏览器里有上次的备份存档，推荐您【从浏览器恢复】！（数据无价）';
+        document.getElementById('textureEditorInfo').innerText = warnInfo;
+        textureEditorTG.placeholder = warnInfo;
+    }
     textureEditorTG.value = thisObj.currTextData.get('T' + globalVar.indexHotCurr)?.content || '';  //+3 填充编辑框
     textureEditorOffsetX.value = thisObj.currTextData.get('T' + globalVar.indexHotCurr)?.offsetX || 0;
     textureEditorOffsetY.value = thisObj.currTextData.get('T' + globalVar.indexHotCurr)?.offsetY || 0;
@@ -162,6 +163,7 @@ document.getElementById('textureEditorSave').addEventListener('click', function(
     textureEditorTG.value = '';  // 清空编辑框
     textureEditorOffsetX.value = 0;
     textureEditorOffsetY.value = 0;
+    textureEditorTG.placeholder = '';
     document.getElementById('textureEditorInfo').innerText = '';
     globalVar.indexHotCurr = -1;
     drawCenterPoint(canvas, globalVar.ccgxkObj, true);  //+4 关闭小点
@@ -279,6 +281,7 @@ document.getElementById('textureEditorRcover').addEventListener('click', functio
                 globalVar.indexHotCurr = -1;
                 document.getElementById('textureEditorInfo').innerText = '';
                 alert('恢复完成！');
+                textureEditorTG.placeholder = '';
             }
         } catch (error) {
             alert('研读失败！这可能是一份损坏或格式错误的卷轴。\n' + error.message);

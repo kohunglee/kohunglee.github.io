@@ -39,7 +39,7 @@ export default {
 
     // 计算位置的简码
     calPosID : function(x, y, z, zindex){
-        const foo = {2: 1000, 3: 100, 4: 40}[zindex] || 0;
+        const foo = {2: 100, 3: 100, 4: 40}[zindex] || 0;
         if (zindex === 2) {zindex = ''};
         if(foo === 0){ return 0 }
         var dirctionA = (Math.sign(x) === -1) ? 'X' : 'D';

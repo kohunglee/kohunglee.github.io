@@ -40,6 +40,9 @@ export default {
     // 是否按下了 shift 键
     isShiftPress : 0,
 
+    // 是否使用防眩晕模式
+    antiDizzyMode : false,
+
     // 判断当前是否是鼠标锁定状态
     isPointerLock : function(){
         return document.pointerLockElement === this.canvas || document.mozPointerLockElement === this.canvas || document.webkitPointerLockElement === this.canvas;
@@ -57,8 +60,13 @@ export default {
         });
         document.addEventListener('mousemove', function(e) {  // 鼠标移动
             if (isMouseMove) {
-                _this.keys.turnRight = e.movementX * 0.1;
-                _this.keys.turnUp = e.movementY * 0.1;
+                if(_this.antiDizzyMode) {  // 防眩晕模式
+                    _this.keys.turnRight = e.movementX * 0.1;
+                    _this.keys.turnUp = e.movementY * 0.1;
+                } else {  // 平滑模式（默认）
+                    _this.keys.turnRight -= e.movementX * 0.1;
+                    _this.keys.turnUp -= e.movementY * 0.1;
+                }
             }
         });
         this.canvas.addEventListener('click', (e) => {  // 单击画布，开启虚拟鼠标
@@ -142,18 +150,25 @@ export default {
             // Y += offset;
             Y = 150;
         }
-        if(keys.turnRight || keys.turnLeft) {  // 左右扭动
-            var offset = (-keys.turnRight + keys.turnLeft);
-            if(Math.abs(offset) > 0.1){
-                RY += offset;
+        if(this.antiDizzyMode) {  // 防眩晕模式
+            if(keys.turnRight || keys.turnLeft) {  // 左右扭动
+                var offset = (-keys.turnRight + keys.turnLeft);
+                if(Math.abs(offset) > 0.1){
+                    RY += offset;
+                }
             }
-        }
-        if(keys.turnUp || keys.turnDown) {  // 上下扭动
-            var offset = (-keys.turnUp + keys.turnDown);
-            if(Math.abs(offset) > 0.5){
-                RX += offset;
+            if(keys.turnUp || keys.turnDown) {  // 上下扭动
+                var offset = (-keys.turnUp + keys.turnDown);
+                if(Math.abs(offset) > 0.5){
+                    RX += offset;
+                }
             }
+        } else {  // 平滑（默认）
+            RY = this.keys.turnRight;
+            RX = this.keys.turnUp;
         }
+        
+        
         return {  x: X,  y: Y,  z: Z,  rx: RX,  ry: RY,  rz: RZ  }
     },
 
