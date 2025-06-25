@@ -41,8 +41,9 @@
     transform: translate(-50%, -50%);
     width: 700px;
     text-align: center;
-    background-color: rgb(159 51 204 / 38%);
+    background-color: rgb(159 51 204 / 55%);
     padding: 32px;
+    backdrop-filter: blur(2px);
 }
 
 .texture-editorBtn-lab {
@@ -82,9 +83,11 @@ canvas {
 <div id="myHUDModal" class="myHUD-modal" hidden>
     <div class="myHUD-modalPos">
         <div>
-            右 <input type="number" id="textureEditorOffsetX" name="offsetX" min="0" max="1" step="0.01">
+            左 <input type="number" id="textureEditorOffsetX" name="offsetX" min="0" max="1" step="0.1">
             &nbsp;&nbsp;&nbsp;&nbsp;
-            下 <input type="number" id="textureEditorOffsetY" name="offsetY" min="0" max="1" step="0.01">
+            右 <input type="number" id="textureEditorOffsetXR" name="offsetXR" min="0" max="1" step="0.1">
+            &nbsp;&nbsp;&nbsp;&nbsp;
+            下 <input type="number" id="textureEditorOffsetY" name="offsetY" min="0" max="1" step="0.1">
             （偏移量，0 ~ 1）
         </div>
         <textarea rows="10" cols="50" class="tgeditor-texture" id="textureEditorTG"></textarea>
@@ -95,9 +98,13 @@ canvas {
             <button class="texture-editorBtn" id="textureEditorSave">写入</button>
             <button class="texture-editorBtn" id="textureEditorCancel">取消</button>
             <button class="texture-editorBtn" id="textureEditorDownload">下载存档</button>
-            <!-- <button class="texture-editorBtn" id="textureEditorReadfile">读取存档</button> -->
             <label for="textureEditorReadfile" class="texture-editorBtn-lab">读取存档 </label>
             <input  type="file" id="textureEditorReadfile" accept=".json" hidden>
+            <div>
+                <button class="texture-editorBtn" id="textureEditorClear">清空</button>
+                <button class="texture-editorBtn" id="textureEditorNumAux">数字行号辅</button>
+                <button class="texture-editorBtn" id="textureEditorNumAuxRemove">一键去除行号</button>
+            </div>
             <hr>
             
             <button class="texture-editorBtn" id="textureEditorRcover">从浏览器恢复</button>
@@ -107,13 +114,13 @@ canvas {
 </div>
 <div id="someCtrl">
     <button id="xforward" style="width: 90px;">前</button>
-    <button id="xbackward">原点</button>
+    <button id="xbackward" style="width: 90px;">城寨入口</button>
+    <button id="xright" style="width: 90px;">坐标原点</button>
     <button id="xleft" style="width: 90px;">防眩晕</button>
-    <button id="xright">右</button>
-    <button id="xjump">蹦</button>
-    <button id="xShadow">影</button>
-    <button id="xVIEW1">视1</button>
-    <button id="xVIEW2">视3</button>
+    <button id="xjump" style="width: 90px;">蹦</button>
+    <button id="xShadow" style="width: 90px;">影</button>
+    <button id="xVIEW1" style="width: 90px;">视1</button>
+    <button id="xVIEW2" style="width: 90px;">视3</button>
     <button id="xStopDY"  style="width: 90px;">小点</button>
 </div>
 <script type="module">
@@ -264,12 +271,13 @@ k.hooks.on('errorTexture_diy', function(ctx, width, height, drawItem, _this){
     const index = drawItem.index;
     const id = drawItem.id;
     if('T' + index !== id) return;  // 只支持 T1234 这种格式的图片名
-    const value = k.currTextData.get(id).content || '';  //+3 使用文字库 currTextData 里的文字，偏移量
-    const offsetX = k.currTextData.get(id).offsetX || 0;
-    const offsetY = k.currTextData.get(id).offsetY || 0;
+    const value = k.currTextData.get(id)?.content || '';  //+3 使用文字库 currTextData 里的文字，偏移量
+    const offsetX = k.currTextData.get(id)?.x || 0;
+    const offsetY = k.currTextData.get(id)?.y || 0;
+    const offsetXR = k.currTextData.get(id)?.xr || 0;
     const typeObj = {};
     ctx.font = typeObj.font || "25px Arial";                  // 字体大小和类型
-    ctx.fillStyle =  typeObj.fillStyle || "black";            // 填充颜色
+    ctx.fillStyle =  typeObj.fillStyle || "white";            // 填充颜色
     ctx.strokeStyle = 'transparent';                          // 好像没用（描边颜色）
     ctx.textAlign =  typeObj.textAlign || "left";             // 水平对齐方式（left/center/right）
 
@@ -279,10 +287,11 @@ k.hooks.on('errorTexture_diy', function(ctx, width, height, drawItem, _this){
     const marginLeft = 10;  // 边距
     const marginTop = 10;
     ctx.clearRect(0, 0, width, height);  // 透明色
-    ctx.fillStyle = 'black';
+    ctx.fillStyle = 'white';
     
     // 简单排版函数
     function wrapText(_ctx, text, x, y, maxWidth, lineHeight) {
+        text = text.split('/*')[0];  // 去掉注释
         const words = text.split(''); // 按单个字符来拆分，保证中英文都能换行
         let line = ''; // 当前正在排版的行内容
         for(let n = 0; n < words.length; n++) {
@@ -310,7 +319,7 @@ k.hooks.on('errorTexture_diy', function(ctx, width, height, drawItem, _this){
                 words[n] = '';
             }
             if(words[n] === '@'){  // 本行内有 #, 则本行格式为默认
-                ctx.fillStyle = 'black';
+                ctx.fillStyle = 'white';
                 ctx.font = typeObj.font || "25px Arial";
                 lineHeight = 25;
                 words[n] = '';
@@ -328,7 +337,7 @@ k.hooks.on('errorTexture_diy', function(ctx, width, height, drawItem, _this){
         }
         _ctx.fillText(line, x, y);  // 最后剩下的一行
     }
-    wrapText(ctx, value, marginLeft + width * offsetX, marginTop + height * offsetY, (width - margin * 2) * (1 - offsetX), lineHeight);
+    wrapText(ctx, value, marginLeft + width * offsetX, marginTop + height * offsetY, (width - margin * 2) * (1 - offsetX - offsetXR), lineHeight);
 })
 
 
@@ -720,7 +729,7 @@ xbackward.addEventListener('mousedown', function(event) {
     // }
     // k.mainVPlayer.body.x = ;
     k.mainVPlayer.body.position.x = 113;
-    k.mainVPlayer.body.position.y = 1;
+    k.mainVPlayer.body.position.y = 5;
     k.mainVPlayer.body.position.z = 495;
 });
 
@@ -738,11 +747,14 @@ xleft.addEventListener('mousedown', function(event) {
 
 // 右转
 xright.addEventListener('mousedown', function(event) {
-    if(k.keys.turnRight === 1){
-        k.keys.turnRight = 0;
-    } else {
-        k.keys.turnRight = 1;
-    }
+    // if(k.keys.turnRight === 1){
+    //     k.keys.turnRight = 0;
+    // } else {
+    //     k.keys.turnRight = 1;
+    // }
+    k.mainVPlayer.body.position.x = 7.6;
+    k.mainVPlayer.body.position.y = 5;
+    k.mainVPlayer.body.position.z = 16.5;
 });
 
 

@@ -135,6 +135,7 @@ function hotAction(thisObj){
     myHUDModal.hidden = false;  // 显示模态框
     const textureEditorTG = document.getElementById('textureEditorTG');
     const textureEditorOffsetX = document.getElementById('textureEditorOffsetX');
+    const textureEditorOffsetXR = document.getElementById('textureEditorOffsetXR');
     const textureEditorOffsetY = document.getElementById('textureEditorOffsetY');
     if(thisObj.currTextData.size === 0 && localStorage.getItem('TGTOOL-backup') !== null){
         const warnInfo = '浏览器里有上次的备份存档，推荐您【从浏览器恢复】！（数据无价）';
@@ -142,8 +143,9 @@ function hotAction(thisObj){
         textureEditorTG.placeholder = warnInfo;
     }
     textureEditorTG.value = thisObj.currTextData.get('T' + globalVar.indexHotCurr)?.content || '';  //+3 填充编辑框
-    textureEditorOffsetX.value = thisObj.currTextData.get('T' + globalVar.indexHotCurr)?.offsetX || 0;
-    textureEditorOffsetY.value = thisObj.currTextData.get('T' + globalVar.indexHotCurr)?.offsetY || 0;
+    textureEditorOffsetX.value = thisObj.currTextData.get('T' + globalVar.indexHotCurr)?.x || 0;
+    textureEditorOffsetXR.value = thisObj.currTextData.get('T' + globalVar.indexHotCurr)?.xr || 0;
+    textureEditorOffsetY.value = thisObj.currTextData.get('T' + globalVar.indexHotCurr)?.y || 0;
 }
 
 // 用户操作完，然后单击 确认（写入） 按钮后
@@ -152,16 +154,28 @@ document.getElementById('textureEditorSave').addEventListener('click', function(
     lockPointer();  // 锁定鼠标
     const textureEditorTG = document.getElementById('textureEditorTG');
     const textureEditorOffsetX = document.getElementById('textureEditorOffsetX');
+    const textureEditorOffsetXR = document.getElementById('textureEditorOffsetXR');
     const textureEditorOffsetY = document.getElementById('textureEditorOffsetY');
     const canvas = document.getElementById('centerPoint');  // 画板
     const modValue = {
         content: textureEditorTG.value,
-        offsetX: Number(textureEditorOffsetX.value),
-        offsetY: Number(textureEditorOffsetY.value),
-    }
+        x: Number(textureEditorOffsetX.value),
+        xr: Number(textureEditorOffsetXR.value),
+        y: Number(textureEditorOffsetY.value) ,
+    };
+    // if(Number(textureEditorOffsetX.value) !== 0) {  //+ 偏移
+    //     modValue.x = Number(textureEditorOffsetX.value);
+    // }
+    // if(Number(textureEditorOffsetXR.value) !== 0) {
+    //     modValue.xr = Number(textureEditorOffsetXR.value);
+    // }
+    // if(Number(textureEditorOffsetY.value) !== 0) {
+    //     modValue.y = ;
+    // }
     modTextDemo(globalVar.indexHotCurr, modValue, globalVar.ccgxkObj);  // 修改文字
     textureEditorTG.value = '';  // 清空编辑框
     textureEditorOffsetX.value = 0;
+    textureEditorOffsetXR.value = 0;
     textureEditorOffsetY.value = 0;
     textureEditorTG.placeholder = '';
     document.getElementById('textureEditorInfo').innerText = '';
@@ -183,6 +197,7 @@ document.getElementById('textureEditorCancel').addEventListener('click', functio
     const canvas = document.getElementById('centerPoint');
     textureEditorTG.value = '';  // 清空编辑框
     textureEditorOffsetX.value = 0;
+    textureEditorOffsetXR.value = 0;
     textureEditorOffsetY.value = 0;
     globalVar.indexHotCurr = -1;
     drawCenterPoint(canvas, globalVar.ccgxkObj, true);  //+4 关闭小点
@@ -236,6 +251,7 @@ document.getElementById('textureEditorReadfile').addEventListener('change', func
                 const textureEditorTG = document.getElementById('textureEditorTG');
                 textureEditorTG.value = '';  // 清空编辑框
                 textureEditorOffsetX.value = 0;
+                textureEditorOffsetXR.value = 0;
                 textureEditorOffsetY.value = 0;
                 globalVar.indexHotCurr = -1;
                 alert('读取完成！');
@@ -277,6 +293,7 @@ document.getElementById('textureEditorRcover').addEventListener('click', functio
                 const textureEditorTG = document.getElementById('textureEditorTG');
                 textureEditorTG.value = '';  // 清空编辑框
                 textureEditorOffsetX.value = 0;
+                textureEditorOffsetXR.value = 0;
                 textureEditorOffsetY.value = 0;
                 globalVar.indexHotCurr = -1;
                 document.getElementById('textureEditorInfo').innerText = '';
@@ -289,6 +306,49 @@ document.getElementById('textureEditorRcover').addEventListener('click', functio
     }
 });
 
+
+// 单击数字行辅助按钮后
+document.getElementById('textureEditorNumAux').addEventListener('click', function(){
+    const textureEditorTG = document.getElementById('textureEditorTG');
+    textureEditorTG.value = '0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n14\n15\n16' +
+         '\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n27\n28\n29\n30';  // 数字行辅助
+})
+
+// 单击清空
+document.getElementById('textureEditorClear').addEventListener('click', function(){
+    const textureEditorTG = document.getElementById('textureEditorTG');
+    textureEditorTG.value = '';
+})
+
+
+// 单击一键去除数字行
+document.getElementById('textureEditorNumAuxRemove').addEventListener('click', function(){
+    const textureEditorTG = document.getElementById('textureEditorTG');
+    textureEditorTG.value = textureEditorTG.value.replace(/^\d+$/gm, '');  // 数字行辅助
+})
+
+// 键盘上的 r 键被按下
+function frozenMVP(event) {
+    if (event.key === 'f') {
+        // console.log('冻结键');
+        const mvpBody = globalVar.ccgxkObj.mainVPlayer.body;
+        if(mvpBody.mass === 0){
+            mvpBody.mass = 50;  // 重量还原
+        } else {
+            mvpBody.mass = 0;  // 重量归 0
+            mvpBody.velocity.set(0, 0, 0);  // 设置线速度为0
+            mvpBody.angularVelocity.set(0, 0, 0);  // 设置角速度为0
+            mvpBody.force.set(0, 0, 0);  // 清除所有作用力
+            mvpBody.torque.set(0, 0, 0);  // 清除所有扭矩
+        }
+    }
+    document.removeEventListener('keydown', frozenMVP);
+}
+document.addEventListener('keydown', frozenMVP);
+document.addEventListener('keyup', function(){
+    document.addEventListener('keydown', frozenMVP);
+});
+
 // 一个修改文字的 DEMO
 function modTextDemo(indexID, value = {}, thisObj) {  // 待优雅化
     const nID = 'T' + indexID;
@@ -297,8 +357,9 @@ function modTextDemo(indexID, value = {}, thisObj) {  // 待优雅化
 
     thisObj.currTextData.set(nID, {
         content: value?.content || '',
-        offsetX: value?.offsetX || 0,
-        offsetY: value?.offsetY || 0,
+        x: value?.x || 0,
+        xr: value?.xr || 0,
+        y: value?.y || 0,
     });  // 重新设置文本内容
 
     thisObj.textureMap.delete(nID);  // 删除纹理库里的该纹理（可能没用？？）

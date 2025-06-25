@@ -17,6 +17,7 @@ export default {
         viewRight: 0,
         shiftKeyvalue: 0,
         jumping: 0,
+        frozen: 0,  // 冻结
     },
 
     // 键盘按键 与 操作状态值 的对应
@@ -31,6 +32,7 @@ export default {
         'p': 'turnDown',
         'k': 'viewLeft',
         'l': 'viewRight',
+        'b': 'frozen',
         'arrowup': 'viewForward',
         'arrowdown': 'viewBackward',
         'arrowleft': 'turnLeft',
