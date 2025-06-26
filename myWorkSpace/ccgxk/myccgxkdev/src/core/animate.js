@@ -73,7 +73,8 @@ export default {
                     });
                     if(disten > 0.01 && (performance.now() - this.gridKeyCurrentTime > 500)){  // 略大一点的距离更改，500ms 间隔以上，计算区块 key，更新表
                         const orginGridKey = indexItem.gridkey || 0;
-                        const currentGridKey = `${Math.floor(this.positionsStatus[p_offset] / this.gridsize)}_${Math.floor(this.positionsStatus[p_offset + 2] / this.gridsize)}`;
+                        const thisDPZ = this.physicsProps[p_offset + 4];
+                        const currentGridKey = `${thisDPZ}_${Math.floor(this.positionsStatus[p_offset] / this.gridsize[thisDPZ])}_${Math.floor(this.positionsStatus[p_offset + 2] / this.gridsize[thisDPZ])}`;
                         if(orginGridKey) {
                             if(currentGridKey !== orginGridKey){
                                 var indicesInCell_orige = this.spatialGrid.get(orginGridKey);  //+8 删去已失效的 key

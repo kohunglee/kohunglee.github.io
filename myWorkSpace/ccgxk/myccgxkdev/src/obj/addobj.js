@@ -25,6 +25,7 @@ export default {
 
     // 最起初的添加物体，TA 物体
     addTABox : function({
+                DPZ = 3,
                 X = 5, Y = 5, Z = 5,
                 quat = {x: 0, y: 0, z: 0, w: 1},
                 mass = 0, width = 1, depth = 1, height = 1, size = 1,
@@ -48,7 +49,8 @@ export default {
         this.physicsProps[p_offset + 1] = width;
         this.physicsProps[p_offset + 2] = height;
         this.physicsProps[p_offset + 3] = depth;
-        const gridKey = `${Math.floor(X / this.gridsize)}_${Math.floor(Z / this.gridsize)}`;  //+5 计算区块 key，并填进数组，再填入表
+        this.physicsProps[p_offset + 4] = DPZ;  // DPZ
+        const gridKey = `${DPZ}_${Math.floor(X / this.gridsize[DPZ])}_${Math.floor(Z / this.gridsize[DPZ])}`;  //+5 计算区块 key，并填进数组，再填入表
         let indicesInCell = this.spatialGrid.get(gridKey);
         if (!indicesInCell) { indicesInCell = [] }
         indicesInCell.push(index);
@@ -60,7 +62,7 @@ export default {
     defaultBoxArgs : {
         isPhysical: true,     // 是否物理化
         isVisualMode: true,   // 是否渲染
-        DPZ: 2,               // 显示优先级
+        DPZ: 3,               // 显示优先级
         colliGroup: 2,        // 碰撞组
         texture: null,
         smooth: 0,
@@ -134,30 +136,21 @@ export default {
             }
             if(typeof tiling === 'number'){ tiling = [tiling, tiling] }  // 处理平铺数
             const utter = (args.isFictBody) ? 0.1 : 0 // 物理假体，仅在视觉上物体小一圈儿
-
             var texture, textureError = false;
             if(typeof args.texture === 'string'){  // 处理纹理
-                // if(index === 12278){ console.log('11' + args.texture); }
-                // if(index === 12278){ console.log(window[args.texture]); }
                 if(window[args.texture] !== undefined || this.textureMap.has(args.texture)){  // 纹理数据 能在全局找到（后续，改成从库里找吧，先使用 window）
-                    // if(index === 12278){ console.log('22'); }
-                    // console.log('狗能找住了！汪！');
-                    
                     if(this.textureMap.has(args.texture)){  // 纹理数据 在库中找到
                         texture = this.textureMap.get(args.texture);
                     } else {  // 纹理数据 在全局找到
                         texture = window[args.texture];
                     }
                 } else {  // 找不到，需要换个默认纹理
-                    // console.log('狗找不到！汪！' + args.texture);
-                    if(index === 12278){ console.log('33'); }
                     texture = null;
                     textureError = true;
                 }
             } else {
                 texture = args.texture;
             }
-
             this.W[args.shape]({  // 渲染引擎添加物体
                 n: 'T' + index,  // 意为 TypeArray 生成的
                 w: physicalProp[1] - utter, d: physicalProp[3] - utter, h: physicalProp[2] - utter,
@@ -166,9 +159,7 @@ export default {
                 rx: args.rX, ry: args.rY, rz: args.rZ, b: args.background, mix: args.mixValue,
                 shadow: args.isShadow,
             });
-
-            if(textureError){  // 纹理加载失败，尝试换上警告纹理（id 还是原 id）
-                if(index === 12278){ console.log('44'); }
+            if(textureError){  // 纹理加载失败，尝试换上自定义纹理（id 还是原 id）
                 const expRatio = 40;  // 缩放比例
                 const cWidth = (physicalProp[1] - utter) * expRatio;
                 const cHeight = (physicalProp[2] - utter) * expRatio;
@@ -195,7 +186,6 @@ export default {
     hiddenTABox : function(index){
         const org_args = this.indexToArgs.get(index);  // 提取参数
         if(org_args.isPhysical !== false && org_args.cannonBody !== undefined){
-            // console.log(org_args.cannonBody);
             this.world.removeBody(org_args.cannonBody);
         }
         if(org_args.isVisualMode !== false){

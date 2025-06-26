@@ -120,20 +120,23 @@ export default {
 
     // -------------------------【 实验 】-----------------------------
     // 新的 dynaNodes（适用于长宽 40 以内的物体）
-    gridsize : 20,  // 单个区块面积大小
+    gridsize : new Uint16Array([10000, 1000, 100, 20]),  // 单个区块面积大小
     currentlyActiveIndices : new Set(),  // 当前激活状态的物体。也可保存本次的激活物体列表，供下一次使用
     activationQueue : new Array(),  // 激活任务队列
     // isActivationScheduled : false,  // 是否已经安排了激活任务
     // isRealtimeAddBox : false,  // 是否实时添加物体
+    
     dynaNodes_lab : function(){
         if(this.mainVPlayer === null || this.stopDynaNodes) {return ''};
-        var mVP = this.mainVPlayer;
-        const playerGridX = Math.floor(mVP.X / this.gridsize);  //+8 计算主角周围 9 个格子的区块
-        const playerGridZ = Math.floor(mVP.Z / this.gridsize);
-        const activeGridKeys = [];  // 装 9 个格子的区块号
-        for (let i = -1; i <= 1; i++) {
-            for (let j = -1; j <= 1; j++) {
-                activeGridKeys.push(`${playerGridX + i}_${playerGridZ + j}`);
+        const mVP = this.mainVPlayer;
+        const activeGridKeys = [];  // 装 9 * dpz 个格子的区块号
+        for (let index = 0; index < this.gridsize.length; index++) {
+            const playerGridX = Math.floor(mVP.X / this.gridsize[index]);  //+8 计算主角周围 9 个格子的区块
+            const playerGridZ = Math.floor(mVP.Z / this.gridsize[index]);
+            for (let i = -1; i <= 1; i++) {
+                for (let j = -1; j <= 1; j++) {
+                    activeGridKeys.push(`${index}_${playerGridX + i}_${playerGridZ + j}`);
+                }
             }
         }
         const newActiveIndices = new Set();  // 待做出隐藏动作的物体的 index 列表
@@ -142,7 +145,7 @@ export default {
             const indicesInGrid = this.spatialGrid.get(key);  // 取物体使用（spatialGrid，俗称战地成员列表）
             if (indicesInGrid) {
                 for (const index of indicesInGrid) {
-                    if(Math.abs(this.positionsStatus[index * 8 + 1] - mVP.Y) < this.gridsize){  // 高度距离（Y）要接近
+                    if(Math.abs(this.positionsStatus[index * 8 + 1] - mVP.Y) < this.gridsize[this.physicsProps[index * 8 + 4]]){  // 高度距离（Y）要接近
                         newActiveIndices.add(index);
                     }
                 }

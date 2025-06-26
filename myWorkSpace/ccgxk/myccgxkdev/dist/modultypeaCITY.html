@@ -175,7 +175,7 @@ for (let i = 0; i < numCubes; i++) {
     for (let j = 0; j < numCubes; j++) {
         var index = i * numCubes + j;
         k.addTABox({
-            DPZ : 4,
+            DPZ : 3,
             isPhysical: true,
             X: Math.floor(random[index] * 99 * areaSpace + 1 - 50 * areaSpace) * cubeTimes,
             Y: Math.floor(random[index + 1] * 50),
@@ -222,7 +222,7 @@ function makeTestObj(indexObj = 8074){
 
     faceConfigs.forEach(face => {
             k.addTABox({  // 创建一个 TA 平面试试
-            DPZ : 1,
+            DPZ : 3,
             shape: 'plane',
             isPhysical: false,
             // isVisualMode: false,
@@ -409,7 +409,7 @@ k.mainVPlayer = k.addBox({  // 创建一个立方体，并设置为主角
 k.W.next['mainPlayer'].h = 0.8;  // 防止穿模，因为纹理和地面的问题.....  后续再想好办法
 
 k.addTABox({  // 创建一个 旋转测试 细长物理体
-    DPZ : 2,
+    DPZ : 3,
     colliGroup: 1,
     name: 'longThin', X: 29, Y: 10, Z: 496,
     mass: 1, width: 3, depth: 2, height: 2, texture: 'marble'
