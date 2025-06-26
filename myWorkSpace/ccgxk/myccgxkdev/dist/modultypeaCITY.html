@@ -128,7 +128,7 @@ import ccgxkApp from '../src/ccgxk.js';
 // 初始化沙盒
 var k = ccgxkApp;
 
-k.initWorld(c);
+k.initWorld('c');
 var list = k.bodylist;
 
 // k.W.isOpenShadow = !k.W.isOpenShadow;  // 关闭阴影
@@ -313,7 +313,7 @@ k.hooks.on('errorTexture_diy', function(ctx, width, height, drawItem, _this){
                 words[n] = '';
             }
             if(words[n] === '%'){  // 本行内有 @, 则本行颜色为红色
-                ctx.fillStyle = 'red';
+                ctx.fillStyle = 'red';  
                 ctx.font = "40px serif";
                 lineHeight = 43;
                 words[n] = '';
