@@ -143,9 +143,6 @@ const random = k.genPR(17, numCubes * numCubes * 5);  // 伪随机数
 for (let i = 0; i < numCubes; i++) {
     for (let j = 0; j < numCubes; j++) {
         var index = i * numCubes + j;
-        // if(index === 5869){  // 测试隐藏某个块块儿
-        //     continue;
-        // }
         cubeInstances.push({
             x: Math.floor(random[index] * 99 * areaSpace + 1 - 50 * areaSpace) * cubeTimes,
             y: Math.floor(random[index + 1] * 50),
@@ -423,208 +420,6 @@ k.addTABox({  // 创建一个 旋转测试 细长物理体
     texture: 'gourou',
 });
 
-// k.addTABox({  // 创建一个 TA 平面试试
-//     DPZ : 1,
-//     shape: 'plane',
-//     isPhysical: false,
-//     // isVisualMode: false,
-//     X: objPosX, Y: objPosY, Z: objPosZ, rX: 0,
-//     mass: 0, width: objWidth, depth: 0, height: objHeight,
-//     texture: imgID, background:'#00000000', mixValue: 0,
-//     forObjID: imgID,  // 可得到宿主的编号
-// });
-
-// if(k.currTextData.size < 1){  // 初始化文字 map()
-//     for (let indexFor = 0; indexFor < 90100; indexFor++) {
-//         k.currTextData.set('T' + indexFor + 'N' + '_forward', '肉狗 ' + 'T' + indexFor + 'N' + ' forward' + ' ' + convertFiveDigitNumberToCommonChars(indexFor));
-//         k.currTextData.set('T' + indexFor + 'N' + '_backward', '肉狗 ' + 'T' + indexFor + 'N' + 'back' + convertFiveDigitNumberToCommonChars(indexFor));
-//         k.currTextData.set('T' + indexFor + 'N' + '_top', '肉狗 ' + 'T' + indexFor + 'N' + ' top ' + convertFiveDigitNumberToCommonChars(indexFor));
-//         k.currTextData.set('T' + indexFor + 'N' + '_down', '肉狗 ' + 'T' + indexFor + 'N' + ' down ' + convertFiveDigitNumberToCommonChars(indexFor));
-//         k.currTextData.set('T' + indexFor + 'N' + '_right', '肉狗 ' + 'T' + indexFor + 'N' + ' right ' + convertFiveDigitNumberToCommonChars(indexFor));
-//         k.currTextData.set('T' + indexFor + 'N' + '_left', '肉狗 ' + 'T' + indexFor + 'N' + ' left ' + convertFiveDigitNumberToCommonChars(indexFor));
-//     }
-// }
-
-
-// // 测试创造一个文字纹理和物体绑定
-// function makeTestTexture(indexObj = 8074){
-//     const expRatio = 40;
-//     const indexOfArr = indexObj * 8;
-//     const objWidth  = k.physicsProps[indexOfArr + 1];  // 这样排列写，性能好一点
-//     const objHeight = k.physicsProps[indexOfArr + 2];
-//     const objDepth  = k.physicsProps[indexOfArr + 3];
-//     const objPosX = k.positionsStatus[indexOfArr];
-//     const objPosY = k.positionsStatus[indexOfArr + 1] ;
-//     const objPosZ = k.positionsStatus[indexOfArr + 2] + objDepth / 2 + 0.1;
-//     const cWidth = objWidth * expRatio;
-//     const cHeight = objHeight * expRatio;
-//     const imgID = 'T' + indexObj + 'N';
-
-//     const faceSuffix = ['_forward', '_backward', '_top', '_down', '_right', '_left'];  // 后缀名
-//     for (let index = 0; index < faceSuffix.length; index++) {
-//         const faceSuffixName = faceSuffix[index];
-//         k.loadTexture([ {
-//             func: k.errorTexture,
-//             id: imgID + faceSuffixName,
-//             type: 'png',
-//             width: cWidth,
-//             height: cHeight,
-//             index: indexObj,
-//         }]).then(res => {});
-//     }
-// }
-
-
-
-// // 预先获取要绘制的方块 index
-// k.preRanderTextureIndexArr = [];
-// k.preRanderTexture = (analyArea = 1) => {
-
-
-//     const gridsize = 20;
-//     const mVP = k.mainVPlayer;
-//     //  先算开要预渲染的坐标
-//     const playerGridX = Math.floor(mVP.X / gridsize);  //+8 计算主角周围 9 个格子的区块
-//     const playerGridZ = Math.floor(mVP.Z / gridsize);
-//     const activeGridKeys = [];  // 装 9 个格子的区块号
-
-//     for (let i = -analyArea; i <= analyArea; i++) {
-//         for (let j = -analyArea; j <= analyArea; j++) {
-//             activeGridKeys.push(`${playerGridX + i}_${playerGridZ + j}`);
-//         }
-//     }
-
-//     // 根据映射和坐标把物体给算进来
-//     const newActiveIndices = new Set();  // 待做出隐藏动作的物体的 index 列表    
-//     for(const key of activeGridKeys){
-//         const indicesInGrid = k.spatialGrid.get(key);  // 取物体使用（spatialGrid，俗称战地成员列表）
-//         if (indicesInGrid) {
-//             for (const index of indicesInGrid) {
-//                 if(index < 10001){  // 一个懒惰的做法，之后再想办法改进
-//                     if(Math.abs(k.positionsStatus[index * 8 + 1] - mVP.Y) < k.gridsize){  // 高度距离（Y）要接近
-//                         newActiveIndices.add(index);
-//                     }
-//                 }
-                
-//             }
-//         }
-//     }
-
-//     // 重新定义任务总量
-//     k.preRanderTextTotalTask = newActiveIndices.size;
-//     console.log('已重新定义总量' + k.preRanderTextTotalTask);
-
-//     // 遍历预渲染任务
-//     for (const index of newActiveIndices) {
-//         // makeTestTexture(index);
-//         k.preRanderTextureIndexArr.push(index);
-//     }
-// }
-
-
-// // 添加附近的纹理
-// let currentIndex_texture = 0;
-// k.preRanderTextTotalTask = 100_0000;
-// function addNearbyTexture(deadline) {  // 添加纹理
-//     while (deadline.timeRemaining() > 0 && currentIndex_texture < k.preRanderTextTotalTask) {
-//         if(k.preRanderTextureIndexArr.length > 0){  // 判断有没有初始化
-//             makeTestTexture(k.preRanderTextureIndexArr[currentIndex_texture]);
-//         } else {
-//             k.preRanderTexture(5);  // 初始化
-//         }
-//         currentIndex_texture++;
-//     }
-//     if (currentIndex_texture < k.preRanderTextTotalTask) {
-//         requestIdleCallback(addNearbyTexture);
-//     } else {
-//         console.log("texture 所有 add texture 步已优雅地完成！" + Math.random().toFixed(3));
-//         k.preRanderTextureIndexArr.length = 0;
-//         k.preRanderTextTotalTask = 100_0000;
-//     }
-//     if(currentIndex_texture % 10 === 0){  // 显示进度
-//         xforward.innerHTML = 'texture ' + currentIndex_texture + '/ ' + k.preRanderTextureIndexArr.length;
-//     }
-// }
-
-
-
-// // 写字
-// function drawText(ctx, value = 'abc', typeObj = {}, cWidth, cHeight){
-//     ctx.font = typeObj.font || "20px Arial";                  // 字体大小和类型
-//     ctx.fillStyle =  typeObj.fillStyle || "black";            // 填充颜色
-//     ctx.strokeStyle =  typeObj.strokeStyle || "blue";         // 描边颜色
-//     ctx.textAlign =  typeObj.textAlign || "left";           // 水平对齐方式（left/center/right）
-//     ctx.textBaseline =  typeObj.textBaseline ||"middle";      // 垂直对齐方式（top/middle/bottom）
-//     const valueByLine = String(value).split('\n');
-//     const lineHeight = parseInt(ctx.font) || 30;
-//     valueByLine.forEach((line, i) => {  // 分行
-//         ctx.fillText(line, 150, 50 + (i * lineHeight + 5));
-//     });
-// }
-
-
-// // 尝试调试物理引擎
-// k.W.isOpenShadow = !k.W.isOpenShadow;  // 关闭阴影
-// k.distanceDPZ[2].len = 35;  // 第四 DZP 级别的探测距离
-// numCubes = 9;
-// for (let i = 0; i < numCubes; i++) {
-//     for (let j = 0; j < numCubes; j++) {
-//         var index = i * numCubes + j;
-//         k.addTABox({
-//             DPZ : 3,
-//             isPhysical: true,
-//             X: i * 3,
-//             Y: 1,
-//             Z: j * 3,
-//             mass: 0,
-//             width: 0.5,
-//             depth: 0.5,
-//             height: 5,
-//             background: '#faa',
-//             mixValue: 0.5,
-//             isShadow: false,
-//             texture: marble,
-//      });
-//     }
-// }
-
-
-// // 一个修改文字的 DEMO
-// k.modTextDemo = (indexID) =>{
-//     const forObjID = k.indexToArgs.get(indexID).forObjID || -1;
-//     k.currTextData.set(forObjID, '狗精，肉不正经！！');
-//     k.textureMap.delete(forObjID);
-//     window[forObjID] = undefined;
-//     k.W.cube({
-//         n: forObjID,
-//         t: k.textureMap.get(forObjID),
-//     });
-//     k.currentlyActiveIndices.delete(indexID)
-// }
-
-// 视角切换
-// document.addEventListener('keydown', function(event) {
-//     if (event.key === '1' || event.key === '2' || event.key === '3' || event.key === '4') {
-//         if(k.viewType){
-//             k.mainCamera.pos = {x: 0, y: 2, z: 4}
-//             k.viewType = 0;
-//         } else {
-//             k.mainCamera.pos = {x:0, y:1, z:0}
-//             k.viewType = 1;
-//         }
-//     }
-// });
-
-// k.loadTexture(drawList).then(res => {
-//     k.addBox({  // 创建一个立方体，测试我的纹理系统
-//         DPZ : 1,
-//         tiling : 1,
-//         name: 'testTexture', X: 10, Y: 200, Z: 510,
-//         mass: 100, size:20, texture: jpflag, mixValue: 0
-//     });
-// })
-
-
 
 
 // 纹理列表
@@ -683,7 +478,6 @@ function drawRandomNoise(ctx, w, h) {
 }
 
 
-
 // 一个能跑起来的计算角度的函数，凑合用吧
 function calculateNorthAngle(t,a,h){var t=-t*Math.PI/180,a=-a*Math.PI/180,h=h*Math.PI/180,M=Math.cos(t),
     t=Math.sin(t),o=Math.cos(a),a=Math.sin(a),h=(Math.cos(h),Math.sin(h),a*M),a=-t,t=o*M,o=[0,0,1],M=t,
@@ -722,12 +516,6 @@ xforward.addEventListener('mousedown', function(event) {
 
 // 后退
 xbackward.addEventListener('mousedown', function(event) {
-    // if(k.keys.viewBackward === 1){
-    //     k.keys.viewBackward = 0;
-    // } else {
-    //     k.keys.viewBackward = 1;
-    // }
-    // k.mainVPlayer.body.x = ;
     k.mainVPlayer.body.position.x = 113;
     k.mainVPlayer.body.position.y = 5;
     k.mainVPlayer.body.position.z = 495;
@@ -736,22 +524,12 @@ xbackward.addEventListener('mousedown', function(event) {
 
 // 左转
 xleft.addEventListener('mousedown', function(event) {
-    // if(k.keys.turnLeft === 1){
-    //     k.keys.turnLeft = 0;
-    // } else {
-    //     k.keys.turnLeft = 1;
-    // }
     k.antiDizzyMode = !k.antiDizzyMode;
 });
 
 
 // 右转
 xright.addEventListener('mousedown', function(event) {
-    // if(k.keys.turnRight === 1){
-    //     k.keys.turnRight = 0;
-    // } else {
-    //     k.keys.turnRight = 1;
-    // }
     k.mainVPlayer.body.position.x = 7.6;
     k.mainVPlayer.body.position.y = 5;
     k.mainVPlayer.body.position.z = 16.5;
@@ -781,8 +559,6 @@ xVIEW2.addEventListener('mousedown', function(event) {
     k.viewType = 0;
 });
 
-// 
-
 
 // 数字转汉字
 function convertFiveDigitNumberToCommonChars(inputNumber) {
@@ -806,9 +582,6 @@ setInterval(() => {
     // cookie 储存位置
     const mainVPlayerBodyPos = k.mainVPlayer.body.position;  //+2 储存主角的位置到 COOKIE
     setObjectCookie('lastPos_mvp', {x: mainVPlayerBodyPos.x, y: mainVPlayerBodyPos.y, z: mainVPlayerBodyPos.z}); // 存储对象到Cookie
-
-    // // 定时预加载附近的纹理
-    // requestIdleCallback(addNearbyTexture);
 }, 1000)
 
 // 存储对象到Cookie
@@ -823,7 +596,7 @@ function setObjectCookie(name, obj, days) {
   document.cookie = `${name}=${value}${expires}; path=/`;
 }
 
-// 从Cookie读取对象
+// 从 Cookie 读取对象
 function getObjectCookie(name) {
   const cookieArr = document.cookie.split('; ');
   for(let i = 0; i < cookieArr.length; i++) {
