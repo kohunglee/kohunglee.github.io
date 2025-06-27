@@ -120,16 +120,17 @@ canvas {
     <button id="xjump" style="width: 90px;">蹦</button>
     <button id="xShadow" style="width: 90px;">影</button>
     <button id="xVIEW1" style="width: 90px;">视1</button>
-    <button id="xVIEW2" style="width: 90px;">视3</button>
     <button id="xStopDY"  style="width: 90px;">小点</button>
+    <span id="xVIEW2" style="font-size: 60px;color: rgb(255, 255, 255);position: absolute;left: 50vw;transform: translate(-50%);width: max-content;">城市</span>
 </div>
 <script type="module">
 import ccgxkApp from '../src/ccgxk.js';
-// 初始化沙盒
-var k = ccgxkApp;
-
+var k = ccgxkApp;  // 初始化沙盒
 k.initWorld('c');
 var list = k.bodylist;
+
+import calCity from '../src/plugins/calCity.js';
+calCity(k);
 
 // k.W.isOpenShadow = !k.W.isOpenShadow;  // 关闭阴影
 
@@ -167,7 +168,6 @@ for (let index = 0; index < 1; index++) {
 }
 
 // 为实例化加上简单的物理引擎
-k.distanceDPZ[2].len = 35;  // 第四 DZP 级别的探测距离
 for (let i = 0; i < numCubes; i++) {
     for (let j = 0; j < numCubes; j++) {
         var index = i * numCubes + j;
@@ -555,8 +555,8 @@ xVIEW1.addEventListener('mousedown', function(event) {
 
 // 第三视角
 xVIEW2.addEventListener('mousedown', function(event) {
-    k.mainCamera.pos = {x: 0, y: 2, z: 4}
-    k.viewType = 0;
+    // k.mainCamera.pos = {x: 0, y: 2, z: 4}
+    // k.viewType = 0;
 });
 
 
@@ -582,6 +582,8 @@ setInterval(() => {
     // cookie 储存位置
     const mainVPlayerBodyPos = k.mainVPlayer.body.position;  //+2 储存主角的位置到 COOKIE
     setObjectCookie('lastPos_mvp', {x: mainVPlayerBodyPos.x, y: mainVPlayerBodyPos.y, z: mainVPlayerBodyPos.z}); // 存储对象到Cookie
+
+    xVIEW2.innerHTML = k.calCityName(); // 获取当前城市名称
 }, 1000)
 
 // 存储对象到Cookie

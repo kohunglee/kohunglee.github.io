@@ -245,10 +245,6 @@ export default {
             } = {}){
         var myargs = Array.from(arguments);  // 备份参数
         var posID = this.calPosID(X, Y, Z, DPZ);
-        if(this.legalPosID.includes(posID) === false && DPZ !== 1){  // 位置编码和优先级不合法
-            this.hiddenBodylist.push({posID, myargs});  // 放入隐藏列表
-            return 0;
-        }
         if(size !== 1){  // 处理体积大小
             width =  depth =  height = size;
         }

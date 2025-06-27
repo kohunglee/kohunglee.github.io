@@ -61,8 +61,6 @@ export default {
                 }
             }
         }
-
-        if(this.legalPosID.length < 1){ this.dynaNodes(); }  // 在启动程序后，要预热 legalPosID
     },
 
     // 计算一次物理世界
@@ -87,13 +85,13 @@ export default {
             this.lastTime = currentTime;
             this._showMemory();  // 一秒显示一次内存
             this.displayPOS();  // 一秒显示一次显示主角坐标
-            var dynaNodesCon = this.dynaNodes();  // 一秒显示一次主角位置编码
+            const mVP = this.mainVPlayer;
+            var dynaNodesCon = this.calPosID(mVP?.X, mVP?.Y, mVP?.Z, 2);
             posIDMVP.textContent = dynaNodesCon.replace(/[Dd]/g,'东').replace(/[Xx]/g,'西').replace(/[Nn]/g,'南').replace(/[Bb]/g,'北');  // 一秒显示一次主角位置编码
             fpsInfo.textContent = ('FPS：' + fps.toFixed(1) + '  ，渲染：' + this.W.drawTime );  // 一秒显示一次 FPS
             modListCount.textContent = ('当前模型数：' + this.bodylist.length +
                                         ' - ❀' + this.bodylistNotPys.length +
                                         ' - 口' + this.bodylistMass0.length +
-                                        ' - ⚠️' +this.hiddenBodylist.length +
                                         ' - ⚡️ ' +this.currentlyActiveIndices.size + `（can ${this.world.bodies.length}）` +  `（${this.indexToArgs.size}）` + `（纹理：${this.textureMap.size}）` +
                                                         ' |');  // 一秒显示一次模型数
         }
