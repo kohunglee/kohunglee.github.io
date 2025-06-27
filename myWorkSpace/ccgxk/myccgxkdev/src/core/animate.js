@@ -91,7 +91,7 @@ export default {
                                 this.spatialGrid.set(currentGridKey, indicesInCell);
                             }
                         }
-                        indexItem.gridkey = currentGridKey;
+                        indexItem.gridkey = currentGridKey; 
                         this.gridKeyCurrentTime = performance.now();
                     }
                 }
