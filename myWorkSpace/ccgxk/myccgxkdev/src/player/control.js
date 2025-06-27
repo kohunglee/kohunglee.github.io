@@ -62,13 +62,8 @@ export default {
         });
         document.addEventListener('mousemove', function(e) {  // 鼠标移动
             if (isMouseMove) {
-                if(_this.antiDizzyMode) {  // 防眩晕模式
-                    _this.keys.turnRight = e.movementX * 0.1;
-                    _this.keys.turnUp = e.movementY * 0.1;
-                } else {  // 平滑模式（默认）
-                    _this.keys.turnRight -= e.movementX * 0.1;
-                    _this.keys.turnUp -= e.movementY * 0.1;
-                }
+                _this.keys.turnRight -= e.movementX * 0.1;
+                _this.keys.turnUp -= e.movementY * 0.1;
             }
         });
         this.canvas.addEventListener('click', (e) => {  // 单击画布，开启虚拟鼠标
@@ -148,29 +143,10 @@ export default {
             this.displayPOS();
         }
         if (keys.viewUp || keys.viewDown) { // 上下平移（已经名存实亡了）
-            // var offset = 1;
-            // Y += offset;
             Y = 150;
         }
-        if(this.antiDizzyMode) {  // 防眩晕模式
-            if(keys.turnRight || keys.turnLeft) {  // 左右扭动
-                var offset = (-keys.turnRight + keys.turnLeft);
-                if(Math.abs(offset) > 0.1){
-                    RY += offset;
-                }
-            }
-            if(keys.turnUp || keys.turnDown) {  // 上下扭动
-                var offset = (-keys.turnUp + keys.turnDown);
-                if(Math.abs(offset) > 0.5){
-                    RX += offset;
-                }
-            }
-        } else {  // 平滑（默认）
-            RY = this.keys.turnRight;
-            RX = this.keys.turnUp;
-        }
-        
-        
+        RY = this.keys.turnRight;
+        RX = this.keys.turnUp;
         return {  x: X,  y: Y,  z: Z,  rx: RX,  ry: RY,  rz: RZ  }
     },
 
@@ -192,11 +168,22 @@ export default {
         },
     },
 
+    // 主角、相机辅助值
+    isMVPInit : false,  // 相机和主角是否初始化
+    Y_AXIS : new CANNON.Vec3(0, 1, 0),
+    DEG_TO_RAD : Math.PI / 180,
+
     // 摄像机和主角的移动和旋转
     mainVPlayerMove : function(mVP){
         if(mVP === null){return};
         var cam = this.mainCamera;
-        var vplayerBodyPos = mVP.body.position;
+
+        if(this.isMVPInit === false){
+            cam.groupName = mVP.name;
+            this.isMVPInit = true;
+        }
+        
+        var vplayerBodyPos = mVP.body.position;  //+ 计算下一帧的主角数据，并传递给物理引擎
         var vplayerBodyQua = mVP.body.quaternion;
         var vplayerAct = this.calMovePara(  // 获取按键和鼠标事件处理后的移动参数
             vplayerBodyPos.x, vplayerBodyPos.y, vplayerBodyPos.z,
@@ -206,9 +193,21 @@ export default {
         mVP.body.position.y = vplayerAct.y;
         mVP.body.position.z = vplayerAct.z;
         cam.qua = vplayerAct;
-        vplayerBodyQua.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), Math.PI / 180 * vplayerAct.ry);  // 主角只旋转 Y 轴
+        vplayerBodyQua.setFromAxisAngle(this.Y_AXIS, this.DEG_TO_RAD * vplayerAct.ry);  // 主角只旋转 Y 轴
         this.W.camera({g:mVP.name, x:cam.pos.x, y:cam.pos.y, z:cam.pos.z, rx: cam.qua.rx, rz: cam.qua.rz})  // 摄像机只旋转 X 和 Z 轴
-        cam.groupName = mVP.name;
+
+        let pos = mVP.body.position;
+        let quat = mVP.body.quaternion;
+        let indexItemEuler = this.quaternionToEuler(quat);
+        mVP.quat = quat;
+        mVP.rX = indexItemEuler.rX;
+        mVP.rY = indexItemEuler.rY;
+        mVP.rZ = indexItemEuler.rZ;
+        mVP.X = pos.x;
+        mVP.Y = pos.y;
+        mVP.Z = pos.z;
+        this.W.move({ n: mVP.name, x: mVP.X, y: mVP.Y, z: mVP.Z, rx: mVP.rX, ry: mVP.rY, rz: mVP.rZ});
+
         mVP.posID = this.calPosID(mVP.X, mVP.Y, mVP.Z, 2);
         return 0;
     },

@@ -6,48 +6,12 @@ export default {
     gridKeyCurrentTime : 0,  // 辅助更新 gridKey 的工具时间值
     updataBodylist : function(){
         this.dynaNodes_lab();  // 一帧计算区块一次
-        for (let i = 0; i < this.bodylist.length; i++) {
-            let indexItem = this.bodylist[i];
-            if(indexItem.body !== null){
-                let pos = indexItem.body.position;
-                const dx = pos.x - indexItem.X;
-                const dy = pos.y - indexItem.Y;
-                var disten = Math.sqrt(dx*dx + dy*dy);  // 计算与自身上次的距离（必须大于 某个值 才能被可视化）
-                let quat = indexItem.body.quaternion;
-                let indexItemEuler = this.quaternionToEuler(quat);
-                indexItem.quat = quat;
-                indexItem.rX = indexItemEuler.rX;
-                indexItem.rY = indexItemEuler.rY;
-                indexItem.rZ = indexItemEuler.rZ;
-                indexItem.X = pos.x;
-                indexItem.Y = pos.y;
-                indexItem.Z = pos.z;
-            }
-            if(
-                (indexItem.isVisualMode && this.W.next[indexItem.name] && disten > 0.00001)  // 运动幅度大于这个值，才更新
-                ||
-                indexItem.name === 'mainPlayer'
-            ){
-                this.W.move({
-                    n: indexItem.name,
-                    x: indexItem.X,
-                    y: indexItem.Y,
-                    z: indexItem.Z,
-                    rx: indexItem.rX,
-                    ry: indexItem.rY,
-                    rz: indexItem.rZ,
-                });
-            }
-        }
-        /* -----------------------------[ 实验 TA 物理更新 ]--------------------------------------- */
+
         for (const index of this.currentlyActiveIndices) {  // 暂时选择遍历吧，反正也显示不了几个，也兼容后续的 mass 改变
-            // console.log(index);
             const p_offset = index * 8;
             if(this.positionsStatus[p_offset + 7] > 0){  // 选择 状态码/mass 大于 0 的物体
-                const gridKey_orige = `${Math.floor(this.positionsStatus[p_offset] / this.gridsize)}_${Math.floor(this.positionsStatus[p_offset + 2] / this.gridsize)}`;
                 const indexItem = this.indexToArgs.get(index);
                 const canBody = indexItem.cannonBody;
-                // console.log(this.positionsStatus[index * 8 + 7]);
                 if(!canBody) continue;
                 const disxX = canBody.position.x - this.positionsStatus[p_offset];
                 const disyY = canBody.position.y - this.positionsStatus[p_offset + 1];
@@ -71,7 +35,7 @@ export default {
                         ry: eulerQuat.rY,
                         rz: eulerQuat.rZ,
                     });
-                    if(disten > 0.01 && (performance.now() - this.gridKeyCurrentTime > 500)){  // 略大一点的距离更改，500ms 间隔以上，计算区块 key，更新表
+                    if(disten > 0.01 && (performance.now() - this.gridKeyCurrentTime > 500)){  //+ 略大一点的距离更改，500ms 间隔以上，计算区块 key，更新表
                         const orginGridKey = indexItem.gridkey || 0;
                         const thisDPZ = this.physicsProps[p_offset + 4];
                         const currentGridKey = `${thisDPZ}_${Math.floor(this.positionsStatus[p_offset] / this.gridsize[thisDPZ])}_${Math.floor(this.positionsStatus[p_offset + 2] / this.gridsize[thisDPZ])}`;
@@ -97,7 +61,6 @@ export default {
                 }
             }
         }
-        /* ---------------------------------------------------------------------- */
 
         if(this.legalPosID.length < 1){ this.dynaNodes(); }  // 在启动程序后，要预热 legalPosID
     },
@@ -133,7 +96,6 @@ export default {
                                         ' - ⚠️' +this.hiddenBodylist.length +
                                         ' - ⚡️ ' +this.currentlyActiveIndices.size + `（can ${this.world.bodies.length}）` +  `（${this.indexToArgs.size}）` + `（纹理：${this.textureMap.size}）` +
                                                         ' |');  // 一秒显示一次模型数
-            // this.dynaNodes_lab();  // 一秒计算区块一次
         }
     },
 
