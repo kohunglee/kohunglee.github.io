@@ -14,7 +14,6 @@ export default function(ccgxkObj){
             // return Math.floor(x / 100) + ' - ' + Math.floor(z / 100);
             const xID = Math.floor(x / 100);
             const zID = Math.floor(z / 100);
-            console.log(zID, xID);
             if(xID >= 0 && xID < 10 && zID >= 0 && zID < 10){
                 return citisCN[zID][xID];
             }

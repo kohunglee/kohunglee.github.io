@@ -8,12 +8,11 @@ import texture from './obj/texture.js';
 import control from './player/control.js';
 import chunkManager from './obj/chunkManager.js';
 import addobj from './obj/addobj.js';
-import addcustobj from './obj/addcustobj.js';
 import animate from './core/animate.js';
 
 // 插件
-import wjsShadow from './plugins/wjsShadow.js';
-import centerDot from './plugins/centerDot.js';
+// import wjsShadow from './plugins/wjsShadow.js';
+// import centerDot from './plugins/centerDot.js';
 
 
 // 主对象
@@ -26,13 +25,12 @@ const ccgxk = {
     ...control,      // 第一视角的实现
     ...chunkManager, // 动态区块管理
     ...addobj,       // 添加新物体
-    ...addcustobj,   // 添加自定义的模型（实验中）
     ...animate,      // 动画进程相关
 }
 
 // 启用插件
 // wjsShadow(ccgxk);  // 开启阴影（暂时有性能问题，待改进）
-centerDot(ccgxk);  // 开启中心点取物
+// centerDot(ccgxk);  // 开启中心点取物
 
 
 // 兼容浏览器平台
