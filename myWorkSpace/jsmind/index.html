@@ -100,6 +100,7 @@ mind002 = {
 </script>
 
 <div class="mypanel">
+    <li><input type="text" name="" id="savename" placeholder="请输入名称..." /></li>
     <li><button class="sub" onclick="save_file();">保存文件</button></li>
     <li><br><br><input id="file_input" class="file_input" type="file" /></li>
     <li><button class="sub" onclick="open_file();">打开文件</button></li>
@@ -110,7 +111,7 @@ mind002 = {
 // 保存文件
 function save_file() {
     var mind_data = jm.get_data();
-    var mind_name = mind_data.meta.name;
+    var mind_name = document.getElementById('savename').value || mind_data.meta.name;
     mind_data = mylib.toMarkdown(mind_data);  // 转化为 markdown 格式
     var mind_str = jsMind.util.json.json2string(mind_data);
     jsMind.util.file.save(mind_str, 'text/jsmind', mind_name + '.jm');
