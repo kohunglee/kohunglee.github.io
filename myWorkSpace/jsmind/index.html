@@ -145,4 +145,35 @@ setInterval(function(){
     var chineseCount = mylib.countChineseCharacters(mindDataStr);
     document.getElementById('chineseCount').innerText = chineseCount;
 }, 1000);
+
+
+// 节流函数
+function throttle(fn, delay) {
+  let lastCall = 0;
+  return function(...args) {
+    const now = Date.now();
+    if (now - lastCall >= delay) {
+      lastCall = now;
+      fn.apply(this, args);
+    }
+  };
+}
+
+// 滚轮处理函数（放大缩小）
+function onWheel(event) {
+  if (event.deltaY < 0) {
+    // console.log('向上滚动');
+    jm.view.zoom_in();
+  } else if (event.deltaY > 0) {
+    // console.log('向下滚动');
+    jm.view.zoom_out();
+  }
+}
+
+// 节流函数与滚轮事件绑定
+const throttledWheel = throttle(onWheel, 30);
+window.addEventListener('wheel', function(event){
+    event.preventDefault();
+    throttledWheel(event);
+}, { passive: false });
 </script>
