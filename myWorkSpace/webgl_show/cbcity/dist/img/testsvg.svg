@@ -1,0 +1,11 @@
+<svg width="800" height="600" xmlns="http://www.w3.org/2000/svg">
+ <g>
+  <title>Layer 1</title>
+  <ellipse ry="50" rx="39" id="svg_1" cy="87" cx="75" stroke="#000" fill="#fff"/>
+  <ellipse ry="155.5" rx="151.5" id="svg_2" cy="338.5" cx="370.5" stroke="#000" fill="#fff"/>
+  <ellipse ry="58" rx="143.5" id="svg_3" cy="190" cx="545.5" stroke="#000" fill="#fff"/>
+  <ellipse id="svg_4" cy="93" cx="381" stroke="#000" fill="#fff"/>
+  <ellipse ry="155.5" rx="134" id="svg_5" cy="249.5" cx="355" stroke="#000" fill="#fff"/>
+ </g>
+
+</svg>
