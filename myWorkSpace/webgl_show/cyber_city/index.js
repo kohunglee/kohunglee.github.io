@@ -149,7 +149,7 @@ if(window.requestIdleCallback === undefined){  // safari bug
 // 从 COOKIE 里取出上一次的位置
 var lastPos = k?.lastPos;
 if(!lastPos){
-    lastPos = {x:33, y:5.00, z:498};
+    lastPos = {x:108, y:37.00, z:527};
 }
 k.mainVPlayer = k.addBox({  // 创建一个立方体，并设置为主角
         name: 'mainPlayer', DPZ : 1,
