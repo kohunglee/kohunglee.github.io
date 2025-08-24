@@ -80,6 +80,8 @@ export default function(ccgxkObj) {
     }
     ccgxkObj.hooks.on('forwardBackward', function(obj, speed){
         // console.log(speed);
+        document.getElementById('shiftInfo').innerHTML = '速度:' + Math.round((100 / speed)) + ' | ';
+        // shiftInfo.textContent = '速度:' + Math.round((100 / speed)) + ' | ';
     });
     ccgxkObj.hooks.on('pointer_lock_click', function(obj, e){
         if(ccgxkObj.centerPointColorUpdatax || e.button === 2){  
@@ -290,6 +292,9 @@ export default function(ccgxkObj) {
     document.getElementById('btn02').addEventListener('click', function(){
         readArchiveFromCloud();
     });
+    document.getElementById('textInfoId').addEventListener('click', function(){
+        readArchiveFromCloud();
+    });
 
 }
 
@@ -299,6 +304,7 @@ function readArchiveFromCloud() {
     globalVar.oldExArSt = globalVar.oldExArSt || document.getElementById('btn02').innerText;
     const archiveURL = 'https://git.ccgxk.com/myWorkSpace/webgl_show/cyber_city/ExampleArchive.json';
     document.getElementById('btn02').innerText = '读取中...';
+    document.getElementById('textInfoId').innerText = '读取中...';
     fetch(archiveURL)
         .then(response => {
             if (!response.ok) {
@@ -312,14 +318,17 @@ function readArchiveFromCloud() {
                 readAfter(archiveContent);
                 alert('应用成功！您可以去城寨入口或坐标原点看一下哈~ 😊 欢迎您来到赛博城寨！！！');
                 document.getElementById('btn02').innerText = globalVar.oldExArSt;
+                document.getElementById('textInfoId').innerText = globalVar.oldExArSt;
             } catch (error) {
                 document.getElementById('btn02').innerText = globalVar.oldExArSt;
+                document.getElementById('textInfoId').innerText = globalVar.oldExArSt;
                 alert('研读失败！这可能是一份损坏或格式错误的云端存档。\n' + error.message);
             }
         })
         .catch(error => {
             alert('读取云端存档失败！请检查您的网络连接或联系管理员。\n' + error.message);
             document.getElementById('btn02').innerText = globalVar.oldExArSt;
+            document.getElementById('textInfoId').innerText = globalVar.oldExArSt;
         });
 }
 
