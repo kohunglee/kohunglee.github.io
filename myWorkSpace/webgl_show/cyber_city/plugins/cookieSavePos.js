@@ -13,6 +13,10 @@ export default function(ccgxkObj){
             x: mPos.x, y: mPos.y, z: mPos.z,
             rX: mvp.rX, rY:mvp.rY, rZ:mvp.rZ,  // 暂时不研究了，好像没法储存选择
         }); // 存储对象到Cookie
+
+        if(k.mainVPlayer.body.position.y < -5){
+            k.mainVPlayer.body.position.y = 150;
+        }
     }, 1000)
 
     // 存储对象到Cookie
