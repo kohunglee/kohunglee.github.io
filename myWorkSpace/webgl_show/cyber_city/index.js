@@ -199,7 +199,7 @@ k.addBox({  // 创建地面
     // isShadow: 1,
     name: 'groundPlane', X: 0, Y: -0.5, Z: 0,
     mass: 0, width: groundPlanesize, depth: groundPlanesize, height: 2,
-    texture: marble, background: '#287A17', mixValue: 0.5,
+    texture: marble, background: '#c7e5c1', mixValue: 0.5,
 });
 document.addEventListener('keydown', (e)=>{
     if(e.key.toUpperCase() === 'I'){
