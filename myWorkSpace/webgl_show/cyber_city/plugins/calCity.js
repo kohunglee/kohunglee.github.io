@@ -14,8 +14,10 @@ export default function(ccgxkObj){
             const xID = Math.floor(x / 100);
             const zID = Math.floor(z / 100);
             if(xID >= 0 && xID < 10 && zID >= 0 && zID < 10){
+                ccgxkObj.currentCityXZ = {xID, zID};
                 return citisCN[zID][xID];
             }
+            ccgxkObj.currentCityXZ = {xID:-1, zID:-1};
             return '荒野';
         } 
     };

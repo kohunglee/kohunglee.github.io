@@ -207,4 +207,20 @@ document.addEventListener('keydown', (e)=>{
     }
 });
 
-
+/* =============[ 城市地图格子变红 ]============== */
+let lastCell = null; 
+setInterval(() => {
+    const pos = k?.currentCityXZ || { xID: -1, zID: -1 };
+    const currentCell = document.querySelector(
+        `#china-cities-table tr:nth-child(${pos.zID + 1}) td:nth-child(${pos.xID + 1})`
+    );
+    if (currentCell !== lastCell) {
+        if (lastCell) {
+            lastCell.style.backgroundColor = ''; 
+        }
+        if (currentCell) {
+            currentCell.style.backgroundColor = 'red';
+        }
+        lastCell = currentCell;
+    }
+}, 1000);
