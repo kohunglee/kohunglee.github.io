@@ -1,0 +1,178 @@
+<meta charset="utf-8">
+<script src="./lib.js"></script>
+<script src="./mylib.js"></script>
+<link rel="stylesheet" href="./style.css">
+
+<div id="jsmind_container" style="width: 100%; height: 100%;">
+</div>
+<script>
+
+var mind = {
+    /* 元数据，定义思维导图的名称、作者、版本等信息 */
+    "meta":{
+        "name":"jsMind-demo-tree",
+        "author":"hizzgdev@163.com",
+        "version":"0.2"
+    },
+    /* 数据格式声明 */
+    "format":"node_tree",
+    /* 数据内容 */
+    "data":{"id":"root","topic":"jsMind","children":[
+        {"id":"easy","topic":"Easy","direction":"left","expanded":false,"children":[
+            {"id":"easy1","topic":"Easy to show"},
+            {"id":"easy2","topic":"Easy to edit"},
+            {"id":"easy3","topic":"Easy to store"},
+            {"id":"easy4","topic":"Easy to embed"}
+        ]},
+        {"id":"open","topic":"Open Source","direction":"right","expanded":true,"children":[
+            {"id":"open1","topic":"on GitHub"},
+            {"id":"open2","topic":"BSD License"}
+        ]},
+        {"id":"powerful","topic":"Powerful","direction":"right","children":[
+            {"id":"powerful1","topic":"Base on Javascript"},
+            {"id":"powerful2","topic":"Base on HTML5"},
+            {"id":"powerful3","topic":"Depends on you"}
+        ]},
+        {"id":"other","topic":"test node","direction":"left","children":[
+            {"id":"other1","topic":"I'm from local variable"},
+            {"id":"other2","topic":"I can do everything"}
+        ]}
+    ]}
+};
+
+    var testmark = mylib.toMarkdown(mind);
+    mind = mylib.toObj(testmark);
+
+    var options = {  // 配置
+       container : 'jsmind_container',         // [必选] 容器的ID
+       editable : true,       // 是否启用编辑
+       theme :'primary',           // 主题
+       mode :'side',           // 布局模式
+       support_html : true,    // 是否支持节点里的HTML元素
+       log_level: 'disable',      // 日志级别
+       view:{
+           engine: 'svg',   // 思维导图各节点之间线条的绘制引擎
+           hmargin:100,        // 思维导图距容器外框的最小水平距离
+           vmargin:50,         // 思维导图距容器外框的最小垂直距离
+           line_width:2,       // 思维导图线条的粗细
+           line_color:'#555',  // 思维导图线条的颜色
+           line_style:'curved',// 思维导图线条的样式，直线(straight)或者曲线(curved)
+           custom_line_render: null,  // 自定义的线条渲染方法
+           draggable: true,   // 当容器不能完全容纳思维导图时，是否允许拖动画布代替鼠标滚动
+           hide_scrollbars_when_draggable: false, // 当设置 draggable = true 时，是否隐藏滚动条
+           node_overflow: 'wrap', // 节点文本过长时的样式
+           zoom: {             // 配置缩放
+               min: 0.5,       // 最小的缩放比例
+               max: 2.1,       // 最大的缩放比例
+               step: 0.1,      // 缩放比例间隔
+           },
+           custom_node_render: null, // 自定义的节点渲染方法
+       },
+       layout:{
+           hspace:30,          // 节点之间的水平间距
+           vspace:20,          // 节点之间的垂直间距
+           pspace:13,          // 节点与连接线之间的水平间距（用于容纳节点收缩/展开控制器）
+           cousin_space:0      // 相邻节点的子节点之间的额外的垂直间距
+       },
+       shortcut:{
+           enable:true,        // 是否启用快捷键
+           handles:{},         // 命名的快捷键事件处理器
+           mapping:{           // 快捷键映射
+               addchild   : 9, 	// <Insert>, <Ctrl> + <Enter>
+               addbrother : 13,    // <Enter>
+               editnode   : 113,   // <F2>
+               delnode    : 46,    // <Delete>
+               toggle     : 32,    // <Space>
+               left       : 37,    // <Left>
+               up         : 38,    // <Up>
+               right      : 39,    // <Right>
+               down       : 40,    // <Down>
+           }
+       },
+    };
+    var jm = new jsMind(options);
+    jm.show(mind);
+</script>
+
+<div class="mypanel">
+    <li><input type="text" name="" id="savename" placeholder="请输入名称..." /></li>
+    <li><button class="sub" onclick="save_file();">保存文件 Ctrl + S</button></li>
+    <li><br><br><input id="file_input" class="file_input" type="file" /></li>
+    <li><button class="sub" onclick="open_file();">打开文件</button></li>
+    <li><br><br>有 <span id="chineseCount">x</span> 个汉字</li>
+</div>
+
+<script>
+// 保存文件
+function save_file() {
+    var mind_data = jm.get_data();
+    var mind_name = document.getElementById('savename').value || mind_data.meta.name;
+    var mind_str = jsMind.util.json.json2string(mind_data);
+    jsMind.util.file.save(mind_str, 'text/jsmind', mind_name + '.jm');
+}
+
+// 读取文件
+function open_file() {
+    var file_input = document.getElementById('file_input');
+    var files = file_input.files;
+    if (files.length > 0) {
+        var file_data = files[0];
+        jsMind.util.file.read(file_data, function (jsmind_data, jsmind_name) {
+            var mind = jsMind.util.json.string2json(jsmind_data);
+            if (!!mind) {
+                jm.show(mind);
+            } else {
+                prompt_info('can not open this file as mindmap');
+            }
+        });
+    } else {
+        prompt_info('please choose a file first');
+    }
+}
+
+// 定时统计汉字数量
+setInterval(function(){
+    var mindDataStr = JSON.stringify(jm.get_data());
+    var chineseCount = mylib.countChineseCharacters(mindDataStr);
+    document.getElementById('chineseCount').innerText = chineseCount;
+}, 1000);
+
+
+// 节流函数
+let lastCall = 0;
+function throttle(fn, delay) {
+  return function(...args) {
+    const now = Date.now();
+    if (now - lastCall >= delay) {
+      lastCall = now;
+      fn.apply(this, args);
+    }
+  };
+}
+
+// 滚轮处理函数（放大缩小）
+function onWheel(event) {
+  if (event.deltaY < 0) {
+    // console.log('向上滚动');
+    jm.view.zoom_in();
+  } else if (event.deltaY > 0) {
+    // console.log('向下滚动');
+    jm.view.zoom_out();
+  }
+}
+
+// 节流函数与滚轮事件绑定
+const throttledWheel = throttle(onWheel, 30);
+window.addEventListener('wheel', function(event){
+    event.preventDefault();
+    throttledWheel(event);
+}, { passive: false });
+
+// 按下保存快捷键后
+document.addEventListener('keydown', function(e) { // 保存快捷键
+    if (e.keyCode == 83 && (navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey)) {
+        e.preventDefault();
+        save_file();
+    }
+});
+</script>
