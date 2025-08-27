@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<meta http-equiv="cache-control" content="no-cache">
+<meta http-equiv="expires" content="0">
+<meta http-equiv="pragma" content="no-cache">
+<script>
+// baidu tongji
+var _hmt = _hmt || [];
+(function() {
+    var hm = document.createElement("script");
+    hm.src = "https://hm.baidu.com/hm.js?7f32626143786db9efbf3749f9a87aed";
+    var s = document.getElementsByTagName("script")[0]; 
+    s.parentNode.insertBefore(hm, s);
+})();
+</script>
+<style>
+    body{margin: 0;}
+    #someCtrl {
+        position: fixed;
+        top: 10px;
+        opacity: 0.5;
+        left: 10px;
+    }
+    #someCtrl button {
+        width: 45px;
+        height: 30px;
+    }
+    .info-modal {
+        position: fixed;
+        background-color: #e4e4e4f5;
+        left: 30px;
+        top: 30px;
+        width: 500px;
+        height: 80vh;
+        z-index: 1;
+        overflow: auto;
+        padding: 1em;
+    }
+</style>
+<canvas id=c style="width:99vw;height:99vh"></canvas>
+<script src="./cannon29kb.js"></script>
+<img src='./texture.jpeg' id=marble hidden>
+<script src="./openworld.js"></script>
+<script src="./index.js" type="module"></script>
+<div id="someCtrl">
+    <button id="btn01" style="width: 105px;">程序说明</button>
+    <button id="btn02" style="width: 105px;">加载示例存档</button>
+    <button id="btn03" style="width: 105px;">到城寨入口</button>
+    <button id="btn04" style="width: 105px;">到坐标原点</button>
+    <button id="btn05" style="width: 105px;">实时城市地图</button>
+</div>
+<div class="info-modal" id="myinfoModal" hidden>
+    <div>
+
+    <button id="closeBtn">关闭</button>
+    <hr>
+
+    <h1>更新详情</h1>
+
+    <p>2025.8.26 - 添加了实时的城市显示地图，方便我们漫游。</p>
+
+    <h1>《赛博城寨》 三维空间笔记系统</h1>
+
+    <p>大家好，欢迎使用《赛博城寨》，这是个使用 WebGL 开发的概念性程序，体积很小，只有 40kb 左右，用于辅助记录文字。</p>
+    <p>
+        这是个开放世界，里面有 1 万个大小不一的立方体，使用伪随机数生成。每个立方体的面，我们都可以使用鼠标左键选中（需要靠近方块），然后输入我们想展示在上面的字句。我们可以读取、保存存档。
+    </p>
+    <p><b><a id="textInfoId" href="javascript:void(0)">单击此处加载示例存档</a>，开始探索这个开放世界吧！</b></p>
+    
+    <hr>
+
+    <h2>按键如下：</h2>
+    <ul>
+        <li><b>W / A / S / D</b>：控制角色前后左右移动。</li>
+        <li><b>空格 或 E</b>：跳跃，连续点按为飞翔（推荐使用 <b>E</b> 键）。</li>
+        <li><b>Q 或 Shift</b>：按住以逐渐加速行走（推荐使用 <b>Q</b> 键）。</li>
+        <li><b>F</b>：冻结视角，让您悬停在空中，以便细致观察。</li>
+        <li><b>I</b>：瞬间将您传送至 150 米的高空，俯瞰全景。</li>
+    </ul>
+
+    <hr>
+
+    <h2>详细功能介绍</h2>
+
+    <h3>编辑模式</h3>
+    <p>我们靠近方块的面后，单击左键进入第一视角，待圆点出现色环后，单击左键进入编辑模式。</p>
+    <ol>
+        <li>
+            <b>文本偏移</b>：第一行，是偏移。因为有很多方块的左侧、上侧、右侧被遮挡，所以需要偏移。偏移范围是 0~1，如偏移一半大小就是 0.5。
+        </li>
+        <li>
+            <b>文本输入框</b>：在此处输入您的笔记内容。我们支持简单的颜色标记：
+            <ul>
+                <li><code>#</code> + 空格：后续文字变为蓝色。</li>
+                <li><code>%</code> + 空格：后续文字变为红色。</li>
+                <li><code>@</code> + 空格：后续文字恢复为默认的白色。</li>
+            </ul>
+        </li>
+        <li>
+            <b>辅助工具栏</b>：这里有一系列按钮，其中一个名为<b>【数字行号辅】</b>的功能可能稍显特别。它的作用是帮助您估算当前方块表面大致可以容纳多少行文字，这在判断一些难以触及的方块顶部空间时尤其有用。
+        </li>
+        <li>
+            <b>数据恢复</b>：第四块是<b>【从浏览器中恢复】</b>功能。您的每一次操作都会实时备份到浏览器的 localStorage 中，以防意外丢失。
+        </li>
+    </ol>
+    
+    <h3>仪表盘解读 (左下角)</h3>
+    <ul>
+        <li><b>FPS / 渲染</b>：分别代表实时帧率和渲染每帧所需的毫秒数。此数值因设备配置而异。</li>
+        <li><b>速度 / 位置</b>：大致估算您当前移动的速度，以及在三维世界中的精确坐标。</li>
+        <li><b>当前模型数</b>：此为开发调试信息。<b>闪电</b>代表理论上视野内的模型数；<b>can</b> 为被赋予物理属性的物体数；<b>w</b> 是实际渲染的模型数；其后数字是已从存档载入的模型数。<b>纹理</b>则显示当前已绘制的纹理数量。</li>
+        <li><b>区域坐标</b>：例如<b>【东1南1】</b>，这是一个方便您定位的坐标系统。以世界中心 (0,0,0) 为原点，向东 100 米、再向南 100 米的区域即为【东1南1】。整个城寨被划分为 100 个这样的方格区域。</li>
+    </ul>
+
+    <h3>城市命名与区块划分</h3>
+    <p>
+        您会注意到，屏幕顶端会显示如<b>【福建漳州】</b>、<b>【广东深圳】</b>之类的城市名称。我们选取了中国 GDP 排名靠前的 100 个城市，并根据它们的地理方位，为城寨中的 100 个区块进行了命名，让每个板块都拥有一个独特的名字。
+    </p>
+    <p>详细的城市分布如下，以便于您记忆和定位：</p>
+    <ol>
+         <li>乌鲁木齐 鄂尔多斯 包头 呼和浩特 北京 廊坊 唐山 沈阳 长春 哈尔滨</li>
+        <li>榆林 太原 石家庄 保定 沧州 天津 东营 烟台 大连 威海</li>
+        <li>兰州 新乡 邯郸 德州 济宁 济南 泰安 淄博 潍坊 青岛</li>
+        <li>西安 洛阳 郑州 周口 菏泽 徐州 宿迁 临沂 淮安 连云港</li>
+        <li>襄阳 南阳 阜阳 滁州 南京 扬州 镇江 泰州 盐城 南通</li>
+        <li>绵阳 宜昌 合肥 芜湖 常州 湖州 无锡 苏州 嘉兴 上海</li>
+        <li>成都 重庆 常德 岳阳 武汉 九江 金华 杭州 绍兴 宁波</li>
+        <li>宜宾 遵义 衡阳 长沙 株洲 宜春 南昌 上饶 温州 台州</li>
+        <li>昆明 曲靖 贵阳 广州 赣州 漳州 厦门 泉州 福州 宁德</li>
+        <li>南宁 湛江 茂名 江门 佛山 中山 珠海 东莞 深圳 惠州</li>
+    </ol>
+
+    <hr>
+    
+    <h2>开发初衷</h2>
+    <dl>
+        <dt><b>一次笔记维度的探索</b></dt>
+        <dd>
+            第一个原因，是一种尝试。记笔记，有一维的 txt 记事本、 typecho 、Word 诸如此类。有二维的 xmind 思维导图、无边记、notepad等等。那笔记可以记成三维的吗？应该可以，人脑更喜欢三维的空间嘛。为了让体积尽可能的小，使用伪随机数生成了 1 万个方块供大家写字。应该可以写一辈子吧。
+        </dd>
+        <br>
+        <dt><b>一次原生 WebGL 的实践</b></dt>
+        <dd>
+            第二个原因，也是练习一下自己的 webgl 制作。这个程序没有使用 threeJS 这里框架，直接使用的 webgl 原生。体积尽可能的小。
+        </dd>
+    </dl>
+    
+    <h2>如何获取本程序？</h2>
+    <p>理论上，您只需在浏览器中按下 <code>Ctrl + S</code> 即可保存网页。但请注意，由于程序采用了模块化开发，必须在 HTTP 环境下（例如通过本地服务器）才能正常启动。</p>
+    
+    <h2>关于框架</h2>
+    <p>
+        本程序基于自研的 <code>openworld.js</code> 框架构建。如果您对此感兴趣，欢迎访问我们的 GitHub 仓库：<a href="https://github.com/kohunglee/openworld-js" target="_blank">https://github.com/kohunglee/openworld-js</a>，希望能送给我们一个 Star 以示鼓励，感激不尽！
+    </p>
+    <p>
+        <code>openworld.js</code> 的未来目标是致力于简化三维开放世界的开发流程，以极小的体积实现高质量的在线虚拟展览馆、在线三维漫游、三维重建、建筑设计等应用。（<a href="//www.ccgxk.com" target="_blank">www.ccgxk.com</a>）
+    </p>
+
+    <p>
+        如果您有对本笔记程序的任何疑问、想法、建议，欢迎在本地址下留言： <a href="https://www.ccgxk.com/webgl/cyber_city.html" target="_blank"> https://www.ccgxk.com/webgl/cyber_city.html </a>！
+    </p>
+
+    <hr>
+
+    <button id="closeBtn02">关闭</button>
+
+    </div>
+    
+</div>
+<img src='https://www.ccgxk.com/getinfo/?info=赛博城寨' alt='' />
+<script>
+
+// 程序说明
+btn01.addEventListener('mousedown', function(event) {
+    document.getElementById('myinfoModal').hidden = false;
+});
+
+// 城寨入口
+btn03.addEventListener('mousedown', function(event) {
+    k.mainVPlayer.body.position.x = 113;
+    k.mainVPlayer.body.position.y = 5;
+    k.mainVPlayer.body.position.z = 495;
+});
+
+// 坐标原点
+btn04.addEventListener('mousedown', function(event) {
+    k.mainVPlayer.body.position.x = 7.6;
+    k.mainVPlayer.body.position.y = 5;
+    k.mainVPlayer.body.position.z = 16.5;
+});
+
+// 开关 实时城市地图
+btn05.addEventListener('mousedown', function(event) {
+    var cityMap = document.getElementById('cityCurrMap');
+    cityMap.style.display = (cityMap.style.display === 'none') ? 'block' : 'none';
+});
+
+// 关闭 【程序说明】模态框
+document.getElementById('closeBtn').addEventListener('click', function() {
+    document.getElementById('myinfoModal').hidden = true;
+});
+
+// 关闭 【程序说明】模态框 02 
+document.getElementById('closeBtn02').addEventListener('click', function() {
+    document.getElementById('myinfoModal').hidden = true;
+});
+
+
+</script>
+
+
+<!---------------- 地图 ---------------------->
+
+<style>
+    .city-maps {
+        display: block;
+        position: fixed;
+        top: 50px;
+        right: 50px;
+        background: #ffffff87;
+    }
+
+    #china-cities-table {
+        width: 100%;
+        border-collapse: collapse;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        border-radius: 8px; /* 让表格有圆角 */
+        overflow: hidden;   /* 确保内部元素不会超出圆角范围 */
+    }
+
+    .city-cell {
+        font-size: 10px;
+        border: 1px solid #e0e0e0;
+        text-align: center;
+        width: 30px;
+        height: 30px;
+    }
+</style>
+<div class="city-maps" id="cityCurrMap">
+    <table id="china-cities-table">
+        <tbody class="table-body">
+            <!-- 第 1 行 -->
+            <tr id="row-1" class="city-row row-odd">
+                <td id="city-wlmq" class="city-cell col-1">乌鲁木齐</td>
+                <td id="city-eeds" class="city-cell col-2">鄂尔多斯</td>
+                <td id="city-bt"   class="city-cell col-3">包头</td>
+                <td id="city-hhht" class="city-cell col-4">呼和浩特</td>
+                <td id="city-bj"   class="city-cell col-5">北京</td>
+                <td id="city-lf"   class="city-cell col-6">廊坊</td>
+                <td id="city-ts"   class="city-cell col-7">唐山</td>
+                <td id="city-sy"   class="city-cell col-8">沈阳</td>
+                <td id="city-cc"   class="city-cell col-9">长春</td>
+                <td id="city-heb"  class="city-cell col-10">哈尔滨</td>
+            </tr>
+            <!-- 第 2 行 -->
+            <tr id="row-2" class="city-row row-even">
+                <td id="city-yl"   class="city-cell col-1">榆林</td>
+                <td id="city-ty"   class="city-cell col-2">太原</td>
+                <td id="city-sjz"  class="city-cell col-3">石家庄</td>
+                <td id="city-bd"   class="city-cell col-4">保定</td>
+                <td id="city-cz"   class="city-cell col-5">沧州</td>
+                <td id="city-tj"   class="city-cell col-6">天津</td>
+                <td id="city-dy"   class="city-cell col-7">东营</td>
+                <td id="city-yt"   class="city-cell col-8">烟台</td>
+                <td id="city-dl"   class="city-cell col-9">大连</td>
+                <td id="city-wh"   class="city-cell col-10">威海</td>
+            </tr>
+            <!-- 第 3 行 -->
+            <tr id="row-3" class="city-row row-odd">
+                <td id="city-lz"   class="city-cell col-1">兰州</td>
+                <td id="city-xx"   class="city-cell col-2">新乡</td>
+                <td id="city-hd"   class="city-cell col-3">邯郸</td>
+                <td id="city-dz"   class="city-cell col-4">德州</td>
+                <td id="city-jn"   class="city-cell col-5">济宁</td>
+                <td id="city-jna"  class="city-cell col-6">济南</td>
+                <td id="city-ta"   class="city-cell col-7">泰安</td>
+                <td id="city-zb"   class="city-cell col-8">淄博</td>
+                <td id="city-wf"   class="city-cell col-9">潍坊</td>
+                <td id="city-qd"   class="city-cell col-10">青岛</td>
+            </tr>
+            <!-- 第 4 行 -->
+            <tr id="row-4" class="city-row row-even">
+                <td id="city-xa"   class="city-cell col-1">西安</td>
+                <td id="city-ly"   class="city-cell col-2">洛阳</td>
+                <td id="city-zz"   class="city-cell col-3">郑州</td>
+                <td id="city-zk"   class="city-cell col-4">周口</td>
+                <td id="city-hz"   class="city-cell col-5">菏泽</td>
+                <td id="city-xz"   class="city-cell col-6">徐州</td>
+                <td id="city-sq"   class="city-cell col-7">宿迁</td>
+                <td id="city-lyi"  class="city-cell col-8">临沂</td>
+                <td id="city-ha"   class="city-cell col-9">淮安</td>
+                <td id="city-lyg"  class="city-cell col-10">连云港</td>
+            </tr>
+            <!-- 第 5 行 -->
+            <tr id="row-5" class="city-row row-odd">
+                <td id="city-xy"   class="city-cell col-1">襄阳</td>
+                <td id="city-ny"   class="city-cell col-2">南阳</td>
+                <td id="city-fy"   class="city-cell col-3">阜阳</td>
+                <td id="city-chu"  class="city-cell col-4">滁州</td>
+                <td id="city-nj"   class="city-cell col-5">南京</td>
+                <td id="city-yz"   class="city-cell col-6">扬州</td>
+                <td id="city-zj"   class="city-cell col-7">镇江</td>
+                <td id="city-tz"   class="city-cell col-8">泰州</td>
+                <td id="city-yc"   class="city-cell col-9">盐城</td>
+                <td id="city-nt"   class="city-cell col-10">南通</td>
+            </tr>
+            <!-- 第 6 行 -->
+            <tr id="row-6" class="city-row row-even">
+                <td id="city-my"   class="city-cell col-1">绵阳</td>
+                <td id="city-yic"  class="city-cell col-2">宜昌</td>
+                <td id="city-hf"   class="city-cell col-3">合肥</td>
+                <td id="city-wuh"  class="city-cell col-4">芜湖</td>
+                <td id="city-chz"  class="city-cell col-5">常州</td>
+                <td id="city-huz"  class="city-cell col-6">湖州</td>
+                <td id="city-wx"   class="city-cell col-7">无锡</td>
+                <td id="city-sz"   class="city-cell col-8">苏州</td>
+                <td id="city-jx"   class="city-cell col-9">嘉兴</td>
+                <td id="city-sh"   class="city-cell col-10">上海</td>
+            </tr>
+            <!-- 第 7 行 -->
+            <tr id="row-7" class="city-row row-odd">
+                <td id="city-cd"   class="city-cell col-1">成都</td>
+                <td id="city-cq"   class="city-cell col-2">重庆</td>
+                <td id="city-chd"  class="city-cell col-3">常德</td>
+                <td id="city-yy"   class="city-cell col-4">岳阳</td>
+                <td id="city-wuhan" class="city-cell col-5">武汉</td>
+                <td id="city-jj"   class="city-cell col-6">九江</td>
+                <td id="city-jh"   class="city-cell col-7">金华</td>
+                <td id="city-hzou" class="city-cell col-8">杭州</td>
+                <td id="city-sx"   class="city-cell col-9">绍兴</td>
+                <td id="city-nb"   class="city-cell col-10">宁波</td>
+            </tr>
+            <!-- 第 8 行 -->
+            <tr id="row-8" class="city-row row-even">
+                <td id="city-yib"  class="city-cell col-1">宜宾</td>
+                <td id="city-zy"   class="city-cell col-2">遵义</td>
+                <td id="city-hy"   class="city-cell col-3">衡阳</td>
+                <td id="city-cs"   class="city-cell col-4">长沙</td>
+                <td id="city-zzu"  class="city-cell col-5">株洲</td>
+                <td id="city-yich" class="city-cell col-6">宜春</td>
+                <td id="city-nc"   class="city-cell col-7">南昌</td>
+                <td id="city-sr"   class="city-cell col-8">上饶</td>
+                <td id="city-wz"   class="city-cell col-9">温州</td>
+                <td id="city-taz"  class="city-cell col-10">台州</td>
+            </tr>
+            <!-- 第 9 行 -->
+            <tr id="row-9" class="city-row row-odd">
+                <td id="city-km"   class="city-cell col-1">昆明</td>
+                <td id="city-qj"   class="city-cell col-2">曲靖</td>
+                <td id="city-gy"   class="city-cell col-3">贵阳</td>
+                <td id="city-gz"   class="city-cell col-4">广州</td>
+                <td id="city-ganz" class="city-cell col-5">赣州</td>
+                <td id="city-zzh"  class="city-cell col-6">漳州</td>
+                <td id="city-xm"   class="city-cell col-7">厦门</td>
+                <td id="city-qz"   class="city-cell col-8">泉州</td>
+                <td id="city-fz"   class="city-cell col-9">福州</td>
+                <td id="city-nd"   class="city-cell col-10">宁德</td>
+            </tr>
+            <!-- 第 10 行 -->
+            <tr id="row-10" class="city-row row-even">
+                <td id="city-nn"   class="city-cell col-1">南宁</td>
+                <td id="city-zj"   class="city-cell col-2">湛江</td>
+                <td id="city-mm"   class="city-cell col-3">茂名</td>
+                <td id="city-jm"   class="city-cell col-4">江门</td>
+                <td id="city-fs"   class="city-cell col-5">佛山</td>
+                <td id="city-zs"   class="city-cell col-6">中山</td>
+                <td id="city-zh"   class="city-cell col-7">珠海</td>
+                <td id="city-dg"   class="city-cell col-8">东莞</td>
+                <td id="city-szhen" class="city-cell col-9">深圳</td>
+                <td id="city-huiz" class="city-cell col-10">惠州</td>
+            </tr>
+        </tbody>
+    </table>
+
+</div>

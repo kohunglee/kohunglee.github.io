@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    
+</body>
+<script>
+    // 画图 类
+    class Canvas {
+        constructor(parent = document.body, width = 400, height = 400){
+            this.canvas = document.createElement('canvas');
+            this.canvas.width = width;
+            this.canvas.height = height;
+            parent.appendChild(this.canvas);
+            this.ctx = this.canvas.getContext('2d');
+        }
+
+        sync(state){  // 执行下一帧的绘图（或称 在画板上同步已经计算好的下一帧的数据）
+            this.clearDisplay();
+            this.drawActor(state.actors);
+        }
+
+        clearDisplay(){
+            this.ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        }
+
+        drawActor(actors){  // 画一个角色，比如画一个圆
+            for (const actor of actors) {
+                if(actor.type === 'circle'){
+                    this.drawCircle(actor);
+                }
+            }
+        }
+
+        drawCircle(actor){  // 画一个圆
+            this.ctx.strokeStyle = 'black';
+            this.ctx.strokeRect(0, 0, this.canvas.width, this.canvas.height);  // 画出边框
+
+            this.ctx.beginPath();
+            this.ctx.arc(actor.position.x, actor.position.y, actor.radius, 0, Math.PI * 2);
+            this.ctx.closePath();
+            this.ctx.fillStyle = actor.color;
+            this.ctx.fill();
+        }
+    }
+
+    // 球类
+    class Ball {
+        constructor(config){
+            Object.assign(this,{
+                type : 'circle',
+                position : new Vector(100, 100),
+                velocity : new Vector(5, 3),
+                color : 'blue',
+                radius : 25,
+
+            },config);
+        }
+
+        nextFrameUpdate(){  // 计算下一帧，小球的位置
+            return new Ball({
+                ...this,  // 其他属性保持不变
+                position: this.position.add(this.velocity),
+            });
+
+        } 
+    }
+
+    // 向量（可作为位置 和 速度）
+    class Vector {
+        constructor(x, y) {
+            this.x = x;
+            this.y = y;
+        }
+
+        /* 向量的各种运算 */
+        add(vector) {  // 加
+            return new Vector(this.x + vector.x, this.y + vector.y);
+        }
+
+        subtract(vector) {  // 减
+            return new Vector(this.x - vector.x, this.y - vector.y);
+        }
+
+        multiply(scalar) {  // 逐元素乘法
+            return new Vector(this.x * scalar, this.y * scalar);
+        }
+
+        dotProduct(vector) {  // 数量积
+            return this.x * vector.x + this.y * vector.y;
+        }
+
+        get magnitude() {  // 求模
+            return Math.sqrt(this.x ** 2 + this.y ** 2);
+        }
+
+        get direction() {  // 求方向的角度 tan
+            return Math.atan2(this.x, this.y);
+        }
+    }
+
+    // 宏观状态
+    class DisplayState {
+        constructor(displayEle, actors) {
+            this.displayEle = displayEle;
+            this.actors = actors;
+        }
+
+        update() {
+            const new_actors = this.actors.map(actor => {
+                return actor.nextFrameUpdate();
+            });
+
+            return new DisplayState(this.displayEle, new_actors);
+        }
+    }
+
+
+    // ---------- 测试
+
+    const displayEle = new Canvas();
+    const ball = new Ball();
+    const actors = [ball];
+
+    let displayState = new DisplayState(displayEle, actors);
+
+    function myAnimation(){
+        
+        displayState = displayState.update();  // 数据更新
+        displayEle.sync(displayState);     // 根据更新的数据来绘画
+
+        requestAnimationFrame(myAnimation)
+    }
+
+
+
+    myAnimation();
+
+
+
+</script>
+</html>

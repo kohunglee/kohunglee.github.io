@@ -1,0 +1,164 @@
+<p id=example-2></p>
+<script>
+// 向量
+class Vector {
+      constructor(x, y) {
+        this.x = x;
+        this.y = y;
+      }
+    
+      add(vector) {  // 两个向量相加
+        return new Vector(this.x + vector.x, this.y + vector.y);
+      }
+    
+      subtract(vector) {  // 两个向量相减
+        return new Vector(this.x - vector.x, this.y - vector.y);
+      }
+    
+      multiply(scalar) {  // 
+        return new Vector(this.x * scalar, this.y * scalar);
+      }
+    
+      dotProduct(vector) {  // 点积
+        return this.x * vector.x + this.y * vector.y;
+      }
+    
+      get magnitude() {  // 取值函数，获取向量的 模
+        return Math.sqrt(this.x ** 2 + this.y ** 2);
+      }
+    
+      get direction() {  // 返回夹角，获取向量的角度
+        return Math.atan2(this.x, this.y);
+      }
+    }
+
+class State2 {
+    constructor(display, actors) {
+        this.display = display;
+        this.actors = actors;
+    }
+    update(time) {
+        const updateId = Math.floor(Math.random() * 1000000);
+        const actors = this.actors.map(actor => {
+            return actor.update(this, time, updateId);
+        });
+        return new State(this.display, actors);
+    }
+}
+
+class Canvas2 {
+    constructor(parent = document.body, width = 400, height = 400) {
+        this.canvas = document.createElement('canvas');
+        this.canvas.width = width;
+        this.canvas.height = height;
+        parent.appendChild(this.canvas);
+        this.ctx = this.canvas.getContext('2d');
+    }
+    sync(state) {
+        this.drawActors(state.actors);
+    }
+    drawActors(actors) {
+        for (let actor of actors) {
+            if (actor.type === 'circle') {
+                this.drawCircle(actor);
+            }
+        }
+    }
+    drawCircle(actor) {
+        this.ctx.strokeStyle = 'black';
+        this.ctx.strokeRect(0, 0, this.canvas.width, this.canvas.height);
+        this.ctx.beginPath();
+        this.ctx.arc(actor.position.x, actor.position.y, actor.radius, 0, Math.PI * 2);
+        this.ctx.closePath();
+        this.ctx.fillStyle = actor.color;
+        this.ctx.fill();
+    }
+}
+
+class Ball2 {
+    constructor(config) {
+        Object.assign(this, {
+            type: 'circle',
+            position: new Vector(20, 20),
+            velocity: new Vector(5, 3),
+            radius: 10,
+            color: 'red',
+        }, config);
+    }
+    update(state, time, updateId) {
+        if (this.position.x >= state.display.canvas.width || this.position.x <= 0) {
+            this.velocity = new Vector(-this.velocity.x, this.velocity.y);
+        }
+        if (this.position.y >= state.display.canvas.height || this.position.y <= 0) {
+            this.velocity = new Vector(this.velocity.x, -this.velocity.y);
+        }
+        return new Ball2({
+            ...this,
+            position: this.position.add(this.velocity),
+        });
+    }
+}
+// ---------
+
+const example2 = document.getElementById('example-2');
+const display2 = new Canvas2(example2, 460, 200);
+const ball2 = new Ball2();
+const actors2 = [ball2];
+
+let state2 = new State2(display2, actors2);
+
+display2.sync(state2);
+
+const startButton2 = document.createElement('button');
+startButton2.innerText = 'Start animation';
+example2.appendChild(startButton2);
+
+const runAnimation = animation => {
+  let lastTime = null;
+  const frame = time => {
+    if (lastTime !== null) {
+      const timeStep = Math.min(100, time - lastTime) / 1000;
+
+      // return false from animation to stop
+      if (animation(timeStep) === false) {
+        return;
+      }
+    }
+    lastTime = time;
+    requestAnimationFrame(frame);
+  };
+  requestAnimationFrame(frame);
+};
+
+class State {
+  constructor(display, actors) {
+    this.display = display;
+    this.actors = actors;
+  }
+
+  update(time) {
+
+    /**
+     * Provide an update ID to let actors
+     * update other actors only once.
+     **/
+    const updateId = Math.floor(Math.random() * 1000000);
+    const actors = this.actors.map(actor => {
+      return actor.update(this, time, updateId);
+    });
+    return new State(this.display, actors);
+  }
+}
+
+const animateOnClick2 = () => {
+    runAnimation(time => {
+        state2 = state2.update(time);
+        display2.sync(state2);
+    });
+}
+startButton2.addEventListener('click', animateOnClick2, {
+    once: true
+});
+// %%%%%%% 以上是原始代码 %%%%%%%
+
+</script>
