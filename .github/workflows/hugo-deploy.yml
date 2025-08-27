@@ -1,0 +1,37 @@
+name: Deploy Hugo Site to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main # 当你推送到main分支时触发，如果你的主分支叫master，则改为master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main branch # 步骤1：机器人签出你的主分支代码
+        uses: actions/checkout@v4
+        with:
+          submodules: true  # 如果你的Hugo主题是子模块，需要这个
+          fetch-depth: 0    # 深度克隆，确保所有历史信息
+
+      - name: Setup Hugo # 步骤2：机器人安装Hugo大师
+        uses: peaceiris/actions-hugo@v3
+        with:
+          hugo-version: 'latest' # 使用最新版Hugo
+          # extended: true # 如果你的主题需要SCSS编译，需要这个
+
+      - name: Build Hugo site # 步骤3：机器人进入quickstart，让Hugo大师生成public文件夹
+        run: |
+          cd quickstart # 进入你的Hugo项目根目录
+          hugo --minify # 生成并压缩网站文件
+        # 默认情况下，Hugo生成的文件会在 quickstart/public
+
+      - name: Deploy to GitHub Pages # 步骤4：机器人把生成的文件部署到GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        if: github.ref == 'refs/heads/main' # 只有在main分支触发时才部署
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }} # GitHub提供的安全令牌
+          publish_dir: quickstart/public # ❤️ 重点！告诉机器人，要部署的文件在 quickstart/public
+          publish_branch: gh-pages # 发布到 gh-pages 分支，如果你的GitHub Pages直接用main分支，可以改成 main
+          cname: git.ccgxk.com # 如果你设置了自定义域名，可以在这里填写
