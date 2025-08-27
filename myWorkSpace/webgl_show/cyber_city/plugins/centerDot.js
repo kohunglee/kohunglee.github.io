@@ -189,8 +189,9 @@ export default function(ccgxkObj) {
     });
 
 
-    // 键盘上的 r 键被按下（冻结物体）
+    // 键盘上的 f 键被按下（冻结物体）
     function frozenMVP(event) {
+        if(myHUDModal.hidden === false) return;
         if (event.key.toUpperCase() === 'F') {
             const mvpBody = globalVar.ccgxkObj.mainVPlayer.body;
             if(mvpBody.mass === 0){

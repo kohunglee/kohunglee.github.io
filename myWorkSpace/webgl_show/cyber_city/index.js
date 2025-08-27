@@ -202,6 +202,7 @@ k.addBox({  // 创建地面
     texture: marble, background: '#c7e5c1', mixValue: 0.5,
 });
 document.addEventListener('keydown', (e)=>{
+    if(myHUDModal.hidden === false) return;
     if(e.key.toUpperCase() === 'I'){
         k.mainVPlayer.body.position.y = 150;
     }
