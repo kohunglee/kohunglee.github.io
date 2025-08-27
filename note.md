@@ -6,3 +6,9 @@
 git config pull.rebase true
 git pull origin main
 ```
+
+## hugo 相关的命令
+
+```
+hugo new content/posts/my-first-post.md
+```

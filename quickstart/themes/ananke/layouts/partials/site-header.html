@@ -1,3 +1,14 @@
+	<script>
+	// baidu tongji
+	var _hmt = _hmt || [];
+	(function() {
+	  var hm = document.createElement("script");
+	  hm.src = "https://hm.baidu.com/hm.js?7f32626143786db9efbf3749f9a87aed";
+	  var s = document.getElementsByTagName("script")[0]; 
+	  s.parentNode.insertBefore(hm, s);
+	})();
+	</script>
+
 {{ $featured_image := partials.Include "func/GetFeaturedImage.html" . }}
 {{ if $featured_image }}
   {{/* Trimming the slash and adding absURL make sure the image works no matter where our site lives */}}
