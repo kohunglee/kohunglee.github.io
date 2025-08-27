@@ -47,6 +47,7 @@ var _hmt = _hmt || [];
     <button id="btn02" style="width: 105px;">加载示例存档</button>
     <button id="btn03" style="width: 105px;">到城寨入口</button>
     <button id="btn04" style="width: 105px;">到坐标原点</button>
+    <button id="btn04_5" style="width: 105px;">到南京名言墙</button>
     <button id="btn05" style="width: 105px;">实时城市地图</button>
 </div>
 <div class="info-modal" id="myinfoModal" hidden>
@@ -203,6 +204,13 @@ document.getElementById('closeBtn').addEventListener('click', function() {
 // 关闭 【程序说明】模态框 02 
 document.getElementById('closeBtn02').addEventListener('click', function() {
     document.getElementById('myinfoModal').hidden = true;
+});
+
+// 到南京
+document.getElementById('btn04_5').addEventListener('click', function() {
+    k.mainVPlayer.body.position.x = -65;
+    k.mainVPlayer.body.position.y = 10;
+    k.mainVPlayer.body.position.z = -66;
 });
 
 
