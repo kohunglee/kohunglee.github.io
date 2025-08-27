@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>My New Hugo Site</title>
-    <link>http://localhost:1313/</link>
-    <description>Recent content on My New Hugo Site</description>
+    <title>ccGxk GL Lab</title>
+    <link>https://git.ccgxk.com/</link>
+    <description>Recent content on ccGxk GL Lab</description>
     <generator>Hugo</generator>
     <language>en-us</language>
     <lastBuildDate>Wed, 27 Aug 2025 12:31:56 +0800</lastBuildDate>
-    <atom:link href="http://localhost:1313/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="https://git.ccgxk.com/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>My First Post</title>
-      <link>http://localhost:1313/posts/my-first-post/</link>
+      <link>https://git.ccgxk.com/posts/my-first-post/</link>
       <pubDate>Wed, 27 Aug 2025 12:31:56 +0800</pubDate>
-      <guid>http://localhost:1313/posts/my-first-post/</guid>
+      <guid>https://git.ccgxk.com/posts/my-first-post/</guid>
       <description>&lt;p&gt;啦啦啦  呀呀呀&lt;/p&gt;</description>
     </item>
   </channel>
