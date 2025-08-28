@@ -169,13 +169,13 @@ k.W.cube({  // 隐藏显示原主角
     b : '#f0f8ff42',
     hidden: true,
 });
-k.W.sphere({g:mStr,n:"mvp_head",y:.82,x:0,z:0,s:1,size:.5,b:"#FFD700"}),
-k.W.cube({g:mStr,n:"mvp_neck",y:.6,x:0,z:0,w:.1,h:.1,d:.1,b:"#C0C0C0"}),
-k.W.cube({g:mStr,n:"mvp_body",y:.3,x:0,z:0,w:.6,h:.5,d:.1,b:"#4A90E2"}),
-k.W.cube({g:mStr,n:"mvp_leg_l",y:-.15,x:-.15,z:0,w:.1,h:.7,d:.05,b:"#333333"}),
-k.W.cube({g:mStr,n:"mvp_leg_r",y:-.15,x:.15,z:0,w:.1,h:.7,d:.05,b:"#333333"}),
-k.W.cube({g:mStr,n:"mvp_arm_l",y:.25,x:-.36,z:0,rz:-15,w:.1,h:.6,d:.05,b:"#FFFFFF"}),
-k.W.cube({g:mStr,n:"mvp_arm_r",y:.25,x:.36,z:0,rz:15,w:.1,h:.6,d:.05,b:"#FFFFFF"});
+k.W.sphere({g:mStr,n:"mvp_head",y:.82,x:0,z:0,s:1,size:.5,}),
+k.W.cube({g:mStr,n:"mvp_neck",y:.6,x:0,z:0,w:.1,h:.1,d:.1,}),
+k.W.cube({g:mStr,n:"mvp_body",y:.3,x:0,z:0,w:.6,h:.5,d:.1,}),
+k.W.cube({g:mStr,n:"mvp_leg_l",y:-.15,x:-.15,z:0,w:.1,h:.7,d:.05,}),
+k.W.cube({g:mStr,n:"mvp_leg_r",y:-.15,x:.15,z:0,w:.1,h:.7,d:.05,}),
+k.W.cube({g:mStr,n:"mvp_arm_l",y:.25,x:-.36,z:0,rz:-15,w:.1,h:.6,d:.05,}),
+k.W.cube({g:mStr,n:"mvp_arm_r",y:.25,x:.36,z:0,rz:15,w:.1,h:.6,d:.05,});
 
 k.addTABox({  // 创建一个 小方块
     DPZ : 3,
