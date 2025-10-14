@@ -241,6 +241,12 @@
                 padding-left: 10px;
             }
         }
+        .toc-con .close-toc {
+            color: #dcdcdd;
+            left: 0px;
+            position: absolute;
+            padding-top: 5px;
+        }
     </style>
     <script>
         // baidu tongji
@@ -261,8 +267,8 @@
     <em><br>本文初衷只为添加目录导航和将全文拼接一起，以方便搜索（Ctrl+F）和阅读。</em>
     <em><br>手机端可以下载本网页后打开，并等待 3-10 秒，各标题后会显示目录按钮。</em>
     <em><br>按快捷键 Ctrl+S (<a href="mxqj.zip">或点击我</a>)可下载本网页，以离线查看。本文一共包含 1,056,938 个汉字。大概 4MB 大小。</em>
-    <em><br>本文页面极简，所以亦适合二次开发和数据提取处理。若遇网页其他异常，可能需添加 jquery.min.js 。</em>
-    <em><a href="https://www.ccgxk.com" target="_blank">(本网页代码作者主页)</a></em>
+    <em><br>本文页面极简，所以亦适合二次开发和数据提取处理。</em>
+    <em><a href="https://www.ccgxk.com" target="_blank">(本网页代码作者联系主页)</a></em>
     
     <div id="emlogEchoLog" class="markdown">
 
@@ -3481,223 +3487,168 @@
 
 <!-- 结束正文 -->
     </div>
-    
 
-
-
-
-
-
-
-
-
-
-    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script>
         /* w w w . c c g x k . c o m */
         var myBlog = {
-            /**
-            * 初始化
-            */
-            init: function () {
-                this.tocAnalyse()  // toc目录生成
+            tocFlag: /\[toc\]/gi,
+            tocArray: [],
+            
+            init: function() {
+                this.tocAnalyse();
             },
-            /**
-            * toc 效果
-            */
-            tocFlag: /\[toc\]/gi,  // 判断toc是否声明的正则表达式
-            tocArray: new Array(),  // 储存toc的数组
-            tocSetArray: function(){  // 设置toc的数组内填数据
-                var $titles = $("#emlogEchoLog h1,h2,h3,h4,h5,h6:eq(0)")
 
-                for (var i = 0; i < $titles.length; i++) {  // 将标签数据依次存入数组
-                    let $tit = $("#emlogEchoLog [toc-date='title']:eq(" + i + ")")
-                    myBlog.tocArray[i] = new Array()
-
-                    myBlog.tocArray[i]['type'] = $tit.prop('tagName').substring(1)
-                    myBlog.tocArray[i]['content'] = $tit.text()
-                    myBlog.tocArray[i]['pos'] = $tit.offset().top
-                    myBlog.tocArray[i]['id'] = $tit.text()
-                    $tit.attr("id", myBlog.tocArray[i]['id'])
-                }
+            tocSetArray: function() {
+                const titles = document.querySelectorAll("#emlogEchoLog h1, #emlogEchoLog h2, #emlogEchoLog h3, #emlogEchoLog h4, #emlogEchoLog h5, #emlogEchoLog h6");
+                this.tocArray = [];
+                titles.forEach((tit, i) => {
+                tit.setAttribute("toc-date", "title");
+                const id = tit.textContent.trim();
+                tit.id = id;
+                this.tocArray[i] = {
+                    type: parseInt(tit.tagName.substring(1)),
+                    content: tit.textContent,
+                    pos: tit.getBoundingClientRect().top + window.scrollY,
+                    id
+                };
+                });
             },
-            /**
-            * toc 分析（toc 效果程序的入口）
-            */
-            tocAnalyse: function () {
-                var tocFlag = document.querySelector("#emlogEchoLog p")
 
-                if ($("#emlogEchoLog").length == 0) return  // 不在阅读页面  退出
-                if (!this.tocFlag.test($('#emlogEchoLog').html().substring(0, 30))) return  // 未声明 toc 标签，退出
-                tocFlag.innerHTML = tocFlag.innerHTML.replace(this.tocFlag, "")  // 去除 toc 声明
+            tocAnalyse: function() {
+                const logCon = document.querySelector("#emlogEchoLog");
+                if (!logCon) return;
 
-                var $logCon = $("#emlogEchoLog")
-                var logConMar = parseInt($logCon.css("margin-left"))
-                var $titles = $("#emlogEchoLog h1,h2,h3,h4,h5,h6:eq(0)")
+                const htmlStart = logCon.innerHTML.substring(0, 30);
+                if (!this.tocFlag.test(htmlStart)) return;
 
-                if ($titles.length > 0) {
-                    if (window.outerWidth > 1275 || window.outerWidth === 0){
-                        $logCon.css("margin-left", logConMar + 150 + 'px')  // 文章正文向右偏移 150px
-                    }
-                } else {
-                    return  // 未发现标题（h标签） 退出
+                const firstP = logCon.querySelector("p");
+                if (firstP) firstP.innerHTML = firstP.innerHTML.replace(this.tocFlag, "");
+
+                const titles = logCon.querySelectorAll("h1, h2, h3, h4, h5, h6");
+                if (!titles.length) return;
+
+                const logConMar = parseInt(getComputedStyle(logCon).marginLeft);
+                if (window.outerWidth > 1275 || window.outerWidth === 0) {
+                logCon.style.marginLeft = (logConMar + 150) + "px";
                 }
 
-                $titles.attr("toc-date", "title")
-                this.tocSetArray()
-                this.tocRender()
-                this.tocMobileSet()
+                this.tocSetArray();
+                this.tocRender();
+                this.tocMobileSet();
             },
-            /** www . c c g x k. com
-            * toc 目录渲染
-            */
+
             tocRender: function() {
-                var tocHtml = ''
-                var data = this.tocArray
-                var $logcon = $("#emlogEchoLog")
-                // var padNum = (window.outerWidth < 1276 && window.outerWidth !== 0) ? 0 : parseInt($logcon.css("margin-left")) - 270
-                var judgeN = 0
-                var chilPad = 4
-                var minType = 6
+                const data = this.tocArray;
+                if (!data.length) return;
 
-                for (var i = 0; i < data.length; i++) {
-                    if (data[i]['type'] < minType) minType = data[i]['type']
+                let tocHtml = '<div class="toc-con" id="toc-con">';
+                tocHtml += '<div style="height:calc(100vh - 70px);overflow-y:auto;"><ul>';
+                tocHtml = tocHtml + '<a href="javascript:myBlog.tocClose()" style="color:black" class="close-toc mh" id="closeToc">x</a>'
+
+                let minType = Math.min(...data.map(d => d.type));
+                let lastType = 0, pad = 4;
+
+                data.forEach((d, i) => {
+                const padTop = (d.type !== lastType) ? `style="padding-top:${pad}px"` : "";
+                const bold = (d.type === minType) ? ["<b>", "</b>"] : ["", ""];
+                let indent = "&nbsp;".repeat((d.type - minType) * 4);
+                tocHtml += `<li ${padTop} id="to${i}" title="${d.content}">${indent}${bold[0]}${d.content}${bold[1]}</li>`;
+                lastType = d.type;
+                });
+
+                tocHtml += "</ul></div></div>";
+                document.querySelector("#emlogEchoLog").insertAdjacentHTML("beforebegin", tocHtml);
+
+                const tocCon = document.querySelector("#toc-con");
+                const tocDiv = tocCon.querySelector("div");
+                const tocLis = tocCon.querySelectorAll("li");
+
+                const tocSetPos = () => {
+                const articleTop = 200;
+                tocCon.style.position = (window.scrollY > articleTop) ? "fixed" : "absolute";
+                tocCon.style.top = (window.scrollY > articleTop ? "0px" : articleTop + "px");
+                };
+
+                const tocGetPos = () => {
+                tocLis.forEach(li => { li.style.color = ""; li.setAttribute("isRed", "n"); });
+                let active;
+                data.forEach((d, i) => {
+                    if (window.scrollY + 30 > d.pos) active = tocLis[i];
+                });
+                if (active) {
+                    active.style.color = "red";
+                    active.setAttribute("isRed", "y");
                 }
-                // tocHtml = tocHtml + '<div class="toc-con" style="left:' + padNum + 'px" id="toc-con">'	// 渲染
-                tocHtml = tocHtml + '<div class="toc-con" id="toc-con">'	// 渲染
-                tocHtml = tocHtml + '<div style="height:calc(100vh - 70px);overflow-y:scroll;" ><lu>'
-                for (var i = 0; i < data.length; i++) {
-                    let k = minType
-                    let itemType = data[i]['type']
-                    let isPadding = ''
-                    let isBold = ['', '']
+                const red = tocCon.querySelector("li[isRed='y']");
+                if (!red) return;
+                const redRect = red.getBoundingClientRect();
+                const tocRect = tocDiv.getBoundingClientRect();
+                const tocHeight = tocRect.height;
+                const diff = redRect.top - tocRect.top;
 
-                    if (itemType != judgeN) isPadding = 'style="padding-top:' + chilPad + 'px"'
-                    tocHtml = tocHtml + '<li ' + isPadding + ' id="to' + i + '" title="' + data[i]['content'] + '" >'
-                    if (itemType == minType) {
-                        isBold[0] = '<b>'
-                        isBold[1] = '</b>'
-                    }
-                    while (k < itemType) {
-                        tocHtml = tocHtml + '&nbsp;&nbsp;&nbsp;&nbsp;'
-                        k++
-                    }
-                    tocHtml = tocHtml + isBold[0] + data[i]['content'] + isBold[1] + '</li>'
-                    judgeN = itemType
-                }
-                tocHtml = tocHtml + '</lu></div></div>'
-                $logcon.before(tocHtml)
+                if (diff > tocHeight) tocDiv.scrollTop += 20;
+                else if (diff < 0) tocDiv.scrollTop -= 20;
+                };
 
-                function tocSetListen(){  // 批量添加监听事件
-                    for (var i = 0; i < data.length; i++) {
-                        let tempPos = myBlog.tocArray[i]["pos"]
-                        $('#to' + i).off("click");
-                        $('#to' + i).bind("click", function () {
-                            window.onscroll = function () {
-                                tocSetPos()
-                            }
-                            $('body,html').animate({scrollTop: tempPos}, 300, function () {
-                                tocGetPos()
-                                window.onscroll = function () {
-                                    tocSetPos();
-                                    tocGetPos()
-                                }
-                            })
-                        })
-                    }
-                }
+                const tocSetListen = () => {
+                tocLis.forEach((li, i) => {
+                    li.onclick = e => {
+                    e.stopPropagation();
+                    window.scrollTo({ top: data[i].pos, behavior: "smooth" });
+                    tocGetPos();
+                    };
+                });
+                };
 
-                function tocSetPos() {  // 判断位置和设置定位样式
-                    let articleTop = 200
-                    
-                    if (document.documentElement.scrollTop > articleTop) {
-                        $("#toc-con").css("position", "fixed")
-                            .css("top", "0px")
-                    } else {
-                        $("#toc-con").css("position", "absolute")
-                            .css("top", articleTop + "px")
-                    }
-                }
+                tocSetListen();
+                tocSetPos();
+                window.onscroll = () => { tocSetPos(); tocGetPos(); };
 
-                function tocGetPos() {  // 获取位置并改变指定标题颜色
-                    let $tempItem
-                    let dataArr = myBlog.tocArray
+                tocDiv.addEventListener("mouseover", () => { window.onscroll = tocSetPos; });
+                tocDiv.addEventListener("mouseout", () => { window.onscroll = () => { tocSetPos(); tocGetPos(); }; });
 
-                    $('#toc-con li').css('color', 'unset').attr('isRed', 'n')
-                    for (var i = 0; i < dataArr.length; i++) {
-                        let winPos = document.documentElement.scrollTop + 30
-                        if (winPos > dataArr[i]['pos']) $tempItem = $('#to' + i)
-                    }
-                    if ($tempItem){
-                        $tempItem.css('color', 'red').attr('isRed', 'y')
-                    } else {
-                        return
-                    }
-                    let redScreenPos = $("li[isred='y']").offset().top - document.documentElement.scrollTop
-                    let tocHeight = $("#toc-con div").outerHeight()
-                    let tocPos = $("#toc-con div").scrollTop()
-
-                    if (redScreenPos > tocHeight) {  // 根据文章阅读位置来调整 toc 滚动条位置
-                        $("#toc-con div").scrollTop($("li[isred='y']").offset().top - tocHeight)
-                    } else if (redScreenPos < 0) {
-                        $("#toc-con div").scrollTop(tocPos + redScreenPos - (tocHeight / 2))
-                    } else {
-                        if (redScreenPos > (tocHeight / 2)) $("#toc-con div").scrollTop(tocPos + 10)
-                        if (redScreenPos < (tocHeight / 2 - 40)) $("#toc-con div").scrollTop(tocPos - 10)
-                    }
-                }
-
-                tocSetListen()
-                tocSetPos()
-                window.onscroll = function () {
-                    tocSetPos();
-                    tocGetPos()
-                }  // 滚轮事件
-                $('#toc-con div').mouseover(function () {  // 根据鼠标位置来调整滚轮事件
-                    window.onscroll = function () {
-                        tocSetPos()
-                    }
-                }).mouseout(function () {
-                    window.onscroll = function () {
-                        tocSetPos();
-                        tocGetPos()
-                    }
-                })
-
-                setInterval(function(){  // 每 1.5 秒刷新一次 toc 监听事件和 toc 目录坐标
-                    tocSetListen()
-                    myBlog.tocSetArray()
-                }, 1500)
+                setInterval(() => {
+                tocSetListen();
+                this.tocSetArray();
+                }, 1500);
             },
-            /**
-            * toc 目录移动端的部分设置
-            */
-            tocMobileSet: function () {
-                if (window.outerWidth === 0) return  // Chrome 浏览器对新窗口打开的页面，会设置 width 为 0
-                if (window.outerWidth > 1275) return
-                $(".toc-con").toggle()
-                $("[toc-date='title']").append('<a class="toc-link">[目录]</a>')
 
-                $(".toc-link").click(function (e) {  // 添加监听事件
-                    $(".toc-con").show()
-                    e.stopPropagation()  // 阻止事件冒泡
-                }),
+            tocMobileSet: function() {
+                if (window.outerWidth === 0 || window.outerWidth > 1275) return;
+                const tocCon = document.querySelector(".toc-con");
+                if (tocCon) tocCon.style.display = "none";
 
-                $("html").click(function (e) {
-                    if($(".toc-con") && $(".toc-con").css("display") == "block") {
-                        $(".toc-con").hide()
-                    }
-                    e.stopPropagation() 
-                })
-            }
-        }
+                document.querySelectorAll("[toc-date='title']").forEach(t => {
+                const a = document.createElement("a");
+                a.textContent = "[目录]";
+                a.className = "toc-link";
+                t.appendChild(a);
+                a.addEventListener("click", e => {
+                    if (tocCon) tocCon.style.display = "block";
+                    e.stopPropagation();
+                });
+                });
+
+                document.documentElement.addEventListener("click", e => {
+                if (tocCon && tocCon.style.display === "block") tocCon.style.display = "none";
+                });
+            },  
+            tocClose: function () {
+                const logCon1 = document.querySelector("#emlogEchoLog");
+                const tocCon1 = document.querySelector(".toc-con");
+                const logLeftMar = parseInt(getComputedStyle(logCon1).marginLeft) - 150;
+                tocCon1.style.display = (tocCon1.style.display === "none" || getComputedStyle(tocCon1).display === "none") ? "block" : "none";
+                logCon1.style.marginLeft = logLeftMar + "px";
+            }    
+};
+
 
         /* www . c c g x k. com
         页面入口
         */
-        $(document).ready(function () {
-            myBlog.init()
-        })
+ 
+        myBlog.init()
+
     </script>
 </body>
 </html>
